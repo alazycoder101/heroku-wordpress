@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-namespace Google\Auth\Subscriber;
+namespace WPvividGoogle\Auth\Subscriber;
 
-use Google\Auth\FetchAuthTokenInterface;
-use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Event\SubscriberInterface;
+use WPvividGoogle\Auth\FetchAuthTokenInterface;
+use WPvividGuzzleHttp\Event\BeforeEvent;
+use WPvividGuzzleHttp\Event\RequestEvents;
+use WPvividGuzzleHttp\Event\SubscriberInterface;
 
 /**
  * AuthTokenSubscriber is a Guzzle Subscriber that adds an Authorization header

@@ -21,7 +21,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Google\\Auth\\": "src"
+      "WPvividGoogle\\Auth\\": "src"
     }
   }
 }

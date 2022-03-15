@@ -181,7 +181,7 @@ class PHPConsoleHandlerTest extends TestCase
         );
         $handler = $this->initLogger();
         $handler->log(
-            \Psr\Log\LogLevel::ERROR,
+            \WPvividPsr\Log\LogLevel::ERROR,
             sprintf('Uncaught Exception %s: "%s" at %s line %s', get_class($e), $e->getMessage(), $e->getFile(), $e->getLine()),
             array('exception' => $e)
         );

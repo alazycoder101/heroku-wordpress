@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use WPvividGuzzleHttp\Psr7;
+use WPvividGuzzleHttp\Psr7\Request;
+use WPvividGuzzleHttp\Psr7\Response;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
 
 /**
  * Class to handle batched requests to the Google API service.

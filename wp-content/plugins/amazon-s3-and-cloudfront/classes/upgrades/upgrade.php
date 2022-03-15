@@ -12,6 +12,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use Amazon_S3_And_CloudFront;
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\No_More_Blogs_Exception;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Batch_Limits_Exceeded_Exception;
 use DeliciousBrains\WP_Offload_Media\Upgrades\Exceptions\Too_Many_Errors_Exception;
@@ -20,7 +21,7 @@ use WP_Error;
 /**
  * Upgrade Class
  *
- * This class handles updates to attachments and attachment meta data
+ * This class handles updates to offloaded items.
  *
  * @since 0.6.2
  */
@@ -84,7 +85,7 @@ abstract class Upgrade {
 	/**
 	 * @var string
 	 */
-	protected $lock_key = 'as3cf_upgrade_lock';
+	public static $lock_key = 'as3cf_upgrade_lock';
 
 	/**
 	 * @var int Time limit in seconds.
@@ -112,7 +113,7 @@ abstract class Upgrade {
 	protected $items_processed;
 
 	/**
-	 * @var mixed Last attachment processed.
+	 * @var mixed Last item processed.
 	 */
 	protected $last_item;
 
@@ -142,8 +143,8 @@ abstract class Upgrade {
 	protected $session;
 
 	const STATUS_RUNNING = 1;
-	const STATUS_ERROR = 2;
-	const STATUS_PAUSED = 3;
+	const STATUS_ERROR   = 2;
+	const STATUS_PAUSED  = 3;
 
 	/**
 	 * Start it up
@@ -166,6 +167,9 @@ abstract class Upgrade {
 
 		add_action( 'as3cf_pre_settings_render', array( $this, 'maybe_display_notices' ) );
 		add_action( 'admin_init', array( $this, 'maybe_handle_action' ) );
+
+		// Settings Tab
+		add_action( 'as3cf_pre_tab_render', array( $this, 'pre_tab_render' ) );
 
 		// Do default checks if the upgrade can be started
 		if ( $this->maybe_init() ) {
@@ -208,6 +212,9 @@ abstract class Upgrade {
 			if ( $this->is_running() ) {
 				// Make sure cron job is persisted in case it has dropped
 				$this->schedule();
+			} else {
+				// Refresh the lock to stop anything from interfering while paused.
+				$this->lock_upgrade();
 			}
 
 			return false;
@@ -237,13 +244,13 @@ abstract class Upgrade {
 	abstract protected function get_items_to_process( $prefix, $limit, $offset = false );
 
 	/**
-	 * Upgrade attachment.
+	 * Upgrade item.
 	 *
-	 * @param mixed $attachment
+	 * @param mixed $item
 	 *
 	 * @return bool
 	 */
-	abstract protected function upgrade_item( $attachment );
+	abstract protected function upgrade_item( $item );
 
 	/**
 	 * Get running update text.
@@ -412,7 +419,7 @@ abstract class Upgrade {
 				break;
 			case self::STATUS_ERROR:
 				$msg         = $this->get_error_message();
-				$action_text = __( 'Try Run It Again', 'amazon-s3-and-cloudfront' );
+				$action_text = __( 'Try To Run It Again', 'amazon-s3-and-cloudfront' );
 				$msg_type    = 'error';
 				break;
 			default:
@@ -493,6 +500,7 @@ abstract class Upgrade {
 	 * Calculate progress.
 	 *
 	 * @return bool|float
+	 * @throws Batch_Limits_Exceeded_Exception
 	 */
 	protected function calculate_progress() {
 		$this->boot_session();
@@ -503,9 +511,9 @@ abstract class Upgrade {
 		} else {
 			// Set up any per-site state
 			$this->switch_to_blog( get_current_blog_id() );
-			$counts = $this->as3cf->count_attachments( $this->blog_prefix );
+			$counts = Media_Library_Item::count_items();
 
-			// If there are no attachments, disable progress calculation
+			// If there are no items, disable progress calculation
 			// and protect against division by zero.
 			if ( ! $counts['total'] ) {
 				return false;
@@ -565,8 +573,7 @@ abstract class Upgrade {
 	 * Restart upgrade
 	 */
 	protected function action_restart_update() {
-		$this->schedule();
-		$this->change_status_request( self::STATUS_RUNNING );
+		$this->init();
 	}
 
 	/**
@@ -646,7 +653,7 @@ abstract class Upgrade {
 	 * @return array
 	 */
 	protected function get_session() {
-		return get_site_option( 'update_' . $this->upgrade_name . '_session', array() );
+		return get_site_option( 'as3cf_update_' . $this->upgrade_name . '_session', array() );
 	}
 
 	/**
@@ -655,7 +662,7 @@ abstract class Upgrade {
 	 * @param array $session session data to store
 	 */
 	protected function save_session( $session ) {
-		update_site_option( 'update_' . $this->upgrade_name . '_session', $session );
+		update_site_option( 'as3cf_update_' . $this->upgrade_name . '_session', $session );
 	}
 
 	/**
@@ -663,7 +670,7 @@ abstract class Upgrade {
 	 *
 	 */
 	protected function clear_session() {
-		delete_site_option( 'update_' . $this->upgrade_name . '_session' );
+		delete_site_option( 'as3cf_update_' . $this->upgrade_name . '_session' );
 	}
 
 	/**
@@ -703,7 +710,7 @@ abstract class Upgrade {
 	 * Lock upgrade.
 	 */
 	protected function lock_upgrade() {
-		set_site_transient( $this->lock_key, $this->upgrade_id, MINUTE_IN_SECONDS * 3 );
+		set_site_transient( static::$lock_key, $this->upgrade_id, MINUTE_IN_SECONDS * 3 );
 	}
 
 	/**
@@ -712,7 +719,7 @@ abstract class Upgrade {
 	 * Voids the lock after 1 second rather than deleting to avoid a race condition.
 	 */
 	protected function unlock_upgrade() {
-		set_site_transient( $this->lock_key, $this->upgrade_id, 1 );
+		set_site_transient( static::$lock_key, $this->upgrade_id, 1 );
 	}
 
 	/**
@@ -720,8 +727,8 @@ abstract class Upgrade {
 	 *
 	 * @return bool
 	 */
-	protected function is_locked() {
-		return false !== get_site_transient( $this->lock_key );
+	public static function is_locked() {
+		return false !== get_site_transient( static::$lock_key );
 	}
 
 	/**
@@ -803,7 +810,7 @@ abstract class Upgrade {
 		global $wpdb;
 
 		if ( is_multisite() ) {
-			return $wpdb->get_var( "SELECT MAX(blog_id) FROM {$wpdb->prefix}blogs" );
+			return $wpdb->get_var( "SELECT MAX(blog_id) FROM {$wpdb->blogs}" );
 		}
 
 		return 1;
@@ -933,5 +940,27 @@ abstract class Upgrade {
 		}
 
 		return is_admin();
+	}
+
+	/**
+	 * Maybe add notices etc. at top of settings tab.
+	 *
+	 * @param string $tab
+	 *
+	 * @handles as3cf_pre_tab_render filter
+	 */
+	public function pre_tab_render( $tab ) {
+		if ( 'media' === $tab ) {
+			$title = ucwords( $this->upgrade_type ) . ' Update';
+
+			$lock_settings_args = array(
+				'message' => sprintf( __( '<strong>Settings Locked Temporarily</strong> &mdash; You can\'t change any of your settings until the "%s" has completed.', 'amazon-s3-and-cloudfront' ), $title ),
+				'id'      => 'as3cf-media-settings-locked-upgrade',
+				'inline'  => true,
+				'type'    => 'notice-warning',
+				'style'   => 'display: none',
+			);
+			$this->as3cf->render_view( 'notice', $lock_settings_args );
+		}
 	}
 }

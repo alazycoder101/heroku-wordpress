@@ -15,7 +15,8 @@ class WPvivid_RestoreSite
         {
             $backup=$wpvivid_plugin->restore_data->get_backup_data();
             $backup_item=new WPvivid_Backup_Item($backup);
-            $root_path=$backup_item->get_local_path();
+            $root_path = $wpvivid_plugin->get_backup_folder();
+            //$root_path=$backup_item->get_local_path();
 
             if(!file_exists($root_path))
             {
@@ -42,7 +43,8 @@ class WPvivid_RestoreSite
         {
             $backup=$wpvivid_plugin->restore_data->get_backup_data();
             $backup_item=new WPvivid_Backup_Item($backup);
-            $local_path=$backup_item->get_local_path();
+            $local_path = $wpvivid_plugin->get_backup_folder();
+            //$local_path=$backup_item->get_local_path();
 
             $is_type_db = false;
             $is_type_db = apply_filters('wpvivid_check_type_database', $is_type_db, $option);

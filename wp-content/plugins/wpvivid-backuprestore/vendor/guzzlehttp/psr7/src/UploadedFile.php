@@ -1,9 +1,9 @@
 <?php
-namespace GuzzleHttp\Psr7;
+namespace WPvividGuzzleHttp\Psr7;
 
 use InvalidArgumentException;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UploadedFileInterface;
+use WPvividPsr\Http\Message\StreamInterface;
+use WPvividPsr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 
 class UploadedFile implements UploadedFileInterface

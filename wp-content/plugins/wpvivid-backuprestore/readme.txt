@@ -1,19 +1,21 @@
-=== Backup & Migration - WPvivid Backup and Migration Plugin ===
+=== Migration, Backup, Staging - WPvivid Backup and Migration Plugin ===
 Contributors: wpvivid
-Tags: move, clone, migrate, cleaner, backup, restore, auto backup, cloud backup
+Tags: move, clone, migrate, staging, backup, restore, auto backup, cloud backup
 Requires at least: 4.5
-Tested up to: 5.7.1
+Tested up to: 5.8.2
 Requires PHP: 5.3
-Stable tag: 0.9.53
+Stable tag: 0.9.69
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
 
-Schedule offsite backup, automatic migration. All in one backup & migration plugin.
+Auto migrate, move, duplicate, clone, back up WP. Create staging sites. All-in-one backup, migration & staging plugin. Schedule, offsite backup.
 
 == Description ==
-WPvivid Backup Plugin offers backup and migration as basic features, and is integrating more and more elegant features, such as unused images cleaner etc.
+WPvivid Backup Plugin offers backup, migration, and staging as basic features, and is integrating more and more elegant features, such as unused images cleaner etc.
 
-Migrate a copy of WP site to a new host (a new domain), schedule backups, send backups to leading remote storage, clean unused images before backup and migration. All in one backup & migration plugin.
+Create a staging site on a subdirectory to safely test WordPress, plugins, themes and website changes.
+
+Clone and migrate a copy of WP site to a new host (a new domain), schedule backups, send backups to leading remote storage, clean unused images before backup and migration. All in one backup & migration plugin.
 
 == WPvivid Backup for MainWP ==
 [WPvivid Backup for MainWP](https://wpvivid.com/wpvivid-backup-for-mainwp) is now available to download.
@@ -27,7 +29,7 @@ Click to download **[WPvivid Backup for MainWP](https://wordpress.org/plugins/wp
 * Incremental backups
 * Database backups encryption
 * Auto backup WordPress core, themes, and plugins
-* Unused images cleaner (Beta)
+* Unused images cleaner
 * WordPress Multisite backup
 * Create a staging for a WordPress MU
 * Create a fresh WP install
@@ -58,29 +60,32 @@ WPvivid Backup Plugin has been tested by our users to migrate well on websites b
 = 1. Easy Backups =
 Easily create a backup of your WordPress site. You can choose to back up the entire site(database+files), all files, or database only.
 = 2. Auto Migration =
-Migrate your WordPress site to a new domain with a single click. WPvivid Backup Plugin supports site migration from dev environment to a new server, from dev environment to a new domain or from a live server to another.
+Clone and migrate your WordPress site to a new domain with a single click. WPvivid Backup Plugin supports site migration from dev environment to a new server, from dev environment to a new domain or from a live server to another.
 
 You can also migrate a site to a subdirectory, from a.com to b.com, from a.com to a.com/directory and from a.com to b.com/directory.
 
 You are free to choose what to migrate: the entire site, files or just database only.
-= 3. Scheduled Backups =
+= 3. Create A Staging Site =
+Create a staging site on a subdirectory of your production site to safely test WordPress, plugins, themes and website changes. You can choose what to copy from the the live site to the staging site.
+= 4. Scheduled Backups =
 Set a schedule to run backups automatically on your website. You can set the backups to run every 12 hours, daily, weekly, fortnightly, monthly, and choose backup items and destination.
-= 4. Offsite Backup to Remote Storage =
+= 5. Offsite Backup to Remote Storage =
 Send your backups offsite to a remote location. WPvivid Backup Plugin supports the leading cloud storage providers: Dropbox, Google Drive, Amazon S3, Microsoft OneDrive, DigitalOcean Spaces, FTP and SFTP.
-= 5. One-Click Restore =
+= 6. One-Click Restore =
 Restore your WordPress site from a backup with a single click.
-= 6. Unused Images Cleaner (Beta) =
+= 7. Unused Images Cleaner =
 Scan your WP media library to find unused images, then you can choose to clean specific or all unused images.
 
 == Cloud Storage Supported ==
 
 Dropbox, Google Drive, Microsoft OneDrive, Amazon S3, DigitalOcean Spaces, SFTP, FTP.
-The pro version also supports Wasabi, pCloud and more are coming soon.
+The pro version also supports Wasabi, pCloud, Backblaze and more are coming soon.
 
 == Features Spotlight ==
 * One-Click Site Move or Migration
+* Create A Staging Site
 * Upload Backups to Restore or Migrate
-* Unused Images Cleaner (Beta)
+* Unused Images Cleaner
 * Schedule Automated Backups
 * Restore A Backup with One Click
 * Create A Manual Backup
@@ -109,7 +114,6 @@ The pro version also supports Wasabi, pCloud and more are coming soon.
 * PHP version 5.3
 * MySQL version 4.1
 * WordPress 4.5
-= Note = Please note that the plugin is currently not compatible with PHP 8. We are going to fix it in the near future.
 
 == Support ==
 We offer free support in 3 channels:
@@ -153,12 +157,12 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 == Frequently Asked Questions ==
 = What does WPvivid Backup Plugin do? =
-As the name says, WPvivid Backup Plugin is an all in one free WP backup plugin that enables you to easily migrate a WordPress site to a new domain, to perform manual and scheduled backups of your WordPress site, to back up to cloud storage and restore backups directly from your sites admin dashboard.
+As the name says, WPvivid Backup Plugin is an all in one free WP backup plugin that enables you to easily clone and migrate a WordPress site to a new domain, to perform manual and scheduled backups of your WordPress site, to back up to cloud storage and restore backups directly from your sites admin dashboard.
 = Does WPvivid Backup Plugin also migrate my site? Is it a free feature? =
 Yes, we have added website migration feature since version 0.9.14.
 Yes, it's a completely free feature.
 = How many cloud options does WPvivid Backup Plugin support? Are they free to access? =
-Out of the box we support Dropbox, Google Drive, Amazon S3, Microsoft OneDrive, DigitalOcean Spaces, we also support FTP, SFTP methods which you can use on any other remote storage provider supporting these methods. We are working hard to add more soon.
+Out of the box we support Dropbox, Google Drive, Amazon S3, Microsoft OneDrive, DigitalOcean Spaces, we also support FTP, SFTP methods which you can use on any other remote storage provider supporting these methods.
 
 Yes, all the cloud access is free.
 = Can I use WPvivid Backup Plugin to restore my site? =
@@ -185,8 +189,87 @@ Thank you for translating WPvivid Backup Plugin to your languages!
 * [Francesco Tosi](https://profiles.wordpress.org/seventhose/) (Italian)
 * [Valentin Lyong](https://profiles.wordpress.org/icedge/) (Bulgarian)
 * [Daniel Wilczkowiak](https://profiles.wordpress.org/virtual03/) (German)
+* [Nima](https://profiles.wordpress.org/nima78600/) (Persian)
 
 == Changelog ==
+= 0.9.69 =
+- Updated: For security reasons, adding Google Drive, Dropbox, OneDrive now needs to get authentication first.
+- Updated: Changed time in a log file to local time.
+- Fixed the curl 60 error that could appear when backing up to Google Drive in some cases.
+- Fixed: Disabling backup splitting did not take effect on PHP 8 sites.
+- Fixed: Uploading backups to Dropbox failed in some cases.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
+= 0.9.68 =
+- Fixed: Failed to upload backups to Dropbox in some cases.
+- Updated: Changed timezone in email report title to local time.
+- Optimized the plugin code.
+= 0.9.67 =
+- Fixed: The object-cache.php file and protection files generated by Wordfence were not excluded during restore.
+- Fixed: Some used images were falsely identified as unused.
+- Added creation time for a staging site.
+- Optimized the plugin code.
+= 0.9.66 =
+- Fixed a Dropbox folder bug.
+- Fixed a conflict between the unused image cleaner and some themes.
+- Fixed a problem that some used images in Elementor were identified as unused.
+- Fixed: Downloading backup would failed in some cases.
+- Added a check to Nginx server when creating a staging site.
+- Optimized the plugin code.
+= 0.9.65 =
+- Fixed: Some WPvivid Backup Plugin settings were reset to default after restore.
+- Fixed: Some urls could not be replaced because of escape format problems after restore.
+- Fixed: Unused image could not be scanned in PHP 8.
+- Fixed: Staging site admin url did not display correctly when the live site has a 'custom login url'.
+- Optimized the plugin code.
+= 0.9.64 =
+- Fixed: Failed to refresh Dropbox token in some cases.
+- Fixed: Custom menu style could not be properly migrated in some cases.
+- Optimized the process of creating a staging site.
+- Added an option to resume the task of creating a staging site when it was interrupted.
+- Optimized the plugin code.
+= 0.9.63 =
+- Added support for Dropbox's new API.
+- Fixed: some images used in Elementor would be scanned as 'unused'.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
+= 0.9.62 =
+- Added a check to the permissions of the staging folder before creating a staging site.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
+- Successfully tested with WordPress 5.8.1.
+= 0.9.61 =
+- Added support for migration of unconventional save of the media paths.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
+= 0.9.60 =
+- Fixed: Failed to back up files of 0 KB in PHP 8 environment.
+- Changed: The information of backup folder name will not be included when you export the plugin settings.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
+= 0.9.59 =
+- Fixed the PHP Guzzle library support compatibility issue which could cause backup failure in some cases.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
+= 0.9.58 =
+- Fixed a fatal error with the last update.
+= 0.9.57 =
+- Added a new feature of creating a staging site.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
+= 0.9.56 =
+- Fixed: Some used images would show up in the image cleaner results in some cases.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
+= 0.9.55 =
+- Successfully tested with WordPress 5.8.
+- Fixed: Creating tables failed when restoring the database in some cases.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
+= 0.9.54 =
+- Added support for PHP 8.
+- Fixed some bugs in the plugin code.
+- Optimized the plugin code.
 = 0.9.53 =
 - Fixed a SQL injection vulnerability.
 - Fixed some bugs in the plugin code and optimized the plugin code.

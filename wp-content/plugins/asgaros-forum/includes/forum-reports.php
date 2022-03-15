@@ -20,6 +20,8 @@ class AsgarosForumReports {
     }
 
     public function render_report_button($post_id, $topic_id) {
+        $output = '';
+
         if ($this->asgarosforum->options['reports_enabled']) {
             // Only show a report button when the user is logged-in.
             if (is_user_logged_in()) {
@@ -29,18 +31,18 @@ class AsgarosForumReports {
                     $report_message = __('Are you sure that you want to report this post?', 'asgaros-forum');
                     $report_href = $this->asgarosforum->rewrite->get_link('topic', $topic_id, array('post' => $post_id, 'report_add' => 1, 'part' => ($this->asgarosforum->current_page + 1)), '#postid-'.$post_id);
 
-                    echo '<a href="'.$report_href.'" title="'.__('Report Post', 'asgaros-forum').'" onclick="return confirm(\''.$report_message.'\');">';
-                        echo '<span class="report-link fas fa-exclamation-triangle">';
-                        echo '<span class="screen-reader-text">'.__('Click to report post.', 'asgaros-forum').'</span>';
-                        echo '</span>';
-                    echo '</a>';
+                    $output .= '<a href="'.$report_href.'" title="'.__('Report Post', 'asgaros-forum').'" onclick="return confirm(\''.$report_message.'\');">';
+                    $output .= '<span class="report-link fas fa-exclamation-triangle">';
+                    $output .= '<span class="screen-reader-text">'.__('Click to report post.', 'asgaros-forum').'</span>';
+                    $output .= '</span>';
+                    $output .= '</a>';
                 } else {
-                    echo '<span class="report-exists fas fa-exclamation-triangle" title="'.__('You reported this post.', 'asgaros-forum').'"></span>';
+                    $output .= '<a href="#"><span class="report-exists fas fa-exclamation-triangle" title="'.__('You reported this post.', 'asgaros-forum').'"></span></a>';
                 }
-
-                echo '&nbsp;&middot;&nbsp;';
             }
         }
+
+        return $output;
     }
 
     public function add_report($post_id, $reporter_id) {
@@ -212,9 +214,9 @@ class AsgarosForumReports {
                     $post_author = $this->asgarosforum->getUsername($report['author_id']);
 
                     echo '<div class="report-source">';
-                        echo sprintf('Posted in %s by %s', $post_link, $post_author);
+                        echo sprintf(__('Posted in %s by %s', 'asgaros-forum'), $post_link, $post_author);
                         echo '&nbsp;&middot;&nbsp;';
-                        echo __('Reported by:', 'asgaros-forum').'&nbsp;';
+                        echo esc_html__('Reported by:', 'asgaros-forum').'&nbsp;';
 
                         $first_reporter = true;
 
@@ -242,14 +244,14 @@ class AsgarosForumReports {
                     echo '<div class="report-actions">';
                         $delete_link = $this->asgarosforum->rewrite->get_link('reports', false, array('report_delete' => $report['post_id']));
 
-                        echo '<a class="report-action-delete" href="'.$delete_link.'">';
+                        echo '<a class="report-action-delete" href="'.esc_url($delete_link).'">';
                             echo '<span class="fas fa-trash-alt"></span>';
-                            echo __('Delete Report', 'asgaros-forum');
+                            echo esc_html__('Delete Report', 'asgaros-forum');
                         echo '</a>';
 
-                        echo '<a href="'.$report['post_link'].'">';
+                        echo '<a href="'.esc_url($report['post_link']).'">';
                             echo '<span class="fas fa-eye"></span>';
-                            echo __('Show Post', 'asgaros-forum');
+                            echo esc_html__('Show Post', 'asgaros-forum');
                         echo '</a>';
                     echo '</div>';
                 echo '</div>';

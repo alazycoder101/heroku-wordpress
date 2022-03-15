@@ -14,16 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace Google\Auth\HttpHandler;
+namespace WPvividGoogle\Auth\HttpHandler;
 
 use Exception;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Message\ResponseInterface as Guzzle5ResponseInterface;
-use GuzzleHttp\Promise\Promise;
-use GuzzleHttp\Promise\RejectedPromise;
-use GuzzleHttp\Psr7\Response;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use WPvividGuzzleHttp\ClientInterface;
+use WPvividGuzzleHttp\Message\ResponseInterface as Guzzle5ResponseInterface;
+use WPvividGuzzleHttp\Promise\Promise;
+use WPvividGuzzleHttp\Promise\RejectedPromise;
+use WPvividGuzzleHttp\Psr7\Response;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
 
 class Guzzle5HttpHandler
 {
@@ -67,7 +67,7 @@ class Guzzle5HttpHandler
      */
     public function async(RequestInterface $request, array $options = [])
     {
-        if (!class_exists('GuzzleHttp\Promise\Promise')) {
+        if (!class_exists('WPvividGuzzleHttp\Promise\Promise')) {
             throw new Exception('Install guzzlehttp/promises to use async with Guzzle 5');
         }
 

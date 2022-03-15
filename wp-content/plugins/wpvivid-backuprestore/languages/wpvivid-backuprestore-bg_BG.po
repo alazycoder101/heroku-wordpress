@@ -2000,34 +2000,34 @@ msgid "Authentication failed, the format of the client_secrets.json file is inco
 msgstr "Неуспешно удостоверяване, форматът на файла client_secrets.json е неправилен. Изтрийте и инсталирайте отново приставката, за да създадете файла."
 
 #: includes/customclass/class-wpvivid-google-drive.php:272
-msgid "You have authenticated the Google Drive account as your remote storage."
-msgstr "Вие сте удостоверили профила в Google Диск като вашето отдалечено хранилище."
+msgid "You have authenticated the WPvividGoogle Drive account as your remote storage."
+msgstr "Вие сте удостоверили профила в WPvividGoogle Диск като вашето отдалечено хранилище."
 
 #: includes/customclass/class-wpvivid-google-drive.php:292
-msgid "Google Drive"
-msgstr "Google Диск"
+msgid "WPvividGoogle Drive"
+msgstr "WPvividGoogle Диск"
 
 #: includes/customclass/class-wpvivid-google-drive.php:304
-msgid "Please read <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">this privacy policy</a> for use of our Google Drive authorization app (none of your backup data is sent to us)."
-msgstr "Моля, прочетете <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">тази декларация</a> за поверителност за използване на приложението ни за упълномощаване Google Диск (нито един от вашите архивни данни не се изпраща до нас)."
+msgid "Please read <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">this privacy policy</a> for use of our WPvividGoogle Drive authorization app (none of your backup data is sent to us)."
+msgstr "Моля, прочетете <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">тази декларация</a> за поверителност за използване на приложението ни за упълномощаване WPvividGoogle Диск (нито един от вашите архивни данни не се изпраща до нас)."
 
 #: includes/customclass/class-wpvivid-google-drive.php:307
 #: includes/customclass/class-wpvivid-google-drive.php:435
-msgid "Enter Your Google Drive Information"
+msgid "Enter Your WPvividGoogle Drive Information"
 msgstr "Въведете информацията за google Диск"
 
 #: includes/customclass/class-wpvivid-google-drive.php:314
 #: includes/customclass/class-wpvivid-google-drive.php:442
-msgid "Enter a unique alias: e.g. Google Drive-001"
-msgstr "Въведете уникален псевдоним: например Google Диск-001"
+msgid "Enter a unique alias: e.g. WPvividGoogle Drive-001"
+msgstr "Въведете уникален псевдоним: например WPvividGoogle Диск-001"
 
 #: includes/customclass/class-wpvivid-google-drive.php:364
-msgid "Authenticate with Google Drive"
-msgstr "Удостоверяване с Google Диск"
+msgid "Authenticate with WPvividGoogle Drive"
+msgstr "Удостоверяване с WPvividGoogle Диск"
 
 #: includes/customclass/class-wpvivid-google-drive.php:369
-msgid "Click the button to get Google authentication and add it to the storage list below."
-msgstr "Кликнете върху бутона, за да получите удостоверяване от Google и да го добавите към списъка за съхранение по-долу."
+msgid "Click the button to get WPvividGoogle authentication and add it to the storage list below."
+msgstr "Кликнете върху бутона, за да получите удостоверяване от WPvividGoogle и да го добавите към списъка за съхранение по-долу."
 
 #: includes/customclass/class-wpvivid-one-drive.php:240
 msgid "You have authenticated the Microsoft OneDrive account as your remote storage."

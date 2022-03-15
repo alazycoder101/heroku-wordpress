@@ -1,8 +1,8 @@
 <?php
-namespace GuzzleHttp\Psr7;
+namespace WPvividGuzzleHttp\Psr7;
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
+use WPvividPsr\Http\Message\StreamInterface;
 
 /**
  * PSR-7 response implementation.

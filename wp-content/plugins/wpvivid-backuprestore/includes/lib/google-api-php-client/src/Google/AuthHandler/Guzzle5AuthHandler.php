@@ -1,14 +1,14 @@
 <?php
 
-use Google\Auth\CredentialsLoader;
-use Google\Auth\HttpHandler\HttpHandlerFactory;
-use Google\Auth\FetchAuthTokenCache;
-use Google\Auth\Subscriber\AuthTokenSubscriber;
-use Google\Auth\Subscriber\ScopedAccessTokenSubscriber;
-use Google\Auth\Subscriber\SimpleSubscriber;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use Psr\Cache\CacheItemPoolInterface;
+use WPvividGoogle\Auth\CredentialsLoader;
+use WPvividGoogle\Auth\HttpHandler\HttpHandlerFactory;
+use WPvividGoogle\Auth\FetchAuthTokenCache;
+use WPvividGoogle\Auth\Subscriber\AuthTokenSubscriber;
+use WPvividGoogle\Auth\Subscriber\ScopedAccessTokenSubscriber;
+use WPvividGoogle\Auth\Subscriber\SimpleSubscriber;
+use WPvividGuzzleHttp\Client;
+use WPvividGuzzleHttp\ClientInterface;
+use WPvividPsr\Cache\CacheItemPoolInterface;
 
 /**
 *

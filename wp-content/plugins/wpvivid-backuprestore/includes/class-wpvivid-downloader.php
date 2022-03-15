@@ -59,8 +59,9 @@ class WPvivid_downloader
             return false;
         }
 
-
-        $local_path=WP_CONTENT_DIR.DIRECTORY_SEPARATOR.$backup['local']['path'].DIRECTORY_SEPARATOR;
+        $backup_dir = WPvivid_Setting::get_backupdir();
+        $local_path=WP_CONTENT_DIR.DIRECTORY_SEPARATOR.$backup_dir.DIRECTORY_SEPARATOR;
+        //$local_path=WP_CONTENT_DIR.DIRECTORY_SEPARATOR.$backup['local']['path'].DIRECTORY_SEPARATOR;
         $need_download_files=array();
 
         $local_file=$local_path.$file_info['file_name'];

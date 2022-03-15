@@ -13,7 +13,7 @@ namespace Monolog;
 
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\TestHandler;
-use Psr\Log\LogLevel;
+use WPvividPsr\Log\LogLevel;
 
 /**
  * @author Robert Gust-Bardon <robert@gust-bardon.org>

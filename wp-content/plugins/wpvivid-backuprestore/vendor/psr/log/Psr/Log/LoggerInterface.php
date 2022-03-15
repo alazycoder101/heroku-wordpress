@@ -1,6 +1,6 @@
 <?php
 
-namespace Psr\Log;
+namespace WPvividPsr\Log;
 
 /**
  * Describes a logger instance.

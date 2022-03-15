@@ -1,6 +1,6 @@
 <?php
 
-namespace Psr\Cache;
+namespace WPvividPsr\Cache;
 
 /**
  * CacheItemPoolInterface generates CacheItemInterface objects.

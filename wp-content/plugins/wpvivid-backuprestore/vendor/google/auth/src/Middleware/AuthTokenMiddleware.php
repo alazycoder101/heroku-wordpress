@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-namespace Google\Auth\Middleware;
+namespace WPvividGoogle\Auth\Middleware;
 
-use Google\Auth\FetchAuthTokenInterface;
-use Psr\Http\Message\RequestInterface;
+use WPvividGoogle\Auth\FetchAuthTokenInterface;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * AuthTokenMiddleware is a Guzzle Middleware that adds an Authorization header

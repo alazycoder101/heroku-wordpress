@@ -402,19 +402,10 @@ function wpvivid_add_backup_type($html, $type_name)
                 <label>
                     <div style="float: left;">
                         <input type="radio" disabled />
-                        <span class="wpvivid-element-space-right" style="color: #ddd;">'.__('Create a staging site', 'wpvivid-backuprestore').'</span>
-                    </div>
-                    <span class="wpvivid-feature-pro">
-                        <a href="https://wpvivid.com/wpvivid-backup-pro-create-staging-site" style="text-decoration: none;">'.__('Pro feature: learn more', 'wpvivid-backuprestore').'</a>
-                    </span>
-                </label><br>
-                <label>
-                    <div style="float: left;">
-                        <input type="radio" disabled />
                         <span class="wpvivid-element-space-right" style="color: #ddd;">'.__('Custom', 'wpvivid-backuprestore').'</span>
                     </div>
                     <span class="wpvivid-feature-pro">
-                        <a href="https://wpvivid.com/backup-migration-overview?utm_source=client_custom_backup&utm_medium=inner_link&utm_campaign=access" style="text-decoration: none;">'.__('Pro feature: learn more', 'wpvivid-backuprestore').'</a>
+                        <a href="https://docs.wpvivid.com/wpvivid-backup-pro-overview.html" style="text-decoration: none;">'.__('Pro feature: learn more', 'wpvivid-backuprestore').'</a>
                     </span>
                 </label><br>';
     return $html;
@@ -1283,7 +1274,7 @@ function wpvivid_backuppage_add_page_restore(){
                 </label><br>
             </div>
             <div>
-                <p><strong><?php _e('Tips:', 'wpvivid-backuprestore'); ?></strong>&nbsp<?php _e('The plugin detects automatically either site restoration or migration (replacing the domain name) based on the current domain name. If the domain name in backup file is same as the current one, it starts restoring. On the contrary, restoring backup means to replace with the current domain name. The precondition is that the backup is created by version 0.9.21 or later.', 'wpvivid-backuprestore'); ?></p>
+                <p><strong><?php _e('Tips:', 'wpvivid-backuprestore'); ?></strong>&nbsp<?php _e('If you are migrating a website, the source domain will be replaced with the target domain automatically. For example, if you are migrating a.com to b.com, then a.com will be replaced with b.com during the restore.', 'wpvivid-backuprestore'); ?></p>
             </div>
             <div id="wpvivid_restore_check"></div>
             <div class="restore-button-position" id="wpvivid_restore_part"><input class="button-primary" id="wpvivid_restore_btn" type="submit" name="restore" value="<?php esc_attr_e( 'Restore', 'wpvivid-backuprestore' ); ?>" onclick="wpvivid_start_restore();" /></div>
@@ -1645,6 +1636,7 @@ function wpvivid_backuppage_add_page_restore(){
             var ajax_data={
                 'action':'wpvivid_get_restore_progress',
                 'wpvivid_restore' : '1',
+                'backup_id':m_restore_backup_id,
             };
 
             if(wpvivid_restore_timeout){
@@ -2199,10 +2191,10 @@ function wpvivid_backuppage_add_progress_module(){
         <div class="action-progress-bar" id="wpvivid_action_progress_bar">
             <div class="action-progress-bar-percent" id="wpvivid_action_progress_bar_percent" style="height:24px;width:0;"></div>
         </div>
-        <div id="wpvivid_estimate_backup_info" style="float: left;">
+        <!--<div id="wpvivid_estimate_backup_info" style="float: left;">
             <div class="backup-basic-info"><span class="wpvivid-element-space-right"><?php _e('Database Size:', 'wpvivid-backuprestore'); ?></span><span id="wpvivid_backup_database_size">N/A</span></div>
             <div class="backup-basic-info"><span class="wpvivid-element-space-right"><?php _e('File Size:', 'wpvivid-backuprestore'); ?></span><span id="wpvivid_backup_file_size">N/A</span></div>
-        </div>
+        </div>-->
         <div id="wpvivid_estimate_upload_info" style="float: left;">
             <div class="backup-basic-info"><span class="wpvivid-element-space-right"><?php _e('Total Size:', 'wpvivid-backuprestore'); ?></span><span>N/A</span></div>
             <div class="backup-basic-info"><span class="wpvivid-element-space-right"><?php _e('Uploaded:', 'wpvivid-backuprestore'); ?></span><span>N/A</span></div>
@@ -2398,8 +2390,13 @@ function wpvivid_backup_module_add_exec(){
                         if(bdownloading) {
                             m_downloading_id = '';
                         }
-                        m_backup_task_id = jsonarray.task_id;                      
-                        var descript = '';
+                        m_backup_task_id = jsonarray.task_id;
+
+                        jQuery('#wpvivid_backup_list').html('');
+                        jQuery('#wpvivid_backup_list').append(jsonarray.html);
+                        wpvivid_backup_now(m_backup_task_id);
+                        /*
+                         var descript = '';
                         if (jsonarray.check.alert_db === true || jsonarray.check.alter_files === true) {
                             descript = 'The database (the dumping SQL file) might be too large, backing up the database may run out of server memory and result in a backup failure.\n' +
                                 'One or more files might be too large, backing up the file(s) may run out of server memory and result in a backup failure.\n' +
@@ -2421,7 +2418,7 @@ function wpvivid_backup_module_add_exec(){
                             jQuery('#wpvivid_backup_list').html('');
                             jQuery('#wpvivid_backup_list').append(jsonarray.html);
                             wpvivid_backup_now(jsonarray.task_id);
-                        }                     
+                        } */
                     }
                 }
                 catch (err) {
@@ -2506,7 +2503,7 @@ function wpvivid_backuppage_add_schedule_module(){
     $schedule=WPvivid_Schedule::get_schedule();
     if($schedule['enable']){
         $schedule_status='Enabled';
-        $next_backup_time=date("l, F d, Y H:i", $schedule['next_start']);
+        $next_backup_time=date("l, F-d-Y H:i", $schedule['next_start']);
     }
     else{
         $schedule_status='Disabled';
@@ -2520,7 +2517,7 @@ function wpvivid_backuppage_add_schedule_module(){
         <div class="schedule-block">
             <p id="wpvivid_schedule_status"><strong><?php _e('Schedule Status: ', 'wpvivid-backuprestore'); ?></strong><?php _e($schedule_status); ?></p>
             <div id="wpvivid_schedule_info">
-                <p><strong><?php _e('Server Time: ', 'wpvivid-backuprestore'); ?></strong><?php _e(date("l, F d, Y H:i",time())); ?></p>
+                <p><strong><?php _e('Server Time: ', 'wpvivid-backuprestore'); ?></strong><?php _e(date("l, F-d-Y H:i",time())); ?></p>
                 <p><span id="wpvivid_last_backup_msg"><?php _e($last_message); ?></span></p>
                 <p id="wpvivid_next_backup"><strong><?php _e('Next Backup: ', 'wpvivid-backuprestore'); ?></strong><?php _e($next_backup_time); ?></p>
             </div>

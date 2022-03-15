@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 /**
  * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  *
@@ -15,7 +16,7 @@ defined( 'ABSPATH' ) or exit;
 /**
  * Helper class with utility methods for getting and setting various product category values.
  *
- * @since 2.3.0-dev.1
+ * @since 2.2.0
  */
 class Product_Categories {
 
@@ -25,7 +26,7 @@ class Product_Categories {
 	 *
 	 * Does not fall back to the plugin settings.
 	 *
-	 * @since 2.3.0-dev.1
+	 * @since 2.2.0
 	 *
 	 * @param int $category_id category ID
 	 * @return string
@@ -39,9 +40,9 @@ class Product_Categories {
 	/**
 	 * Updates the stored Google product category ID for the Products::GOOGLE_PRODUCT_CATEGORY_META_KEY meta.
 	 *
-	 * @since 2.3.0-dev.1
+	 * @since 2.2.0
 	 *
-	 * @param int $id category ID
+	 * @param int    $id category ID
 	 * @param string $category_id Google product category ID
 	 */
 	public static function update_google_product_category_id( $id, $category_id ) {

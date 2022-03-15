@@ -1,9 +1,9 @@
 <?php
-namespace GuzzleHttp;
+namespace WPvividGuzzleHttp;
 
-use GuzzleHttp\Promise\PromisorInterface;
-use Psr\Http\Message\RequestInterface;
-use GuzzleHttp\Promise\EachPromise;
+use WPvividGuzzleHttp\Promise\PromisorInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividGuzzleHttp\Promise\EachPromise;
 
 /**
  * Sends and iterator of requests concurrently using a capped pool size.
@@ -50,7 +50,7 @@ class Pool implements PromisorInterface
             $opts = [];
         }
 
-        $iterable = \GuzzleHttp\Promise\iter_for($requests);
+        $iterable = \WPvividGuzzleHttp\Promise\iter_for($requests);
         $requests = function () use ($iterable, $client, $opts) {
             foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {

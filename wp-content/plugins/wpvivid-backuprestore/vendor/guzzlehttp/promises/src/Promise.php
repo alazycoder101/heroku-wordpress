@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp\Promise;
+namespace WPvividGuzzleHttp\Promise;
 
 /**
  * Promises/A+ implementation that avoids recursion when possible.

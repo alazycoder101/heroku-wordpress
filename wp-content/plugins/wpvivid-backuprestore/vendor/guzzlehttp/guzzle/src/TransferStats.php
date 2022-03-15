@@ -1,9 +1,9 @@
 <?php
-namespace GuzzleHttp;
+namespace WPvividGuzzleHttp;
 
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
+use WPvividPsr\Http\Message\UriInterface;
 
 /**
  * Represents data at the point after it was transferred either successfully

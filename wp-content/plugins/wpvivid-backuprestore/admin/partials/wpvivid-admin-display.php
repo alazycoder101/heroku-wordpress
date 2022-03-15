@@ -119,6 +119,7 @@ foreach ($page_array as $page_name){
         document.getElementById(contentName).style.display = "block";
         evt.currentTarget.className += " nav-tab-active";
         jQuery( document ).trigger( 'wpvivid-switch-tabs', contentName );
+        //nav-tab-active
     }
     function switchrestoreTabs(evt,contentName) {
         // Declare all variables
@@ -132,6 +133,26 @@ foreach ($page_array as $page_name){
 
         // Get all elements with class="table-nav-tab" and remove the class "nav-tab-active"
         tablinks = document.getElementsByClassName("backup-nav-tab");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" nav-tab-active", "");
+        }
+
+        // Show the current tab, and add an "storage-menu-active" class to the button that opened the tab
+        document.getElementById(contentName).style.display = "block";
+        evt.currentTarget.className += " nav-tab-active";
+    }
+    function switchlogTabs(evt,contentName) {
+        // Declare all variables
+        var i, tabcontent, tablinks;
+
+        // Get all elements with class="table-list-content" and hide them
+        tabcontent = document.getElementsByClassName("log-tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+
+        // Get all elements with class="table-nav-tab" and remove the class "nav-tab-active"
+        tablinks = document.getElementsByClassName("log-nav-tab");
         for (i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(" nav-tab-active", "");
         }
@@ -160,6 +181,43 @@ foreach ($page_array as $page_name){
         document.getElementById(contentName).style.display = "block";
         evt.currentTarget.className += " nav-tab-active";
     }
+    function switchstorageTabs(remote_type,storage_page_id)
+    {
+        var i, tabcontent, tablinks,contentName;
+        contentName='storage-page';
+        // Get all elements with class="tabcontent" and hide them
+        tabcontent = document.getElementsByClassName("wrap-tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+
+        // Get all elements with class="wrap-nav-tab" and remove the class "active"
+        tablinks = document.getElementsByClassName("wrap-nav-tab");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" nav-tab-active", "");
+        }
+
+        // Show the current tab, and add an "nav-tab-active" class to the button that opened the tab
+        document.getElementById(contentName).style.display = "block";
+        jQuery('#wpvivid_tab_remote_storage').addClass('nav-tab-active');
+        jQuery( document ).trigger( 'wpvivid-switch-tabs', contentName );
+        start_select_remote_storage(remote_type,storage_page_id);
+
+    }
+
+    function start_select_remote_storage(remote_type, storage_page_id)
+    {
+        var i, tablecontent, tablinks;
+        tablinks = document.getElementsByClassName("storage-providers");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace("storage-providers-active", "");
+        }
+        jQuery("div[remote_type='"+remote_type+"']").addClass('storage-providers-active');
+
+        jQuery(".storage-account-page").hide();
+        jQuery("#"+storage_page_id).show();
+    }
+
     function wpvivid_getrequest()
     {
         wpvivid_click_switch_page('wrap', wpvivid_page_request, false);
@@ -196,6 +254,21 @@ foreach ($page_array as $page_name){
         <?php
         }
         ?>
+
+        <?php
+           if (isset($_GET['main_tab']))
+            {
+                $tab=esc_html($_GET['main_tab']);
+
+                if($tab=='storage')
+                {
+                    $sub_tab=isset($_GET['sub_tab'])?$_GET['sub_tab']:'googledrive';
+                    $sub_page=isset($_GET['sub_page'])?$_GET['sub_page']:'storage_account_google_drive';
+                    echo "switchstorageTabs('$sub_tab','$sub_page');";
+                }
+            }
+        ?>
+        //switchTabs(event,'storage-page')
     });
 
 </script>

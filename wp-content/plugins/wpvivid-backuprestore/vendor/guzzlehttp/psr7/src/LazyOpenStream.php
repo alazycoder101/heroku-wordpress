@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp\Psr7;
+namespace WPvividGuzzleHttp\Psr7;
 
-use Psr\Http\Message\StreamInterface;
+use WPvividPsr\Http\Message\StreamInterface;
 
 /**
  * Lazily reads or writes to a file that is opened only after an IO operation

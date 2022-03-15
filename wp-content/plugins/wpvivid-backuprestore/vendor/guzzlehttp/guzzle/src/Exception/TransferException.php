@@ -1,4 +1,4 @@
 <?php
-namespace GuzzleHttp\Exception;
+namespace WPvividGuzzleHttp\Exception;
 
 class TransferException extends \RuntimeException implements GuzzleException {}

@@ -2,8 +2,8 @@
 
 namespace Guzzle\Log;
 
-use Psr\Log\LogLevel;
-use Psr\Log\LoggerInterface;
+use WPvividPsr\Log\LogLevel;
+use WPvividPsr\Log\LoggerInterface;
 
 /**
  * PSR-3 log adapter

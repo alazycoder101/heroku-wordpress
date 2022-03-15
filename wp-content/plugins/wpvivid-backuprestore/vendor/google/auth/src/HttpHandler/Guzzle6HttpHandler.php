@@ -1,10 +1,10 @@
 <?php
 
-namespace Google\Auth\HttpHandler;
+namespace WPvividGoogle\Auth\HttpHandler;
 
-use GuzzleHttp\ClientInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use WPvividGuzzleHttp\ClientInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
 
 class Guzzle6HttpHandler
 {

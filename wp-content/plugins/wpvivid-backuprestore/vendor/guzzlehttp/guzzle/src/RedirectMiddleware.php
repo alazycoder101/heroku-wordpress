@@ -1,13 +1,13 @@
 <?php
-namespace GuzzleHttp;
+namespace WPvividGuzzleHttp;
 
-use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Exception\TooManyRedirectsException;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
+use WPvividGuzzleHttp\Exception\BadResponseException;
+use WPvividGuzzleHttp\Exception\TooManyRedirectsException;
+use WPvividGuzzleHttp\Promise\PromiseInterface;
+use WPvividGuzzleHttp\Psr7;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
+use WPvividPsr\Http\Message\UriInterface;
 
 /**
  * Request redirect middleware.

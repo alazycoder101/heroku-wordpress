@@ -18,10 +18,10 @@
 
 use Firebase\JWT\ExpiredException as ExpiredExceptionV3;
 use Firebase\JWT\SignatureInvalidException;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use Psr\Cache\CacheItemPoolInterface;
-use Google\Auth\Cache\MemoryCacheItemPool;
+use WPvividGuzzleHttp\Client;
+use WPvividGuzzleHttp\ClientInterface;
+use WPvividPsr\Cache\CacheItemPoolInterface;
+use WPvividGoogle\Auth\Cache\MemoryCacheItemPool;
 use Stash\Driver\FileSystem;
 use Stash\Pool;
 

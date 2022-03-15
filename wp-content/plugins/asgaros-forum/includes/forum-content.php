@@ -39,8 +39,8 @@ class AsgarosForumContent {
 
     private function get_action() {
         // If no action is set, try to determine one.
-        if (!$this->action && ($_POST['submit_action'] === 'add_topic' || $_POST['submit_action'] === 'add_post' || $_POST['submit_action'] === 'edit_post')) {
-            $this->action = $_POST['submit_action'];
+        if (!$this->action && !empty($_POST['submit_action']) && ($_POST['submit_action'] === 'add_topic' || $_POST['submit_action'] === 'add_post' || $_POST['submit_action'] === 'edit_post')) {
+            $this->action = sanitize_key($_POST['submit_action']);
         }
 
         return $this->action;
@@ -48,11 +48,11 @@ class AsgarosForumContent {
 
     private function set_data() {
         if (isset($_POST['subject'])) {
-            $this->data_subject = apply_filters('asgarosforum_filter_subject_before_insert', trim($_POST['subject']));
+            $this->data_subject = apply_filters('asgarosforum_filter_subject_before_insert', sanitize_text_field($_POST['subject']));
         }
 
         if (isset($_POST['message'])) {
-            $this->data_content = apply_filters('asgarosforum_filter_content_before_insert', trim($_POST['message']));
+            $this->data_content = apply_filters('asgarosforum_filter_content_before_insert', wp_kses_post($_POST['message']));
         }
     }
 
@@ -82,6 +82,12 @@ class AsgarosForumContent {
 
         // Cancel when no action could be determined.
         if (!$this->get_action()) {
+            $this->asgarosforum->error = __('You are not allowed to do this.', 'asgaros-forum');
+            return false;
+        }
+
+        // Verify the corresponding nonce.
+        if (empty($_REQUEST['_wpnonce']) || !wp_verify_nonce(sanitize_key($_REQUEST['_wpnonce']), 'asgaros_forum_'.$this->get_action())) {
             $this->asgarosforum->error = __('You are not allowed to do this.', 'asgaros-forum');
             return false;
         }
@@ -160,65 +166,172 @@ class AsgarosForumContent {
         $author_id = $this->asgarosforum->permissions->currentUserID;
 
         if ($this->get_action() === 'add_topic') {
-            // Create the topic.
-            $inserted_ids = $this->insert_topic($this->asgarosforum->current_forum, $this->data_subject, $this->data_content, $author_id, $upload_list);
+            $add_topic = array(
+                'forum'         => $this->asgarosforum->current_forum,
+                'subject'       => $this->data_subject,
+                'content'       => $this->data_content,
+                'author'        => $author_id,
+                'upload_list'   => $upload_list,
+                'warning'       => null,
+                'error'         => null,
+                'redirect'      => null,
+                'add_topic'     => true,
+            );
 
-            // Assign the inserted IDs.
-            $this->asgarosforum->current_topic = $inserted_ids->topic_id;
-            $this->asgarosforum->current_post = $inserted_ids->post_id;
+            // apply filter to change topic content
+            $add_topic = apply_filters('asgarosforum_filter_before_topic_submit', $add_topic);
 
-            // Upload files.
-            $this->asgarosforum->uploads->upload_files($this->asgarosforum->current_post, $upload_list);
+            // Check if add topic is being cancelled
+            if ($add_topic['add_topic']) {
+                // Create the topic.
+                $inserted_ids = $this->insert_topic($add_topic['forum'], $add_topic['subject'], $add_topic['content'], $add_topic['author'], $add_topic['upload_list']);
 
-            // Create link.
-            $link = html_entity_decode($this->asgarosforum->rewrite->get_post_link($this->asgarosforum->current_post, $this->asgarosforum->current_topic));
+                // Assign the inserted IDs.
+                $this->asgarosforum->current_topic = $inserted_ids->topic_id;
+                $this->asgarosforum->current_post = $inserted_ids->post_id;
 
-            // Special instructions for un/approved topics.
-            if ($this->asgarosforum->approval->is_topic_approved($this->asgarosforum->current_topic)) {
+                // Upload files.
+                $this->asgarosforum->uploads->upload_files($this->asgarosforum->current_post, $add_topic['upload_list']);
+
+                // Create link.
+                $link = html_entity_decode($this->asgarosforum->rewrite->get_post_link($this->asgarosforum->current_post, $this->asgarosforum->current_topic));
+
+                // Special instructions for un/approved topics.
+                if ($this->asgarosforum->approval->is_topic_approved($this->asgarosforum->current_topic)) {
+                    // Send notifications about mentionings.
+                    $receivers = $this->asgarosforum->mentioning->mention_users($this->asgarosforum->current_post);
+
+                    // Send notifications about new topic.
+                    $this->asgarosforum->notifications->notify_about_new_topic($this->asgarosforum->current_topic, $receivers);
+
+                } else {
+                    // Notify siteowner about new unapproved topic.
+                    $this->asgarosforum->approval->notify_about_new_unapproved_topic($this->asgarosforum->current_topic);
+
+                    // Set link for redirection.
+                    $link = $this->asgarosforum->rewrite->get_link('home', false, array('new_unapproved_topic' => 1));
+                }
+
+                $_POST['message'] = '';
+                $_POST['subject'] = '';
+
+            } else {
+                $link = $this->asgarosforum->rewrite->get_link('home');
+            }
+
+            // Add error message and stop redirecting
+            if ($add_topic['error']) {
+                $this->asgarosforum->error = $add_topic['error'];
+                return;
+            }
+
+            // Add warning and stop redirecting
+            if ($add_topic['warning']) {
+                $this->asgarosforum->add_notice($add_topic['warning']);
+                return;
+            }
+
+            // Set redirect.
+            $redirect = $add_topic['redirect'] ? $add_topic['redirect'] : $link;
+
+        } else if ($this->get_action() === 'add_post') {
+
+            $add_post = array(
+                'topic'         => $this->asgarosforum->current_topic,
+                'forum'         => $this->asgarosforum->current_forum,
+                'content'       => $this->data_content,
+                'author'        => $author_id,
+                'upload_list'   => $upload_list,
+                'warning'       => null,
+                'error'         => null,
+                'redirect'      => null,
+                'add_post'      => true,
+            );
+
+            // apply filter to change post content
+            $add_post = apply_filters('asgarosforum_filter_before_post_submit', $add_post);
+
+            // Check if add post is canceled
+            if ($add_post['add_post']) {
+                // Create the post.
+                $this->asgarosforum->current_post = $this->insert_post($add_post['topic'], $add_post['forum'], $add_post['content'], $add_post['author'], $add_post['upload_list']);
+
+                // Upload files.
+                $this->asgarosforum->uploads->upload_files($this->asgarosforum->current_post, $add_post['upload_list']);
+
                 // Send notifications about mentionings.
                 $receivers = $this->asgarosforum->mentioning->mention_users($this->asgarosforum->current_post);
 
-                // Send notifications about new topic.
-                $this->asgarosforum->notifications->notify_about_new_topic($this->asgarosforum->current_topic, $receivers);
+                // Send notifications about new post.
+                $this->asgarosforum->notifications->notify_about_new_post($this->asgarosforum->current_post, $receivers);
 
-                // Set redirect.
-                $redirect = $link;
+                // Create link.
+                $link = html_entity_decode($this->asgarosforum->rewrite->get_post_link($this->asgarosforum->current_post, $add_post['topic']));
+
+                // unset message to prevent duplicate posts
+                $_POST['message'] = '';
             } else {
-                // Notify siteowner about new unapproved topic.
-                $this->asgarosforum->approval->notify_about_new_unapproved_topic($this->asgarosforum->current_topic);
-
-                // Set redirect.
-                $redirect = $this->asgarosforum->rewrite->get_link('home', false, array('new_unapproved_topic' => 1));
+                // Create link.
+                $link = html_entity_decode($this->asgarosforum->rewrite->get_link('topic', $add_post['topic']));
             }
-        } else if ($this->get_action() === 'add_post') {
-            // Create the post.
-            $this->asgarosforum->current_post = $this->insert_post($this->asgarosforum->current_topic, $this->asgarosforum->current_forum, $this->data_content, $author_id, $upload_list);
 
-            // Upload files.
-            $this->asgarosforum->uploads->upload_files($this->asgarosforum->current_post, $upload_list);
+            // Add error message and stop redirecting
+            if ($add_post['error']) {
+                $this->asgarosforum->error = $add_post['error'];
+                return;
+            }
 
-            // Send notifications about mentionings.
-            $receivers = $this->asgarosforum->mentioning->mention_users($this->asgarosforum->current_post);
-
-            // Send notifications about new post.
-            $this->asgarosforum->notifications->notify_about_new_post($this->asgarosforum->current_post, $receivers);
-
-            // Create link.
-            $link = html_entity_decode($this->asgarosforum->rewrite->get_post_link($this->asgarosforum->current_post, $this->asgarosforum->current_topic));
+            // Add warning and stop redirecting
+            if ($add_post['warning']) {
+                $this->asgarosforum->add_notice($add_post['warning']);
+                return;
+            }
 
             // Set redirect.
-            $redirect = $link;
+            $redirect = $add_post['redirect'] ? $add_post['redirect'] : $link;
         } else if ($this->get_action() === 'edit_post') {
-            $date = $this->asgarosforum->current_time();
-            $upload_list = $this->asgarosforum->uploads->upload_files($this->asgarosforum->current_post, $upload_list);
-            $this->asgarosforum->db->update($this->asgarosforum->tables->posts, array('text' => $this->data_content, 'uploads' => maybe_serialize($upload_list), 'date_edit' => $date, 'author_edit' => $this->asgarosforum->permissions->currentUserID), array('id' => $this->asgarosforum->current_post), array('%s', '%s', '%s', '%d'), array('%d'));
 
-            if ($this->asgarosforum->is_first_post($this->asgarosforum->current_post) && !empty($this->data_subject)) {
-                $this->asgarosforum->db->update($this->asgarosforum->tables->topics, array('name' => $this->data_subject), array('id' => $this->asgarosforum->current_topic), array('%s'), array('%d'));
+            $edit_post = array(
+                'subject'       => $this->data_subject,
+                'content'       => $this->data_content,
+                'editor'        => $this->asgarosforum->permissions->currentUserID,
+                'upload_list'   => $upload_list,
+                'warning'       => null,
+                'error'         => null,
+                'redirect'      => null,
+                'edit_post'      => true,
+            );
+
+            // apply filter to change post content
+            $edit_post = apply_filters('asgarosforum_filter_before_edit_post_submit', $edit_post);
+
+            // Check if edit post if cancelled
+            if ($edit_post['edit_post']) {
+                $date = $this->asgarosforum->current_time();
+                $upload_list = $this->asgarosforum->uploads->upload_files($this->asgarosforum->current_post, $edit_post['upload_list']);
+                $this->asgarosforum->db->update($this->asgarosforum->tables->posts, array('text' => $edit_post['content'], 'uploads' => maybe_serialize($upload_list), 'date_edit' => $date, 'author_edit' => $edit_post['editor']), array('id' => $this->asgarosforum->current_post), array('%s', '%s', '%s', '%d'), array('%d'));
+
+                if ($this->asgarosforum->is_first_post($this->asgarosforum->current_post) && !empty($edit_post['subject'])) {
+                    $this->asgarosforum->db->update($this->asgarosforum->tables->topics, array('name' => $edit_post['subject']), array('id' => $this->asgarosforum->current_topic), array('%s'), array('%d'));
+                }
+
+                // Create link.
+                $link = html_entity_decode($this->asgarosforum->rewrite->get_post_link($this->asgarosforum->current_post, $this->asgarosforum->current_topic));
+            }else {
+                $link = $this->asgarosforum->rewrite->get_link('home');
             }
 
-            // Create link.
-            $link = html_entity_decode($this->asgarosforum->rewrite->get_post_link($this->asgarosforum->current_post, $this->asgarosforum->current_topic));
+            // Add error message and stop redirecting
+            if ($edit_post['error']) {
+                $this->asgarosforum->error = $edit_post['error'];
+                return;
+            }
+
+            // Add warning and stop redirecting
+            if ($edit_post['warning']) {
+                $this->asgarosforum->add_notice($edit_post['warning']);
+                return;
+            }
 
             // Set redirect.
             $redirect = $link;
@@ -228,7 +341,7 @@ class AsgarosForumContent {
 
         do_action('asgarosforum_after_'.$this->get_action().'_submit', $this->asgarosforum->current_post, $this->asgarosforum->current_topic, $this->data_subject, $this->data_content, $link, $author_id);
 
-        wp_redirect($redirect);
+        wp_safe_redirect($redirect);
         exit;
     }
 
@@ -277,7 +390,7 @@ class AsgarosForumContent {
         );
 
         // Save the ID of the new topic.
-        $inserted_ids = new stdClass;
+        $inserted_ids = new stdClass();
         $inserted_ids->topic_id = $this->asgarosforum->db->insert_id;
 
         // Now create a post inside this topic and save its ID as well.
@@ -428,7 +541,7 @@ class AsgarosForumContent {
             );
         }
 
-        if (sizeof($meta_query_filter) > 1) {
+        if (count($meta_query_filter) > 1) {
             return $meta_query_filter;
         } else {
             return array();
@@ -485,22 +598,25 @@ class AsgarosForumContent {
         $ids_categories = implode(',', $ids_categories);
 
         // Build query-part for ordering.
-        $order = "(SELECT MAX(id) FROM {$this->asgarosforum->tables->posts} WHERE parent_id = t.id) DESC";
-        $order = apply_filters('asgarosforum_filter_get_threads_order', $order);
+        $query_order = "(SELECT MAX(id) FROM {$this->asgarosforum->tables->posts} WHERE parent_id = t.id) DESC";
+        $query_order = apply_filters('asgarosforum_filter_get_threads_order', $query_order);
 
-        // Build additional sub-queries.
+        // Build query for calculating answers.
         $query_answers = "SELECT (COUNT(*) - 1) FROM {$this->asgarosforum->tables->posts} WHERE parent_id = t.id";
 
         // Build final query and get results.
-        $query = "SELECT t.id, t.name, t.views, t.sticky, t.closed, t.author_id, ({$query_answers}) AS answers FROM {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->forums} AS f WHERE t.parent_id = f.id AND f.parent_id IN ({$ids_categories}) AND t.approved = 1 AND ((t.sticky = 2) OR (t.parent_id = %d AND t.sticky = 1)) ORDER BY ".$order.";";
-        $results = $this->asgarosforum->db->get_results($this->asgarosforum->db->prepare($query, $forum_id));
+        $query = "SELECT t.id, t.name, t.views, t.sticky, t.closed, t.author_id, ({$query_answers}) AS answers FROM {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->forums} AS f WHERE t.parent_id = f.id AND f.parent_id IN ({$ids_categories}) AND t.approved = 1 AND ((t.sticky = 2) OR (t.parent_id = %d AND t.sticky = 1)) ORDER BY ".$query_order.";";
+		$query = $this->asgarosforum->db->prepare($query, $forum_id);
+		$query = apply_filters('asgarosforum_overwrite_get_sticky_topics_query', $query, $forum_id, $query_answers, $query_order);
+
+		$results = $this->asgarosforum->db->get_results($query);
         $results = apply_filters('asgarosforum_filter_get_threads', $results);
 
         return $results;
     }
 
     // Returns all subforums.
-    var $get_all_subforums_cache = false;
+    private $get_all_subforums_cache = false;
     public function get_all_subforums() {
         if ($this->get_all_subforums_cache === false) {
             $query = "SELECT * FROM {$this->asgarosforum->tables->forums} WHERE parent_forum != 0;";
@@ -511,22 +627,23 @@ class AsgarosForumContent {
         return $this->get_all_subforums_cache;
     }
 
-    function get_topics($forum_id) {
+    public function get_topics($forum_id, $topic_offset, $number_of_topics) {
         // Build query-part for pagination.
-        $limit_end = $this->asgarosforum->options['topics_per_page'];
-        $limit_start = $this->asgarosforum->current_page * $limit_end;
-        $limit = $this->asgarosforum->db->prepare("LIMIT %d, %d", $limit_start, $limit_end);
+        $query_limit = $this->asgarosforum->db->prepare("LIMIT %d, %d", $topic_offset, $number_of_topics);
 
         // Build query-part for ordering.
-        $order = "(SELECT MAX(id) FROM {$this->asgarosforum->tables->posts} WHERE parent_id = t.id) DESC";
-        $order = apply_filters('asgarosforum_filter_get_threads_order', $order);
+        $query_order = "(SELECT MAX(id) FROM {$this->asgarosforum->tables->posts} WHERE parent_id = t.id) DESC";
+        $query_order = apply_filters('asgarosforum_filter_get_threads_order', $query_order);
 
-        // Build additional sub-queries.
+        // Build query for calculating answers.
         $query_answers = "SELECT (COUNT(*) - 1) FROM {$this->asgarosforum->tables->posts} WHERE parent_id = t.id";
 
         // Build final query and get results.
-        $query = "SELECT t.id, t.name, t.views, t.sticky, t.closed, t.author_id, ({$query_answers}) AS answers FROM {$this->asgarosforum->tables->topics} AS t WHERE t.parent_id = %d AND t.sticky = 0 AND t.approved = 1 ORDER BY {$order} {$limit};";
-        $results = $this->asgarosforum->db->get_results($this->asgarosforum->db->prepare($query, $forum_id));
+        $query = "SELECT t.id, t.name, t.views, t.sticky, t.closed, t.author_id, ({$query_answers}) AS answers FROM {$this->asgarosforum->tables->topics} AS t WHERE t.parent_id = %d AND t.sticky = 0 AND t.approved = 1 ORDER BY {$query_order} {$query_limit};";
+		$query = $this->asgarosforum->db->prepare($query, $forum_id);
+		$query = apply_filters('asgarosforum_overwrite_get_topics_query', $query, $forum_id, $query_answers, $query_order, $query_limit);
+
+        $results = $this->asgarosforum->db->get_results($query);
         $results = apply_filters('asgarosforum_filter_get_threads', $results);
 
         return $results;

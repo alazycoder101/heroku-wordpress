@@ -138,7 +138,7 @@
         "installation-source": "dist",
         "autoload": {
             "psr-4": {
-                "Google\\Auth\\": "src"
+                "WPvividGoogle\\Auth\\": "src"
             }
         },
         "notification-url": "https://packagist.org/downloads/",
@@ -304,7 +304,7 @@
                 "src/functions_include.php"
             ],
             "psr-4": {
-                "GuzzleHttp\\": "src/"
+                "WPvividGuzzleHttp\\": "src/"
             }
         },
         "notification-url": "https://packagist.org/downloads/",
@@ -367,7 +367,7 @@
         "installation-source": "dist",
         "autoload": {
             "psr-4": {
-                "GuzzleHttp\\Promise\\": "src/"
+                "WPvividGuzzleHttp\\Promise\\": "src/"
             },
             "files": [
                 "src/functions_include.php"
@@ -431,7 +431,7 @@
         "installation-source": "dist",
         "autoload": {
             "psr-4": {
-                "GuzzleHttp\\Psr7\\": "src/"
+                "WPvividGuzzleHttp\\Psr7\\": "src/"
             },
             "files": [
                 "src/functions_include.php"
@@ -691,7 +691,7 @@
         "installation-source": "dist",
         "autoload": {
             "psr-4": {
-                "Psr\\Cache\\": "src/"
+                "WPvividPsr\\Cache\\": "src/"
             }
         },
         "notification-url": "https://packagist.org/downloads/",
@@ -745,7 +745,7 @@
         "installation-source": "dist",
         "autoload": {
             "psr-4": {
-                "Psr\\Http\\Message\\": "src/"
+                "WPvividPsr\\Http\\Message\\": "src/"
             }
         },
         "notification-url": "https://packagist.org/downloads/",
@@ -803,7 +803,7 @@
         "installation-source": "dist",
         "autoload": {
             "psr-4": {
-                "Psr\\Log\\": "Psr/Log/"
+                "WPvividPsr\\Log\\": "Psr/Log/"
             }
         },
         "notification-url": "https://packagist.org/downloads/",

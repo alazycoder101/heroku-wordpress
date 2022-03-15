@@ -59,6 +59,8 @@ class WPvivid {
 
     public $interface_mainwp;
 
+    public $staging;
+
 	public function __construct()
     {
         $this->version = WPVIVID_PLUGIN_VERSION;
@@ -132,7 +134,9 @@ class WPvivid {
         add_filter('wpvivid_get_oldest_backup_ids', array($this, 'get_oldest_backup_ids'), 10, 2);
         add_filter('wpvivid_check_backup_completeness', array($this, 'check_backup_completeness'), 10, 2);
 
+        add_filter('wpvivid_get_mainwp_sync_data', array($this, 'get_mainwp_sync_data'), 10);
         //
+        add_filter('wpvivid_get_zip_object_class_ex',array($this, 'get_zip_object_class'));
 		//Initialisation schedule hook
         $this->init_cron();
         //Initialisation log object
@@ -197,6 +201,7 @@ class WPvivid {
         include_once WPVIVID_PLUGIN_DIR . '/includes/class-wpvivid-interface-mainwp.php';
 
         include_once WPVIVID_PLUGIN_DIR . '/includes/upload-cleaner/class-wpvivid-uploads-cleaner.php';
+        include_once WPVIVID_PLUGIN_DIR . '/includes/staging/class-wpvivid-staging.php';
 
         $this->function_realize=new WPvivid_Function_Realize();
         $this->migrate=new WPvivid_Migrate();
@@ -205,6 +210,7 @@ class WPvivid {
         $send_to_site=new WPvivid_Send_to_site();
         $export_import = new WPvivid_Export_Import();
         $cleaner=new WPvivid_Uploads_Cleaner();
+        $this->staging=new WPvivid_Staging_Free();
 	}
 
 	public function init_pclzip_tmp_folder()
@@ -358,8 +364,6 @@ class WPvivid {
         add_action('wp_ajax_wpvivid_get_restore_progress',array( $this,'get_restore_progress'));
         add_action('wp_ajax_wpvivid_get_download_restore_progress',array( $this,'download_restore_progress'));
         //When restoring the database use wp_ajax_nopriv_
-        add_action('wp_ajax_nopriv_wpvivid_init_restore_page',array( $this,'init_restore_page'));
-        add_action('wp_ajax_nopriv_wpvivid_delete_last_restore_data',array( $this,'delete_last_restore_data'));
         add_action('wp_ajax_nopriv_wpvivid_restore',array( $this,'restore'));
         add_action('wp_ajax_nopriv_wpvivid_get_restore_progress',array( $this,'get_restore_progress'));
         add_action('wp_ajax_wpvivid_list_tasks',array( $this,'list_tasks'));
@@ -441,13 +445,14 @@ class WPvivid {
                 if($ret['result']=='success')
                 {
                     //Check the website data to be backed up
+                    /*
                     $ret['check']=$this->check_backup($ret['task_id'],$backup_options);
                     if(isset($ret['check']['result']) && $ret['check']['result'] == WPVIVID_FAILED)
                     {
                         $this->end_shutdown_function=true;
                         echo json_encode(array('result' => WPVIVID_FAILED,'error' => $ret['check']['error']));
                         die();
-                    }
+                    }*/
 
                     $html = '';
                     $html = apply_filters('wpvivid_add_backup_list', $html);
@@ -852,7 +857,7 @@ class WPvivid {
             if ($ret['result'] != WPVIVID_SUCCESS)
             {
                 $this->end_shutdown_function=true;
-                echo json_encode($ret);
+                //echo json_encode($ret);
                 die();
             }
 
@@ -865,7 +870,7 @@ class WPvivid {
             $ret = $this->pre_backup($schedule_options['backup']);
             if ($ret['result'] == 'success') {
                 //Check the website data to be backed up.
-                $this->check_backup($ret['task_id'], $schedule_options['backup']);
+                //$this->check_backup($ret['task_id'], $schedule_options['backup']);
                 //flush buffer
                 $this->flush($ret['task_id']);
                 //start backup task.
@@ -888,7 +893,7 @@ class WPvivid {
             $log->CloseFile();
             WPvivid_error_log::create_error_log($log->log_file);
             error_log($message);
-            echo json_encode($ret);
+            //echo json_encode($ret);
             die();
         }
     }
@@ -1067,6 +1072,39 @@ class WPvivid {
         return $check_res;
     }
 
+    public function get_mainwp_sync_data($information)
+    {
+        $data['setting']['wpvivid_compress_setting']=get_option('wpvivid_compress_setting');
+        $data['setting']['wpvivid_local_setting']=get_option('wpvivid_local_setting');
+        $data['setting']['wpvivid_common_setting']=get_option('wpvivid_common_setting');
+        $data['setting']['wpvivid_email_setting']=get_option('wpvivid_email_setting');
+        $data['setting']['cron_backup_count']=get_option('cron_backup_count');
+        $data['schedule']=get_option('wpvivid_schedule_setting');
+        $data['remote']['upload']=get_option('wpvivid_upload_setting');
+        $data['remote']['history']=get_option('wpvivid_user_history');
+
+        $data['setting_addon'] = $data['setting'];
+        $data['setting_addon']['wpvivid_staging_options']=array();
+        $data['backup_custom_setting']=array();
+        $data['menu_capability']=array();
+        $data['white_label_setting']=array();
+        $data['incremental_backup_setting']=array();
+        $data['last_backup_report']=array();
+        $data['schedule_addon']=array();
+        $data['time_zone']=false;
+        $data['is_pro']=false;
+        $data['is_install']=false;
+        $data['is_login']=false;
+        $data['latest_version']='';
+        $data['current_version']='';
+        $data['dashboard_version'] = '';
+        $data['addons_info'] = array();
+        $data=apply_filters('wpvivid_get_wpvivid_info_addon_mainwp', $data);
+
+        $information['syncWPvividSetting']=$data;
+        return $information;
+    }
+
     public function check_backup_file_json($file_name){
         $zip=new WPvivid_ZipClass();
 
@@ -1157,7 +1195,7 @@ class WPvivid {
         {
             $backup=new WPvivid_Backup();
 
-            $backup->clearcache();
+            //$backup->clearcache();
             $backup_ret=$backup->backup($task_id);
             $backup->clearcache();
 
@@ -1187,14 +1225,7 @@ class WPvivid {
             $this->end_shutdown_function=true;
             die();
         }
-        catch (Error $e)
-        {
-            //catch error and stop task recording history
-            $this->deal_task_error($task_id,'error',$e);
-            $this->wpvivid_log->CloseFile();
-            $this->end_shutdown_function=true;
-            die();
-        }
+
         $this->end_shutdown_function=true;
         die();
     }
@@ -1353,7 +1384,13 @@ class WPvivid {
             $this->update_last_backup_task($task_msg);
         }
         WPvivid_Schedule::clear_monitor_schedule($task['id']);
-        WPvivid_mail_report::send_report_mail($task);
+
+        $backup_task=new WPvivid_Backup_Task($task['id']);
+        $res=$backup_task->get_backup_result();
+        if(!empty($res['files']))
+        {
+            WPvivid_mail_report::send_report_mail($task);
+        }
     }
 
     function wpvivid_mark_task($task)
@@ -2267,7 +2304,8 @@ class WPvivid {
                     $remote = $backup_item->get_remote();
 
                     foreach ($backup_files['files'] as $file) {
-                        $path = $backup_item->get_local_path() . $file['file_name'];
+                        $path = $this->get_backup_path($backup_item, $file['file_name']);
+                        //$path = $backup_item->get_local_path() . $file['file_name'];
 
                         if (file_exists($path)) {
                             if (filesize($path) == $file['size']) {
@@ -2276,7 +2314,7 @@ class WPvivid {
                                 $ret['files'][$file['file_name']]['status'] = 'completed';
                                 $ret['files'][$file['file_name']]['size'] = size_format(filesize($path), 2);
                                 $ret['files'][$file['file_name']]['download_path'] = $path;
-                                $download_url = $backup_item->get_local_url() . $file['file_name'];
+                                $download_url = $this->get_backup_url($backup_item, $file['file_name']);
                                 $ret['files'][$file['file_name']]['download_url'] = $download_url;
 
                                 continue;
@@ -2372,8 +2410,8 @@ class WPvivid {
                     $remote = $backup_item->get_remote();
 
                     foreach ($backup_files['files'] as $file) {
-                        $path = $backup_item->get_local_path() . $file['file_name'];
-
+                        $path = $this->get_backup_path($backup_item, $file['file_name']);
+                        //$path = $backup_item->get_local_path() . $file['file_name'];
                         if (file_exists($path)) {
                             if (filesize($path) == $file['size']) {
                                 if (WPvivid_taskmanager::get_download_task_v2($file['file_name']))
@@ -2381,7 +2419,7 @@ class WPvivid {
                                 $ret['files'][$file['file_name']]['status'] = 'completed';
                                 $ret['files'][$file['file_name']]['size'] = size_format(filesize($path), 2);
                                 $ret['files'][$file['file_name']]['download_path'] = $path;
-                                $download_url = $backup_item->get_local_url() . $file['file_name'];
+                                $download_url = $this->get_backup_url($backup_item, $file['file_name']);
                                 $ret['files'][$file['file_name']]['download_url'] = $download_url;
 
                                 continue;
@@ -2533,7 +2571,8 @@ class WPvivid {
                 $backup_files = $backup_item->get_download_backup_files($backup_id);
 
                 foreach ($backup_files['files'] as $file) {
-                    $path = $backup_item->get_local_path() . $file['file_name'];
+                    $path = $this->get_backup_path($backup_item, $file['file_name']);
+                    //$path = $backup_item->get_local_path() . $file['file_name'];
                     if (file_exists($path)) {
                         $downloaded_size = size_format(filesize($path), 2);
                     } else {
@@ -2700,6 +2739,8 @@ class WPvivid {
                     if (file_exists($path)) {
                         if (session_id())
                             session_write_close();
+
+                        @ini_set( 'memory_limit', '1024M' );
 
                         $size = filesize($path);
                         if (!headers_sent()) {
@@ -3601,6 +3642,8 @@ class WPvivid {
      */
     public function restore()
     {
+        check_ajax_referer( 'wpvivid_ajax', 'nonce' );
+
         $this->end_shutdown_function=false;
         register_shutdown_function(array($this,'deal_restore_shutdown_error'));
         if(!isset($_POST['backup_id'])||empty($_POST['backup_id'])||!is_string($_POST['backup_id']))
@@ -3610,6 +3653,11 @@ class WPvivid {
         }
 
         $backup_id=sanitize_key($_POST['backup_id']);
+        $backup=WPvivid_Backuplist::get_backup_by_id($backup_id);
+        if($backup===false)
+        {
+            die();
+        }
 
         $this->restore_data=new WPvivid_restore_data();
 
@@ -3801,10 +3849,26 @@ class WPvivid {
      */
     public function get_restore_progress()
     {
-        try {
+        try
+        {
+            check_ajax_referer( 'wpvivid_ajax', 'nonce' );
+            if(!isset($_POST['backup_id'])||empty($_POST['backup_id'])||!is_string($_POST['backup_id']))
+            {
+                $this->end_shutdown_function=true;
+                die();
+            }
+
+            $backup_id=sanitize_key($_POST['backup_id']);
+            $backup=WPvivid_Backuplist::get_backup_by_id($backup_id);
+            if($backup===false)
+            {
+                die();
+            }
+
             $this->restore_data = new WPvivid_restore_data();
 
-            if ($this->restore_data->has_restore()) {
+            if ($this->restore_data->has_restore())
+            {
                 $ret['result'] = 'success';
                 $ret['status'] = $this->restore_data->get_restore_status();
                 if ($ret['status'] == WPVIVID_RESTORE_ERROR) {
@@ -3934,6 +3998,7 @@ class WPvivid {
             $last_message=__('The last backup message not found.', 'wpvivid-backuprestore');
         }
         else{
+            $message['status']['start_time'] = date("l, F-d-Y H:i", strtotime($message['status']['start_time']));
             if($message['status']['str'] == 'completed'){
                 $backup_status='Succeeded';
                 $last_message=$backup_status.', '.$message['status']['start_time'].' <a onclick="wpvivid_read_log(\''.'wpvivid_read_last_backup_log'.'\', \''.$message['log_file_name'].'\');" style="cursor:pointer;">   Log</a>';
@@ -4016,12 +4081,12 @@ class WPvivid {
                         //do_action('wpvivid_update_schedule_last_time_addon');
                     }
                 }*/
+                //<div id="wpvivid_estimate_backup_info" style="float:left; ' . $list_tasks[$task['id']]['task_info']['display_estimate_backup'] . '">
+                //                                                <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('Database Size:', 'wpvivid-backuprestore') . '</span><span id="wpvivid_backup_database_size">' . $list_tasks[$task['id']]['task_info']['db_size'] . '</span></div>
+                //                                                <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('File Size:', 'wpvivid-backuprestore') . '</span><span id="wpvivid_backup_file_size">' . $list_tasks[$task['id']]['task_info']['file_size'] . '</span></div>
+                //                                             </div>
                 $list_tasks[$task['id']]['progress_html'] = '<div class="action-progress-bar" id="wpvivid_action_progress_bar">
                                                 <div class="action-progress-bar-percent" id="wpvivid_action_progress_bar_percent" style="height:24px;width:' . $list_tasks[$task['id']]['task_info']['backup_percent'] . '"></div>
-                                             </div>
-                                             <div id="wpvivid_estimate_backup_info" style="float:left; ' . $list_tasks[$task['id']]['task_info']['display_estimate_backup'] . '">
-                                                <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('Database Size:', 'wpvivid-backuprestore') . '</span><span id="wpvivid_backup_database_size">' . $list_tasks[$task['id']]['task_info']['db_size'] . '</span></div>
-                                                <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('File Size:', 'wpvivid-backuprestore') . '</span><span id="wpvivid_backup_file_size">' . $list_tasks[$task['id']]['task_info']['file_size'] . '</span></div>
                                              </div>
                                              <div id="wpvivid_estimate_upload_info" style="float: left;"> 
                                                 <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('Total Size:', 'wpvivid-backuprestore') . '</span><span>' . $list_tasks[$task['id']]['task_info']['total'] . '</span></div>
@@ -4731,6 +4796,15 @@ class WPvivid {
         $setting_data['wpvivid_compress_setting']['subpackage_plugin_upload'] = $setting['subpackage_plugin_upload'];
 
         $setting_data['wpvivid_local_setting']['path'] = $setting['path'];
+
+        if($options['options']['wpvivid_local_setting']['path'] !== $setting['path'])
+        {
+            if(file_exists(WP_CONTENT_DIR.DIRECTORY_SEPARATOR.$options['options']['wpvivid_local_setting']['path']))
+            {
+                @rename(WP_CONTENT_DIR.DIRECTORY_SEPARATOR.$options['options']['wpvivid_local_setting']['path'], WP_CONTENT_DIR.DIRECTORY_SEPARATOR.$setting['path']);
+            }
+        }
+
         $setting_data['wpvivid_local_setting']['save_local'] = $options['options']['wpvivid_local_setting']['save_local'];
 
         $setting_data['wpvivid_common_setting']['max_execution_time'] = $setting['max_execution_time'];
@@ -4836,7 +4910,7 @@ class WPvivid {
         $ret['result']=WPVIVID_FAILED;
         if(!isset($data['max_file_size']))
         {
-            $ret['error']=__('The maximum zip file size is required.', 'wpvivid-backuprestore');
+            $ret['error']=__('The value of \'Compress file every\' can\'t be empty.', 'wpvivid-backuprestore');
             return $ret;
         }
 
@@ -4844,35 +4918,180 @@ class WPvivid {
 
         if(empty($data['max_file_size']) && $data['max_file_size'] != '0')
         {
-            $ret['error']=__('The maximum zip file size is required.', 'wpvivid-backuprestore');
+            $ret['error']=__('The value of \'Compress file every\' can\'t be empty.', 'wpvivid-backuprestore');
             return $ret;
         }
 
         if(!isset($data['exclude_file_size']))
         {
-            $ret['error']=__('The size for excluded files is required.', 'wpvivid-backuprestore');
+            $ret['error']=__('The value of \'Exclude files which are lager than\' can\'t be empty.', 'wpvivid-backuprestore');
         }
 
         $data['exclude_file_size']=sanitize_text_field($data['exclude_file_size']);
 
         if(empty($data['exclude_file_size']) && $data['exclude_file_size'] != '0')
         {
-            $ret['error']=__('The size for excluded files is required.', 'wpvivid-backuprestore');
+            $ret['error']=__('The value of \'Exclude files which are lager than\' can\'t be empty.', 'wpvivid-backuprestore');
             return $ret;
         }
 
         if(!isset($data['max_execution_time']))
         {
-            $ret['error']=__('The maximum execution time for PHP script is required.', 'wpvivid-backuprestore');
+            $ret['error']=__('The value of \'PHP scripts execution timeout for backup\' can\'t be empty.', 'wpvivid-backuprestore');
         }
 
         $data['max_execution_time']=sanitize_text_field($data['max_execution_time']);
 
         if(empty($data['max_execution_time']) && $data['max_execution_time'] != '0')
         {
-            $ret['error']=__('The maximum execution time for PHP script is required.', 'wpvivid-backuprestore');
+            $ret['error']=__('The value of \'PHP scripts execution timeout for backup\' can\'t be empty.', 'wpvivid-backuprestore');
             return $ret;
         }
+
+        //
+        if(!isset($data['restore_max_execution_time']))
+        {
+            $ret['error']=__('The value of \'PHP scripts execution timeout for restore\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['restore_max_execution_time']=sanitize_text_field($data['restore_max_execution_time']);
+        if(empty($data['restore_max_execution_time']) && $data['restore_max_execution_time'] != '0')
+        {
+            $ret['error']=__('The value of \'PHP scripts execution timeout for restore\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['memory_limit']))
+        {
+            $ret['error']=__('The value of \'PHP memory limit for backup\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['memory_limit']=sanitize_text_field($data['memory_limit']);
+        if(empty($data['memory_limit']) && $data['memory_limit'] != '0')
+        {
+            $ret['error']=__('The value of \'PHP memory limit for backup\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['restore_memory_limit']))
+        {
+            $ret['error']=__('The value of \'PHP memory limit for restoration\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['restore_memory_limit']=sanitize_text_field($data['restore_memory_limit']);
+        if(empty($data['restore_memory_limit']) && $data['restore_memory_limit'] != '0')
+        {
+            $ret['error']=__('The value of \'PHP memory limit for restoration\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['migrate_size']))
+        {
+            $ret['error']=__('The value of \'Chunk Size\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['migrate_size']=sanitize_text_field($data['migrate_size']);
+        if(empty($data['migrate_size']) && $data['migrate_size'] != '0')
+        {
+            $ret['error']=__('The value of \'Chunk Size\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['wpvivid_uc_scan_limit']))
+        {
+            $ret['error']=__('The value of \'Posts Quantity Processed Per Request\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['wpvivid_uc_scan_limit']=sanitize_text_field($data['wpvivid_uc_scan_limit']);
+        if(empty($data['wpvivid_uc_scan_limit']) && $data['wpvivid_uc_scan_limit'] != '0')
+        {
+            $ret['error']=__('The value of \'Posts Quantity Processed Per Request\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['wpvivid_uc_files_limit']))
+        {
+            $ret['error']=__('The value of \'Media Files Quantity Processed Per Request\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['wpvivid_uc_files_limit']=sanitize_text_field($data['wpvivid_uc_files_limit']);
+        if(empty($data['wpvivid_uc_files_limit']) && $data['wpvivid_uc_files_limit'] != '0')
+        {
+            $ret['error']=__('The value of \'Media Files Quantity Processed Per Request\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['staging_db_insert_count']))
+        {
+            $ret['error']=__('The value of \'DB Copy Count\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['staging_db_insert_count']=sanitize_text_field($data['staging_db_insert_count']);
+        if(empty($data['staging_db_insert_count']) && $data['staging_db_insert_count'] != '0')
+        {
+            $ret['error']=__('The value of \'DB Copy Count\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['staging_db_replace_count']))
+        {
+            $ret['error']=__('The value of \'DB Replace Count\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['staging_db_replace_count']=sanitize_text_field($data['staging_db_replace_count']);
+        if(empty($data['staging_db_replace_count']) && $data['staging_db_replace_count'] != '0')
+        {
+            $ret['error']=__('The value of \'DB Replace Count\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['staging_file_copy_count']))
+        {
+            $ret['error']=__('The value of \'File Copy Count\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['staging_file_copy_count']=sanitize_text_field($data['staging_file_copy_count']);
+        if(empty($data['staging_file_copy_count']) && $data['staging_file_copy_count'] != '0')
+        {
+            $ret['error']=__('The value of \'File Copy Count\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['staging_exclude_file_size']))
+        {
+            $ret['error']=__('The value of \'Max Files Size\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['staging_exclude_file_size']=sanitize_text_field($data['staging_exclude_file_size']);
+        if(empty($data['staging_exclude_file_size']) && $data['staging_exclude_file_size'] != '0')
+        {
+            $ret['error']=__('The value of \'Max Files Size\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['staging_memory_limit']))
+        {
+            $ret['error']=__('The value of \'Staging Memeory Limit\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['staging_memory_limit']=sanitize_text_field($data['staging_memory_limit']);
+        if(empty($data['staging_memory_limit']) && $data['staging_memory_limit'] != '0')
+        {
+            $ret['error']=__('The value of \'Staging Memeory Limit\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['staging_max_execution_time']))
+        {
+            $ret['error']=__('The value of \'PHP Scripts Execution Timeout\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['staging_max_execution_time']=sanitize_text_field($data['staging_max_execution_time']);
+        if(empty($data['staging_max_execution_time']) && $data['staging_max_execution_time'] != '0')
+        {
+            $ret['error']=__('The value of \'PHP Scripts Execution Timeout\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+
+        if(!isset($data['staging_request_timeout']))
+        {
+            $ret['error']=__('The value of \'Delay Between Requests\' can\'t be empty.', 'wpvivid-backuprestore');
+        }
+        $data['staging_request_timeout']=sanitize_text_field($data['staging_request_timeout']);
+        if(empty($data['staging_request_timeout']) && $data['staging_request_timeout'] != '0')
+        {
+            $ret['error']=__('The value of \'Delay Between Requests\' can\'t be empty.', 'wpvivid-backuprestore');
+            return $ret;
+        }
+        //
 
         if(!isset($data['path']))
         {
@@ -5018,6 +5237,7 @@ class WPvivid {
                     die();
                 }
                 if (json_last_error() === JSON_ERROR_NONE && is_array($json) && array_key_exists('plugin', $json) && $json['plugin'] == 'WPvivid') {
+                    $json = apply_filters('wpvivid_trim_import_info', $json);
                     WPvivid_Setting::import_json_to_setting($json);
                     //WPvivid_Schedule::reset_schedule();
                     do_action('wpvivid_reset_schedule');
@@ -5182,8 +5402,8 @@ class WPvivid {
                 }
                 else{
                     $offset=get_option('gmt_offset');
-                    $localtime = strtotime($value['time']) + $offset * 60 * 60;
-                    $value['time'] = date('Y-m-d H:i:s',$localtime);
+                    $localtime = strtotime($value['time'])/* + $offset * 60 * 60*/;
+                    $value['time'] = date('F-d-Y H:i:s',$localtime);
                 }
                 if (empty($value['des'])) {
                     $value['des'] = 'N/A';
@@ -5631,7 +5851,7 @@ class WPvivid {
                 <th class="check-column"><input name="check_backup" type="checkbox" id="' . esc_attr($key, 'wpvivid-backuprestore') . '" value="' . esc_attr($key, 'wpvivid-backuprestore') . '" onclick="wpvivid_click_check_backup(\'' . $key . '\', \'' . $list_name . '\');" /></th>
                 <td class="tablelistcolumn">
                     <div style="float:left;padding:0 10px 10px 0;">
-                        <div class="backuptime"><strong>' . $upload_title . '</strong>' . __(date('M d, Y H:i', $backup_time), 'wpvivid-backuprestore') . '</div>
+                        <div class="backuptime"><strong>' . $upload_title . '</strong>' . __(date('M-d-Y H:i', $backup_time), 'wpvivid-backuprestore') . '</div>
                         <div class="common-table">
                             <span title="To lock the backup, the backup can only be deleted manually" id="wpvivid_lock_' . $key . '">
                             <img src="' . esc_url(WPVIVID_PLUGIN_URL . $backup_lock) . '" name="' . esc_attr($lock_status, 'wpvivid-backuprestore') . '" onclick="wpvivid_set_backup_lock(\'' . $key . '\', \'' . $lock_status . '\');" style="vertical-align:middle; cursor:pointer;"/>
@@ -5654,7 +5874,7 @@ class WPvivid {
                 </td>
                 <td class="tablelistcolumn" style="min-width:100px;">
                     <div class="' . $tour_class . '" onclick="wpvivid_popup_tour(\'' . $hide . '\');">
-                        ' . $tour_message . '<div style="cursor:pointer;padding:10px 0 10px 0;" onclick="wpvivid_initialize_restore(\'' . __($key, 'wpvivid-backuprestore') . '\',\'' . __(date('M d, Y H:i', $backup_time), 'wpvivid-backuprestore') . '\',\'' . __($value['type'], 'wpvivid-backuprestore') . '\');" style="float:left;padding:10px 10px 10px 0;">
+                        ' . $tour_message . '<div style="cursor:pointer;padding:10px 0 10px 0;" onclick="wpvivid_initialize_restore(\'' . __($key, 'wpvivid-backuprestore') . '\',\'' . __(date('M-d-Y H:i', $backup_time), 'wpvivid-backuprestore') . '\',\'' . __($value['type'], 'wpvivid-backuprestore') . '\');" style="float:left;padding:10px 10px 10px 0;">
                             <img src="' . esc_url(WPVIVID_PLUGIN_URL . '/admin/partials/images/Restore.png') . '" style="vertical-align:middle;" /><span>' . __('Restore', 'wpvivid-backuprestore') . '</span>
                         </div>
                     </div>
@@ -5701,9 +5921,9 @@ class WPvivid {
                 <td>'.__($storage_type, 'wpvivid-backuprestore').'</td>
                 <td class="row-title"><label for="tablecell">'.__($value['name'], 'wpvivid-backuprestore').'</label></td>
                 <td>
-                    <div style="float: left;"><img src="'.esc_url(WPVIVID_PLUGIN_URL.'/admin/partials/images/Edit.png').'" onclick="click_retrieve_remote_storage(\''.__($key, 'wpvivid-backuprestore').'\',\''.__($value['type'], 'wpvivid-backuprestore').'\',\''.__($value['name'], 'wpvivid-backuprestore').'\'
+                    <div style="float: left;"><img src="'.esc_url(WPVIVID_PLUGIN_URL.'/admin/partials/images/Edit.png').'" onclick="click_retrieve_remote_storage(\''.esc_attr($key, 'wpvivid-backuprestore').'\',\''.esc_attr($value['type'], 'wpvivid-backuprestore').'\',\''.esc_attr($value['name'], 'wpvivid-backuprestore').'\'
                     );" style="vertical-align:middle; cursor:pointer;" title="Edit the remote storage"/></div>
-                    <div><img src="'.esc_url(WPVIVID_PLUGIN_URL.'/admin/partials/images/Delete.png').'" onclick="wpvivid_delete_remote_storage(\''.__($key, 'wpvivid-backuprestore').'\'
+                    <div><img src="'.esc_url(WPVIVID_PLUGIN_URL.'/admin/partials/images/Delete.png').'" onclick="wpvivid_delete_remote_storage(\''.esc_attr($key, 'wpvivid-backuprestore').'\'
                     );" style="vertical-align:middle; cursor:pointer;" title="Remove the remote storage"/></div>
                 </td>
                 </tr>';
@@ -6150,5 +6370,67 @@ class WPvivid {
         $public_interface = new WPvivid_Public_Interface();
         $ret = $public_interface->mainwp_data($data);
         return $ret;
+    }
+
+    public function get_zip_object_class($class)
+    {
+        if(version_compare(phpversion(),'8.0.0','>='))
+        {
+            return 'WPvivid_PclZip_Class_Ex';
+        }
+        return $class;
+    }
+
+    public function get_backup_path($backup_item, $file_name)
+    {
+        $path = $backup_item->get_local_path() . $file_name;
+
+        if (file_exists($path)) {
+            return $path;
+        }
+        else{
+            $local_setting = get_option('wpvivid_local_setting', array());
+            if(!empty($local_setting))
+            {
+                $path = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $local_setting['path'] . DIRECTORY_SEPARATOR . $file_name;
+            }
+            else {
+                $path = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'wpvividbackups' . DIRECTORY_SEPARATOR . $file_name;
+            }
+        }
+        return $path;
+    }
+
+    public function get_backup_folder()
+    {
+        $local_setting = get_option('wpvivid_local_setting', array());
+        if(!empty($local_setting))
+        {
+            $path = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $local_setting['path'] . DIRECTORY_SEPARATOR;
+        }
+        else {
+            $path = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'wpvividbackups' . DIRECTORY_SEPARATOR;
+        }
+        return $path;
+    }
+
+    public function get_backup_url($backup_item, $file_name)
+    {
+        $path = $backup_item->get_local_path() . $file_name;
+
+        if (file_exists($path)) {
+            return $backup_item->get_local_url() . $file_name;
+        }
+        else{
+            $local_setting = get_option('wpvivid_local_setting', array());
+            if(!empty($local_setting))
+            {
+                $url = content_url().DIRECTORY_SEPARATOR.$local_setting['path'].DIRECTORY_SEPARATOR.$file_name;
+            }
+            else {
+                $url = content_url().DIRECTORY_SEPARATOR.'wpvividbackups'.DIRECTORY_SEPARATOR.$file_name;
+            }
+        }
+        return $url;
     }
 }

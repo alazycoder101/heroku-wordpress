@@ -14,7 +14,7 @@ namespace Monolog;
 use Monolog\Handler\TestHandler;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Processor\PsrLogMessageProcessor;
-use Psr\Log\Test\LoggerInterfaceTest;
+use WPvividPsr\Log\Test\LoggerInterfaceTest;
 
 class PsrLogCompatTest extends LoggerInterfaceTest
 {

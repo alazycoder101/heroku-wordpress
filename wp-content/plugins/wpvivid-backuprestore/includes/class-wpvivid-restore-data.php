@@ -32,6 +32,7 @@ class WPvivid_restore_data
 
     public function delete_temp_files()
     {
+        global $wpvivid_plugin;
         $backup=$this->get_backup_data();
         $backup_item=new WPvivid_Backup_Item($backup);
         foreach($this->restore_cache['restore_tasks'] as $index => $task)
@@ -60,7 +61,8 @@ class WPvivid_restore_data
                     $temp_files=$backup_item->get_child_files($file);
                     foreach ($temp_files as $delete_file)
                     {
-                        $path= $backup_item->get_local_path().$delete_file['file_name'];
+                        $path = $wpvivid_plugin->get_backup_path($backup_item, $delete_file['file_name']);
+                        //$path= $backup_item->get_local_path().$delete_file['file_name'];
                         if(file_exists($path))
                         {
                             $this->write_log('clean file:'.$path,'notice');

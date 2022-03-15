@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp\Psr7;
+namespace WPvividGuzzleHttp\Psr7;
 
-use Psr\Http\Message\UriInterface;
+use WPvividPsr\Http\Message\UriInterface;
 
 /**
  * Provides methods to normalize and compare URIs.

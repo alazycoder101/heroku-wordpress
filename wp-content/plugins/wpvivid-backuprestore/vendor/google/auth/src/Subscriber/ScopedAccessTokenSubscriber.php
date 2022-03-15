@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-namespace Google\Auth\Subscriber;
+namespace WPvividGoogle\Auth\Subscriber;
 
-use Google\Auth\CacheTrait;
-use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Event\SubscriberInterface;
-use Psr\Cache\CacheItemPoolInterface;
+use WPvividGoogle\Auth\CacheTrait;
+use WPvividGuzzleHttp\Event\BeforeEvent;
+use WPvividGuzzleHttp\Event\RequestEvents;
+use WPvividGuzzleHttp\Event\SubscriberInterface;
+use WPvividPsr\Cache\CacheItemPoolInterface;
 
 /**
  * ScopedAccessTokenSubscriber is a Guzzle Subscriber that adds an Authorization

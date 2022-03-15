@@ -1,10 +1,10 @@
 <?php
-namespace GuzzleHttp\Exception;
+namespace WPvividGuzzleHttp\Exception;
 
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use GuzzleHttp\Promise\PromiseInterface;
-use Psr\Http\Message\UriInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
+use WPvividGuzzleHttp\Promise\PromiseInterface;
+use WPvividPsr\Http\Message\UriInterface;
 
 /**
  * HTTP Request exception

@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp\Handler;
+namespace WPvividGuzzleHttp\Handler;
 
-use Psr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\RequestInterface;
 
 interface CurlFactoryInterface
 {

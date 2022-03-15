@@ -27,7 +27,7 @@ abstract class Wpvivid_Compress_Default{
     }
     public function filesplit($max_size,$files){
         $packages = array();
-        if($max_size == 0 || empty($max_size)){
+        if($max_size == 0 || $max_size === '0M' || empty($max_size)){
             $packages[] = $files;
         }else{
             $sizenum = 0;

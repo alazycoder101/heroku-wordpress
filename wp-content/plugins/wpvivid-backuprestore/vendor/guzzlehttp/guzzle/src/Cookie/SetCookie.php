@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp\Cookie;
+namespace WPvividGuzzleHttp\Cookie;
 
 /**
  * Set-Cookie object

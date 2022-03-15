@@ -1,8 +1,8 @@
 <?php
 
-namespace Psr\Log\Test;
+namespace WPvividPsr\Log\Test;
 
-use Psr\Log\AbstractLogger;
+use WPvividPsr\Log\AbstractLogger;
 
 /**
  * Used for testing purposes.

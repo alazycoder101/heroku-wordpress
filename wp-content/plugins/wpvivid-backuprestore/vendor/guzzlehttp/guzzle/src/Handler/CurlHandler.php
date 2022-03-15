@@ -1,8 +1,8 @@
 <?php
-namespace GuzzleHttp\Handler;
+namespace WPvividGuzzleHttp\Handler;
 
-use GuzzleHttp\Psr7;
-use Psr\Http\Message\RequestInterface;
+use WPvividGuzzleHttp\Psr7;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * HTTP handler that uses cURL easy handles as a transport layer.

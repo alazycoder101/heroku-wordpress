@@ -97,7 +97,7 @@ function wpvivid_general_settings()
                     }
                 }
                 ?>
-            </select><strong style="margin-right: 10px;"><?php _e('backups retained', 'wpvivid-backuprestore'); ?></strong><a href="https://wpvivid.com/wpvivid-backup-pro-backup-retention" style="text-decoration: none;"><?php _e('Pro feature: Retain more backups', 'wpvivid-backuprestore'); ?></a>
+            </select><strong style="margin-right: 10px;"><?php _e('backups retained', 'wpvivid-backuprestore'); ?></strong><a href="https://docs.wpvivid.com/wpvivid-backup-pro-backup-retention.html" style="text-decoration: none;"><?php _e('Pro feature: Retain more backups', 'wpvivid-backuprestore'); ?></a>
         </div>
         <div>
             <label for="wpvivid_estimate_backup">
@@ -298,7 +298,15 @@ function wpvivid_email_report()
 function wpvivid_clean_junk()
 {
     global $wpvivid_plugin;
-    $junk_file=$wpvivid_plugin->_junk_files_info();
+    //$junk_file=$wpvivid_plugin->_junk_files_info();
+    $junk_file['sum_size']=0;
+    $junk_file['log_dir_size']=0;
+    $junk_file['backup_dir_size'] =0;
+    $junk_file['log_path'] = $log_dir = $wpvivid_plugin->wpvivid_log->GetSaveLogFolder();
+    $dir = WPvivid_Setting::get_backupdir();
+    $junk_file['old_files_path'] = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR . WPVIVID_DEFAULT_ROLLBACK_DIR;
+    $dir = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $dir;
+    $junk_file['junk_path'] = $dir;
     ?>
     <div class="postbox schedule-tab-block" id="wpvivid_clean_junk">
         <div>
@@ -430,6 +438,11 @@ function wpvivid_clean_junk()
                 });
             }
         }
+
+        jQuery(document).ready(function ()
+        {
+            wpvivid_calculate_diskspaceused();
+        });
     </script>
     <?php
 }
@@ -613,17 +626,17 @@ function wpvivid_advanced_settings()
         <div style="padding-top: 10px;">
             <div><strong><?php _e('Compress Files Every', 'wpvivid-backuprestore'); ?></strong></div>
             <div class="setting-tab-block">
-                <input type="text" placeholder="400" option="setting" name="max_file_size" id="wpvivid_max_zip" class="all-options" value="<?php esc_attr_e(str_replace('M', '', $general_setting['options']['wpvivid_compress_setting']['max_file_size']), 'wpvivid-backuprestore'); ?>" onkeyup="value=value.replace(/\D/g,'')" />MB
+                <input type="text" placeholder="200" option="setting" name="max_file_size" id="wpvivid_max_zip" class="all-options" value="<?php esc_attr_e(str_replace('M', '', $general_setting['options']['wpvivid_compress_setting']['max_file_size']), 'wpvivid-backuprestore'); ?>" onkeyup="value=value.replace(/\D/g,'')" />MB
                 <div><p><?php _e( 'Some web hosting providers limit large zip files (e.g. 200MB), and therefore splitting your backup into many parts is an ideal way to avoid hitting the limitation if you are running a big website.  Please try to adjust the value if you are encountering backup errors. If you use a value of 0 MB, any backup files won\'t be split.', 'wpvivid-backuprestore' ); ?></div></p>
             </div>
             <div><strong><?php _e('Exclude the files which are larger than', 'wpvivid-backuprestore'); ?></strong></div>
             <div class="setting-tab-block">
-                <input type="text" placeholder="400" option="setting" name="exclude_file_size" id="wpvivid_ignore_large" class="all-options" value="<?php esc_attr_e($general_setting['options']['wpvivid_compress_setting']['exclude_file_size'], 'wpvivid-backuprestore'); ?>" onkeyup="value=value.replace(/\D/g,'')" />MB
+                <input type="text" placeholder="0" option="setting" name="exclude_file_size" id="wpvivid_ignore_large" class="all-options" value="<?php esc_attr_e($general_setting['options']['wpvivid_compress_setting']['exclude_file_size'], 'wpvivid-backuprestore'); ?>" onkeyup="value=value.replace(/\D/g,'')" />MB
                 <div><p><?php _e( 'Using the option will ignore the file larger than the certain size in MB when backing up, \'0\' (zero) means unlimited.', 'wpvivid-backuprestore' ); ?></p></div>
             </div>
             <div><strong><?php _e('PHP script execution timeout for backup', 'wpvivid-backuprestore'); ?></strong></div>
             <div class="setting-tab-block">
-                <input type="text" placeholder="600" option="setting" name="max_execution_time" id="wpvivid_option_timeout" class="all-options" value="<?php esc_attr_e($general_setting['options']['wpvivid_common_setting']['max_execution_time'], 'wpvivid-backuprestore'); ?>" onkeyup="value=value.replace(/\D/g,'')" />Seconds
+                <input type="text" placeholder="900" option="setting" name="max_execution_time" id="wpvivid_option_timeout" class="all-options" value="<?php esc_attr_e($general_setting['options']['wpvivid_common_setting']['max_execution_time'], 'wpvivid-backuprestore'); ?>" onkeyup="value=value.replace(/\D/g,'')" />Seconds
                 <div><p><?php _e( 'The time-out is not your server PHP time-out. With the execution time exhausted, our plugin will shut the process of backup down. If the progress of backup encounters a time-out, that means you have a medium or large sized website, please try to scale the value bigger.', 'wpvivid-backuprestore' ); ?></p></div>
             </div>
             <div><strong><?php _e('PHP script execution timeout for restore', 'wpvivid-backuprestore'); ?></strong></div>
@@ -643,7 +656,7 @@ function wpvivid_advanced_settings()
             </div>
             <div><strong><?php _e('Chunk Size', 'wpvivid-backuprestore'); ?></strong></div>
             <div class="setting-tab-block">
-                <input type="text" placeholder="2" option="setting" name="migrate_size" class="all-options" value="<?php esc_attr_e($general_setting['options']['wpvivid_common_setting']['migrate_size']); ?>" onkeyup="value=value.replace(/\D/g,'')" />KB
+                <input type="text" placeholder="2048" option="setting" name="migrate_size" class="all-options" value="<?php esc_attr_e($general_setting['options']['wpvivid_common_setting']['migrate_size']); ?>" onkeyup="value=value.replace(/\D/g,'')" />KB
                 <div><p><?php _e('e.g.  if you choose a chunk size of 2MB, a 8MB file will use 4 chunks. Decreasing this value will break the ISP\'s transmission limit, for example:512KB', 'wpvivid-backuprestore'); ?></p></div>
             </div>
             <div>

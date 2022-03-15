@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp\Promise;
+namespace WPvividGuzzleHttp\Promise;
 
 /**
  * A promise that has been rejected.

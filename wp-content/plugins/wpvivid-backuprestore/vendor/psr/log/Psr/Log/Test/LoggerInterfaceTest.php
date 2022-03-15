@@ -1,9 +1,9 @@
 <?php
 
-namespace Psr\Log\Test;
+namespace WPvividPsr\Log\Test;
 
-use Psr\Log\LoggerInterface;
-use Psr\Log\LogLevel;
+use WPvividPsr\Log\LoggerInterface;
+use WPvividPsr\Log\LogLevel;
 
 /**
  * Provides a base test class for ensuring compliance with the LoggerInterface.
@@ -31,7 +31,7 @@ abstract class LoggerInterfaceTest extends \PHPUnit_Framework_TestCase
 
     public function testImplements()
     {
-        $this->assertInstanceOf('Psr\Log\LoggerInterface', $this->getLogger());
+        $this->assertInstanceOf('WPvividPsr\Log\LoggerInterface', $this->getLogger());
     }
 
     /**
@@ -85,9 +85,9 @@ abstract class LoggerInterfaceTest extends \PHPUnit_Framework_TestCase
     public function testObjectCastToString()
     {
         if (method_exists($this, 'createPartialMock')) {
-            $dummy = $this->createPartialMock('Psr\Log\Test\DummyTest', array('__toString'));
+            $dummy = $this->createPartialMock('WPvividPsr\Log\Test\DummyTest', array('__toString'));
         } else {
-            $dummy = $this->getMock('Psr\Log\Test\DummyTest', array('__toString'));
+            $dummy = $this->getMock('WPvividPsr\Log\Test\DummyTest', array('__toString'));
         }
         $dummy->expects($this->once())
             ->method('__toString')

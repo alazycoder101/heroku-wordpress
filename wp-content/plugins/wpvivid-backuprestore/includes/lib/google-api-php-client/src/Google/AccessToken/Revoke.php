@@ -16,10 +16,10 @@
  * limitations under the License.
  */
 
-use Google\Auth\HttpHandler\HttpHandlerFactory;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\Request;
+use WPvividGoogle\Auth\HttpHandler\HttpHandlerFactory;
+use WPvividGuzzleHttp\ClientInterface;
+use WPvividGuzzleHttp\Psr7;
+use WPvividGuzzleHttp\Psr7\Request;
 
 /**
  * Wrapper around Google Access Tokens which provides convenience functions

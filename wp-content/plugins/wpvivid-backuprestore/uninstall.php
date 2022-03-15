@@ -77,6 +77,21 @@ delete_option('wpvivid_download_task_v2');
 delete_option('wpvivid_export_list');
 delete_option('wpvivid_backup_report');
 
+$options=get_option('wpvivid_staging_options',array());
+$staging_keep_setting=isset($options['staging_keep_setting']) ? $options['staging_keep_setting'] : true;
+if($staging_keep_setting)
+{
+
+}
+else
+{
+    delete_option('wpvivid_staging_task_list');
+    delete_option('wpvivid_staging_task_cancel');
+    delete_option('wpvivid_staging_options');
+    delete_option('wpvivid_staging_history');
+    delete_option('wpvivid_staging_list');
+}
+
 define('WPVIVID_MAIN_SCHEDULE_EVENT','wpvivid_main_schedule_event');
 
 if(wp_get_schedule(WPVIVID_MAIN_SCHEDULE_EVENT))

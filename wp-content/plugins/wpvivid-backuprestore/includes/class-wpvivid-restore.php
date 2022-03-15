@@ -88,11 +88,12 @@ class WPvivid_Restore
                 if(isset($option['is_crypt'])&&$option['is_crypt']=='1')
                 {
                     $sql_file = $backup_item->get_sql_file($restore_task['files'][0]);
-                    $local_path=$backup_item->get_local_path();
+                    $local_path= $wpvivid_plugin->get_backup_folder(); //$backup_item->get_local_path();
                     $ret=$this->restore_crypt_db($sql_file,$restore_task,$option,$local_path);
                     return $ret;
                 }
-                $path = $backup_item->get_local_path().WPVIVID_DEFAULT_ROLLBACK_DIR.DIRECTORY_SEPARATOR.'wpvivid_old_database'.DIRECTORY_SEPARATOR;
+                $path = $wpvivid_plugin->get_backup_folder().WPVIVID_DEFAULT_ROLLBACK_DIR.DIRECTORY_SEPARATOR.'wpvivid_old_database'.DIRECTORY_SEPARATOR;
+                //$path = $backup_item->get_local_path().WPVIVID_DEFAULT_ROLLBACK_DIR.DIRECTORY_SEPARATOR.'wpvivid_old_database'.DIRECTORY_SEPARATOR;
                 $sql_file = $backup_item->get_sql_file($restore_task['files'][0]);
                 $wpvivid_plugin->restore_data->write_log('sql file: '.$sql_file,'notice');
                 $restore_db=new WPvivid_RestoreDB();

@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp\Exception;
+namespace WPvividGuzzleHttp\Exception;
 
-use Psr\Http\Message\StreamInterface;
+use WPvividPsr\Http\Message\StreamInterface;
 
 /**
  * Exception thrown when a seek fails on a stream.

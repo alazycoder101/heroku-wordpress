@@ -6,7 +6,7 @@ class AsgarosForumOnline {
     private $asgarosforum = null;
     private $current_user_id = null;
     private $current_time_stamp = null;
-    public  $functionality_enabled = false;
+    public $functionality_enabled = false;
     private $interval_update = false;
     private $interval_online = false;
     private $online_users = array();
@@ -38,7 +38,7 @@ class AsgarosForumOnline {
             if ($this->current_user_id) {
                 // Clean guest-counter data for logged-in user.
                 if (isset($_COOKIE['asgarosforum_unique_id'])) {
-                    $unique_id = $_COOKIE['asgarosforum_unique_id'];
+                    $unique_id = sanitize_key($_COOKIE['asgarosforum_unique_id']);
 
                     // Delete cookie first.
                     unset($_COOKIE['asgarosforum_unique_id']);
@@ -77,7 +77,7 @@ class AsgarosForumOnline {
                 if (!isset($_COOKIE['asgarosforum_unique_id'])) {
                     setcookie('asgarosforum_unique_id', $unique_id, 2147483647, COOKIEPATH, COOKIE_DOMAIN);
                 } else {
-                    $unique_id = $_COOKIE['asgarosforum_unique_id'];
+                    $unique_id = sanitize_key($_COOKIE['asgarosforum_unique_id']);
                 }
 
                 // Add the user to the online list when he is not already included.
@@ -140,27 +140,36 @@ class AsgarosForumOnline {
                 $newest_member = get_users(array('orderby' => 'ID', 'order' => 'DESC', 'number' => 1));
 
                 echo '<span class="online-users-icon fas fa-user"></span>';
-                echo __('Newest Member:', 'asgaros-forum').'&nbsp;<i>'.$this->asgarosforum->renderUsername($newest_member[0]).'</i>';
+                echo esc_html__('Newest Member:', 'asgaros-forum').'&nbsp;<i>'.$this->asgarosforum->renderUsername($newest_member[0]).'</i>';
                 echo '&nbsp;&middot;&nbsp;';
             }
 
             echo '<span class="online-users-icon fas fa-users"></span>';
 
             if ($currently_online_users || $currently_online_guests) {
-                echo __('Currently Online:', 'asgaros-forum').'&nbsp;<i>';
+                echo esc_html__('Currently Online:', 'asgaros-forum').'&nbsp;<i>';
 
                 $loop_counter = 0;
 
                 if ($currently_online_users) {
-                    foreach ($currently_online_users as $online_user) {
-                        $loop_counter++;
+					// Show the names of online users.
+					if ($this->asgarosforum->options['statistics_show_online_usernames']) {
+						foreach ($currently_online_users as $online_user) {
+							$loop_counter++;
 
-                        if ($loop_counter > 1) {
-                            echo ', ';
-                        }
+							if ($loop_counter > 1) {
+								echo ', ';
+							}
 
-                        echo $this->asgarosforum->renderUsername($online_user);
-                    }
+							echo $this->asgarosforum->renderUsername($online_user);
+						}
+					} else {
+						$loop_counter++;
+
+						$users_counter = count($currently_online_users);
+						$users_counter_output = sprintf(_n('%s User', '%s Users', $users_counter, 'asgaros-forum'), number_format_i18n($users_counter));
+						echo esc_html($users_counter_output);
+					}
                 }
 
                 if ($currently_online_guests) {
@@ -171,13 +180,13 @@ class AsgarosForumOnline {
                     }
 
                     $guests_counter = count($currently_online_guests);
-
-                    echo sprintf(_n('%s Guest', '%s Guests', $guests_counter, 'asgaros-forum'), number_format_i18n($guests_counter));
+                    $guests_counter_output = sprintf(_n('%s Guest', '%s Guests', $guests_counter, 'asgaros-forum'), number_format_i18n($guests_counter));
+                    echo esc_html($guests_counter_output);
                 }
 
                 echo '</i>';
             } else {
-                echo '<i>'.__('Currently nobody is online.', 'asgaros-forum').'</i>';
+                echo '<i>'.esc_html__('Currently nobody is online.', 'asgaros-forum').'</i>';
             }
 
             echo '</div>';

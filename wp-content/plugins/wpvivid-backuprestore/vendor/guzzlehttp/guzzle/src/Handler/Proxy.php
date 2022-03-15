@@ -1,8 +1,8 @@
 <?php
-namespace GuzzleHttp\Handler;
+namespace WPvividGuzzleHttp\Handler;
 
-use GuzzleHttp\RequestOptions;
-use Psr\Http\Message\RequestInterface;
+use WPvividGuzzleHttp\RequestOptions;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * Provides basic proxies for handlers.

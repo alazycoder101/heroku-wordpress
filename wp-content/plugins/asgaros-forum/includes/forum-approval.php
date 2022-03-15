@@ -74,7 +74,12 @@ class AsgarosForumApproval {
                 return $this->asgarosforum->db->get_results("SELECT t.id, t.name, f.name AS forum_name FROM {$this->asgarosforum->tables->topics} AS t LEFT JOIN {$this->asgarosforum->tables->forums} AS f ON (t.parent_id = f.id) WHERE f.parent_id IN ({$ids_categories}) AND t.approved = 0 ORDER BY t.id ASC;");
             }
         } else {
-            return $this->asgarosforum->db->get_results("SELECT * FROM {$this->asgarosforum->tables->topics} WHERE approved = 0 AND parent_id = {$forum_id} ORDER BY id DESC;");
+            // Ensure forum-ID is an integer.
+            $forum_id = absint($forum_id);
+
+            if ($forum_id) {
+                return $this->asgarosforum->db->get_results("SELECT * FROM {$this->asgarosforum->tables->topics} WHERE approved = 0 AND parent_id = {$forum_id} ORDER BY id DESC;");
+            }
         }
 
         return false;
@@ -205,19 +210,19 @@ class AsgarosForumApproval {
                 echo '<div class="content-element unapproved-topic topic-normal">';
                     echo '<div class="topic-status fas fa-eye unread"></div>';
                     echo '<div class="topic-name">';
-                        echo '<a href="'.$this->asgarosforum->rewrite->get_link('topic', $topic->id).'" title="'.$topic_title.'">'.$topic_title.'</a>';
+                        echo '<a href="'.esc_url($this->asgarosforum->rewrite->get_link('topic', $topic->id)).'" title="'.esc_attr($topic_title).'">'.esc_html($topic_title).'</a>';
                         echo '<small>';
 
                         // Author
-                        echo __('By', 'asgaros-forum').'&nbsp;'.$this->asgarosforum->getUsername($first_post->author_id);
+                        echo esc_html__('By', 'asgaros-forum').'&nbsp;'.$this->asgarosforum->getUsername($first_post->author_id);
 
                         // Creation time
                         echo '&nbsp;&middot;&nbsp;';
-                        echo sprintf(__('%s ago', 'asgaros-forum'), human_time_diff(strtotime($first_post->date), current_time('timestamp')));
+                        echo esc_html($this->asgarosforum->get_activity_timestamp($first_post->date));
 
                         // Location
                         echo '&nbsp;&middot;&nbsp;';
-                        echo __('In', 'asgaros-forum').'&nbsp;';
+                        echo esc_html__('In', 'asgaros-forum').'&nbsp;';
                         echo '<i>'.esc_html(stripslashes($topic->forum_name)).'</i>';
 
                         echo '</small>';

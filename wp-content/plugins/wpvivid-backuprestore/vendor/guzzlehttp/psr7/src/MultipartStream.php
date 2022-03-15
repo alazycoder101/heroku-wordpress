@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp\Psr7;
+namespace WPvividGuzzleHttp\Psr7;
 
-use Psr\Http\Message\StreamInterface;
+use WPvividPsr\Http\Message\StreamInterface;
 
 /**
  * Stream that when read returns bytes for a streaming multipart or

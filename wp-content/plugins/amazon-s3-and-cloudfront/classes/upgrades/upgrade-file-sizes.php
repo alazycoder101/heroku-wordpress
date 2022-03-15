@@ -12,6 +12,7 @@
 namespace DeliciousBrains\WP_Offload_Media\Upgrades;
 
 use AS3CF_Error;
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 use Exception;
 
 /**
@@ -51,26 +52,32 @@ class Upgrade_File_Sizes extends Upgrade {
 	/**
 	 * Get the total file sizes for an attachment and associated files.
 	 *
-	 * @param mixed $attachment
+	 * @param mixed $item
 	 *
 	 * @return bool
+	 * @throws Exception
 	 */
-	protected function upgrade_item( $attachment ) {
-		$provider_object = unserialize( $attachment->provider_object );
+	protected function upgrade_item( $item ) {
+		$provider_object = unserialize( $item->provider_object );
 		if ( false === $provider_object ) {
-			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $attachment->ID . ': ' . $attachment->provider_object );
+			AS3CF_Error::log( 'Failed to unserialize offload meta for attachment ' . $item->ID . ': ' . $item->provider_object );
 			$this->error_count++;
 
 			return false;
 		}
 
-		$region = $this->as3cf->get_provider_object_region( $provider_object );
-		if ( is_wp_error( $region ) ) {
-			AS3CF_Error::log( 'Failed to get the region for the bucket of the attachment ' . $attachment->ID );
+		// Using Media_Library_Item::get_by_source_id falls back to legacy metadata and substitutes in defaults and potentially missing values.
+		$as3cf_item = Media_Library_Item::get_by_source_id( $item->ID );
+
+		if ( ! $as3cf_item ) {
+			AS3CF_Error::log( 'Could not construct item for attachment with ID ' . $item->ID . ' from legacy offload metadata.' );
 			$this->error_count++;
 
 			return false;
 		}
+
+		// $as3cf_item can't exist without a region value, so we can just use it here.
+		$region = $as3cf_item->region();
 
 		$provider_client = $this->as3cf->get_provider_client( $region, true );
 		$main_file       = $provider_object['key'];
@@ -90,7 +97,7 @@ class Upgrade_File_Sizes extends Upgrade {
 			// List objects for the attachment
 			$result = $provider_client->list_objects( $args );
 		} catch ( Exception $e ) {
-			AS3CF_Error::log( 'Error listing objects of prefix ' . $search_prefix . ' for attachment ' . $attachment->ID . ' in bucket: ' . $e->getMessage() );
+			AS3CF_Error::log( 'Error listing objects of prefix ' . $search_prefix . ' for attachment ' . $item->ID . ' in bucket: ' . $e->getMessage() );
 			$this->error_count++;
 
 			return false;
@@ -118,19 +125,19 @@ class Upgrade_File_Sizes extends Upgrade {
 		}
 
 		if ( 0 === $file_size_total ) {
-			AS3CF_Error::log( 'Total file size for the attachment is 0: ' . $attachment->ID );
+			AS3CF_Error::log( 'Total file size for the attachment is 0: ' . $item->ID );
 			$this->error_count++;
 
 			return false;
 		}
 
 		// Update the main file size for the attachment
-		$meta             = get_post_meta( $attachment->ID, '_wp_attachment_metadata', true );
+		$meta             = get_post_meta( $item->ID, '_wp_attachment_metadata', true );
 		$meta['filesize'] = $main_file_size;
-		update_post_meta( $attachment->ID, '_wp_attachment_metadata', $meta );
+		update_post_meta( $item->ID, '_wp_attachment_metadata', $meta );
 
 		// Add the total file size for all image sizes
-		update_post_meta( $attachment->ID, 'wpos3_filesize_total', $file_size_total );
+		update_post_meta( $item->ID, 'wpos3_filesize_total', $file_size_total );
 
 		return true;
 	}

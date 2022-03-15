@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp\Psr7;
+namespace WPvividGuzzleHttp\Psr7;
 
-use Psr\Http\Message\StreamInterface;
+use WPvividPsr\Http\Message\StreamInterface;
 
 /**
  * Trait implementing functionality common to requests and responses.

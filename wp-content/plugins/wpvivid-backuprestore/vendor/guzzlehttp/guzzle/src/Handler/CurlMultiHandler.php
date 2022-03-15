@@ -1,10 +1,10 @@
 <?php
-namespace GuzzleHttp\Handler;
+namespace WPvividGuzzleHttp\Handler;
 
-use GuzzleHttp\Promise as P;
-use GuzzleHttp\Promise\Promise;
-use GuzzleHttp\Psr7;
-use Psr\Http\Message\RequestInterface;
+use WPvividGuzzleHttp\Promise as P;
+use WPvividGuzzleHttp\Promise\Promise;
+use WPvividGuzzleHttp\Psr7;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * Returns an asynchronous response using curl_multi_* functions.

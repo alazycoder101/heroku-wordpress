@@ -32,13 +32,13 @@ class Retry
     /**
      * @var callable
      */
-    private $retryFunction;
-    /**
-     * @var callable
-     */
     private $delayFunction;
     /**
-     * @param int $retries Maximum number of retries for a failed request.
+     * @var callable|null
+     */
+    private $retryFunction;
+    /**
+     * @param int|null $retries Maximum number of retries for a failed request.
      * @param callable $delayFunction A function returning an array of format
      *        `['seconds' => (int >= 0), 'nanos' => (int >= 0)] specifying how
      *        long an operation should pause before retrying. Should accept a
@@ -72,7 +72,7 @@ class Retry
                 return $res;
             } catch (\Exception $exception) {
                 if ($this->retryFunction) {
-                    if (!call_user_func($this->retryFunction, $exception)) {
+                    if (!call_user_func($this->retryFunction, $exception, $retryAttempt)) {
                         throw $exception;
                     }
                 }

@@ -15,11 +15,13 @@ class WPvivid_ZipClass extends Wpvivid_Compress_Default
 
 	public function __construct()
     {
-		if (!class_exists('PclZip')) include_once(ABSPATH.'/wp-admin/includes/class-pclzip.php');
-		if (!class_exists('PclZip')) {
+		if (!class_exists('PclZip'))
+		    include_once(ABSPATH.'/wp-admin/includes/class-pclzip.php');
+		if (!class_exists('PclZip'))
+		{
 			$this->last_error = array('result'=>WPVIVID_FAILED,'error'=>"Class PclZip is not detected. Please update or reinstall your WordPress.");
 		}
-	}
+    }
 
 	public function get_packages($data,$write_child_files_json=false)
     {
@@ -1128,10 +1130,192 @@ class WPvivid_PclZip_Class
     }
 }
 
+class WPvivid_PclZip_Class_Ex
+{
+    public function zip($name,$files,$options,$json_info=false)
+    {
+        global $wpvivid_plugin;
+
+        if(file_exists($name))
+            @unlink($name);
+
+        if (!class_exists('WPvivid_PclZip'))
+            include_once WPVIVID_PLUGIN_DIR . '/includes/zip/class-wpvivid-pclzip.php';
+        $archive = new WPvivid_PclZip($name);
+
+        if(isset($options['compress']['no_compress']))
+        {
+            $no_compress=$options['compress']['no_compress'];
+        }
+        else
+        {
+            $no_compress=1;
+        }
+
+        if(isset($options['compress']['use_temp_file']))
+        {
+            $use_temp_file=1;
+        }
+        else
+        {
+            $use_temp_file=0;
+        }
+
+        if(isset($options['compress']['use_temp_size']))
+        {
+            $use_temp_size=$options['compress']['use_temp_size'];
+        }
+        else
+        {
+            $use_temp_size=16;
+        }
+
+        if(isset($options['root_path']))
+        {
+            $replace_path=$options['root_path'];
+        }
+        else if(isset($options['root_flag']))
+        {
+            $replace_path=$this->get_root_flag_path($options['root_flag']);
+        }
+        else
+        {
+            $replace_path=WP_CONTENT_DIR.DIRECTORY_SEPARATOR.WPvivid_Setting::get_backupdir();
+        }
+
+        if($json_info!==false)
+        {
+            $temp_path = dirname($name).DIRECTORY_SEPARATOR.'wpvivid_package_info.json';
+            if(file_exists($temp_path))
+            {
+                @unlink($temp_path);
+            }
+            $json_info['php_version'] = phpversion();
+            global $wpdb;
+            $json_info['mysql_version'] = $wpdb->db_version();
+            file_put_contents($temp_path,print_r(json_encode($json_info),true));
+            $archive -> add($temp_path,WPVIVID_PCLZIP_OPT_REMOVE_PATH,dirname($temp_path));
+            @unlink($temp_path);
+        }
+
+        $wpvivid_plugin->wpvivid_log->WriteLog('Prepare to zip files. file: '.basename($name),'notice');
+
+        if($no_compress)
+        {
+            if($use_temp_file==1)
+            {
+                if($use_temp_size!=0)
+                {
+                    $ret = $archive -> add($files,WPVIVID_PCLZIP_OPT_REMOVE_PATH,$replace_path,WPVIVID_PCLZIP_CB_PRE_ADD,'wpvivid_function_per_add_callback',WPVIVID_PCLZIP_OPT_NO_COMPRESSION,WPVIVID_PCLZIP_OPT_TEMP_FILE_THRESHOLD,$use_temp_size);
+                }
+                else
+                {
+                    $ret = $archive -> add($files,WPVIVID_PCLZIP_OPT_REMOVE_PATH,$replace_path,WPVIVID_PCLZIP_CB_PRE_ADD,'wpvivid_function_per_add_callback',WPVIVID_PCLZIP_OPT_NO_COMPRESSION,WPVIVID_PCLZIP_OPT_TEMP_FILE_ON);
+                }
+            }
+            else
+            {
+                $ret = $archive -> add($files,WPVIVID_PCLZIP_OPT_REMOVE_PATH,$replace_path,WPVIVID_PCLZIP_CB_PRE_ADD,'wpvivid_function_per_add_callback',WPVIVID_PCLZIP_OPT_NO_COMPRESSION,WPVIVID_PCLZIP_OPT_TEMP_FILE_OFF);
+            }
+        }
+        else
+        {
+            if($use_temp_file==1)
+            {
+                if($use_temp_size!=0)
+                {
+                    $ret = $archive -> add($files,WPVIVID_PCLZIP_OPT_REMOVE_PATH,$replace_path,WPVIVID_PCLZIP_CB_PRE_ADD,'wpvivid_function_per_add_callback',WPVIVID_PCLZIP_OPT_TEMP_FILE_THRESHOLD,$use_temp_size);
+                }
+                else
+                {
+                    $ret = $archive -> add($files,WPVIVID_PCLZIP_OPT_REMOVE_PATH,$replace_path,WPVIVID_PCLZIP_CB_PRE_ADD,'wpvivid_function_per_add_callback',WPVIVID_PCLZIP_OPT_TEMP_FILE_ON);
+                }
+            }
+            else
+            {
+                $ret = $archive -> add($files,WPVIVID_PCLZIP_OPT_REMOVE_PATH,$replace_path,WPVIVID_PCLZIP_CB_PRE_ADD,'wpvivid_function_per_add_callback',WPVIVID_PCLZIP_OPT_TEMP_FILE_OFF);
+            }
+        }
+
+        if(!$ret)
+        {
+            $wpvivid_plugin->wpvivid_log->WriteLog('Failed to add zip files, error: '.$archive->errorInfo(true),'notice');
+            $size=size_format(disk_free_space(dirname($name)),2);
+            $wpvivid_plugin->wpvivid_log->WriteLog('disk_free_space : '.$size,'notice');
+            return array('result'=>WPVIVID_FAILED,'error'=>$archive->errorInfo(true));
+        }
+
+        $size=filesize($name);
+        if($size===false)
+        {
+            $wpvivid_plugin->wpvivid_log->WriteLog('Failed to add zip files, error: file not found after backup success','error');
+            $size=size_format(disk_free_space(dirname($name)),2);
+            $wpvivid_plugin->wpvivid_log->WriteLog('disk_free_space : '.$size,'notice');
+            return array('result'=>WPVIVID_FAILED,'error'=>'The file compression failed while backing up becuase of '.$name.' file not found. Please try again. The available disk space: '.$size.'.');
+        }
+        else if($size==0)
+        {
+            $wpvivid_plugin->wpvivid_log->WriteLog('Failed to add zip files, error: file size 0B after backup success','error');
+            $size=size_format(disk_free_space(dirname($name)),2);
+            $wpvivid_plugin->wpvivid_log->WriteLog('disk_free_space : '.$size,'notice');
+            return array('result'=>WPVIVID_FAILED,'error'=>'The file compression failed while backing up. The size of '.$name.' file is 0. Please make sure there is an enough disk space to backup. Then try again. The available disk space: '.$size.'.');
+        }
+
+        $wpvivid_plugin->wpvivid_log->WriteLog('Adding zip files completed.'.basename($name).', filesize: '.size_format(filesize($name),2),'notice');
+        $file_data = array();
+        $file_data['file_name'] = basename($name);
+        $file_data['size'] = filesize($name);
+
+        return array('result'=>WPVIVID_SUCCESS,'file_data'=>$file_data);
+    }
+
+    public function get_root_flag_path($flag)
+    {
+        $path='';
+        if($flag==WPVIVID_BACKUP_ROOT_WP_CONTENT)
+        {
+            $path=WP_CONTENT_DIR;
+        }
+        else if($flag==WPVIVID_BACKUP_ROOT_CUSTOM)
+        {
+            $path=WP_CONTENT_DIR.DIRECTORY_SEPARATOR.WPvivid_Setting::get_backupdir();
+        }
+        else if($flag==WPVIVID_BACKUP_ROOT_WP_ROOT)
+        {
+            $path=ABSPATH;
+        }
+        return $path;
+    }
+}
+
 $wpvivid_old_time=0;
 
 function wpvivid_function_per_add_callback($p_event, &$p_header)
 {
+    if(!file_exists($p_header['filename'])){
+        return 0;
+    }
+    /*if($p_header['size'] === 0){
+        return 0;
+    }*/
+
+    $path = str_replace('\\','/',WP_CONTENT_DIR);
+    $content_path = $path.'/';
+    if(strpos($p_header['filename'], $content_path.'mu-plugins/endurance-browser-cache.php')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'], $content_path.'mu-plugins/endurance-page-cache.php')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'], $content_path.'mu-plugins/endurance-php-edge.php')!==false)
+    {
+        return 0;
+    }
+
     global $wpvivid_old_time;
     if(time()-$wpvivid_old_time>30)
     {
@@ -1148,34 +1332,62 @@ function wpvivid_function_pre_extract_callback($p_event, &$p_header)
 {
     $plugins = substr(WP_PLUGIN_DIR, strpos(WP_PLUGIN_DIR, 'wp-content/'));
 
-    $option = $GLOBALS['wpvivid_extract_option'];
-    if (isset($option['file_type'])) {
-        if ($option['file_type'] == 'themes') {
-            if (isset($option['remove_themes'])) {
-                foreach ($option['remove_themes'] as $slug => $themes) {
-                    if (empty($slug))
-                        continue;
-                    if(strpos($p_header['filename'],$plugins.DIRECTORY_SEPARATOR.$slug)!==false)
+    if ( isset( $GLOBALS['wpvivid_extract_option'] ) )
+    {
+        $option = $GLOBALS['wpvivid_extract_option'];
+        if (isset($option['file_type']))
+        {
+            if ($option['file_type'] == 'themes')
+            {
+                if (isset($option['remove_themes']))
+                {
+                    foreach ($option['remove_themes'] as $slug => $themes)
                     {
-                        return 0;
+                        if (empty($slug))
+                            continue;
+                        if(strpos($p_header['filename'],$plugins.DIRECTORY_SEPARATOR.$slug)!==false)
+                        {
+                            return 0;
+                        }
                     }
                 }
             }
-        } else if ($option['file_type'] == 'plugin') {
-            if (isset($option['remove_plugin'])) {
-                foreach ($option['remove_plugin'] as $slug => $plugin) {
-                    if (empty($slug))
-                        continue;
-                    if(strpos($p_header['filename'],$plugins.'/'.$slug)!==false)
+            else if ($option['file_type'] == 'plugin')
+            {
+                if (isset($option['remove_plugin']))
+                {
+                    foreach ($option['remove_plugin'] as $slug => $plugin)
                     {
-                        return 0;
+                        if (empty($slug))
+                            continue;
+                        if(strpos($p_header['filename'],$plugins.'/'.$slug)!==false)
+                        {
+                            return 0;
+                        }
                     }
                 }
             }
         }
     }
 
-    if(strpos($p_header['filename'],$plugins.DIRECTORY_SEPARATOR.'wpvivid-backuprestore')!==false)
+    $path = str_replace('\\','/',WP_CONTENT_DIR);
+    $content_path = $path.'/';
+    if(strpos($p_header['filename'], $content_path.'advanced-cache.php')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'], $content_path.'db.php')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'], $content_path.'object-cache.php')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'],$plugins.'/wpvivid-backuprestore')!==false)
     {
         return 0;
     }
@@ -1191,6 +1403,31 @@ function wpvivid_function_pre_extract_callback($p_event, &$p_header)
     }
 
     if(strpos($p_header['filename'],'.htaccess')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'],'.user.ini')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'],'wordfence-waf.php')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'], $content_path.'mu-plugins/endurance-browser-cache.php')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'], $content_path.'mu-plugins/endurance-page-cache.php')!==false)
+    {
+        return 0;
+    }
+
+    if(strpos($p_header['filename'], $content_path.'mu-plugins/endurance-php-edge.php')!==false)
     {
         return 0;
     }

@@ -1,12 +1,12 @@
 <?php
 
-namespace GuzzleHttp\Psr7;
+namespace WPvividGuzzleHttp\Psr7;
 
 use InvalidArgumentException;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\UriInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UploadedFileInterface;
+use WPvividPsr\Http\Message\ServerRequestInterface;
+use WPvividPsr\Http\Message\UriInterface;
+use WPvividPsr\Http\Message\StreamInterface;
+use WPvividPsr\Http\Message\UploadedFileInterface;
 
 /**
  * Server-side HTTP request

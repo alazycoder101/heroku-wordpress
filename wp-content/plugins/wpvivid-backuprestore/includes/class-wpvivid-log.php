@@ -28,7 +28,8 @@ class WPvivid_Log
             @unlink( $this->log_file);
         }
         $this->log_file_handle = fopen($this->log_file, 'a');
-        $time =date("Y-m-d H:i:s",time());
+        $offset=get_option('gmt_offset');
+        $time =date("Y-m-d H:i:s",time()+$offset*60*60);
         $text='Log created: '.$time."\n";
         $text.='Type: '.$describe."\n";
         fwrite($this->log_file_handle,$text);
@@ -59,7 +60,8 @@ class WPvivid_Log
     {
         if ($this->log_file_handle)
         {
-            $time =date("Y-m-d H:i:s",time());
+            $offset=get_option('gmt_offset');
+            $time =date("Y-m-d H:i:s",time()+$offset*60*60);
             $text='['.$time.']'.'['.$type.']'.$log."\n";
             fwrite($this->log_file_handle,$text );
         }
@@ -82,7 +84,10 @@ class WPvivid_Log
 
         if(!isset($options['log_save_location']))
         {
-            WPvivid_Setting::set_default_common_option();
+            //WPvivid_Setting::set_default_common_option();
+            $options['log_save_location']=WPVIVID_DEFAULT_LOG_DIR;
+            update_option('wpvivid_common_setting', $options);
+
             $options = WPvivid_Setting::get_option('wpvivid_common_setting');
         }
 
@@ -163,7 +168,8 @@ class WPvivid_Log
                 $log.=' is_multisite:0';
             }
 
-            $time =date("Y-m-d H:i:s",time());
+            $offset=get_option('gmt_offset');
+            $time =date("Y-m-d H:i:s",time()+$offset*60*60);
             $text='['.$time.']'.'[notice]'.$log."\n";
             fwrite($this->log_file_handle,$text );
         }

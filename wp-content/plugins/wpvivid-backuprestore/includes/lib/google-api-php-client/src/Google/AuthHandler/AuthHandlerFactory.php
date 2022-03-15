@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
+use WPvividGuzzleHttp\Client;
+use WPvividGuzzleHttp\ClientInterface;
 
 class Google_AuthHandler_AuthHandlerFactory
 {

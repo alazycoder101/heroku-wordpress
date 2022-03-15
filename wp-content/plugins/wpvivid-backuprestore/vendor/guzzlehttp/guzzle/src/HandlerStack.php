@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp;
+namespace WPvividGuzzleHttp;
 
-use Psr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * Creates a composed Guzzle handler function by stacking middlewares on top of

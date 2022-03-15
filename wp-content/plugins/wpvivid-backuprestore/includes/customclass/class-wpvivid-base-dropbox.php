@@ -10,14 +10,67 @@ class Dropbox_Base{
     const API_ID = 'cwn4z5jg8wy7b4u';
 
     private $access_token;
+    private $created;
+    private $expires_in;
+    private $refresh_token;
     private $option;
 
-    public function __construct($option){
+    public function __construct($option)
+    {
         $this -> option = $option;
-    	$this -> access_token = $option['token'];
+    	$this -> access_token = $option['access_token'];
+
+        $this -> created = $option['created'];
+        $this -> expires_in = $option['expires_in'];
+        $this -> refresh_token = $option['refresh_token'];
     }
 
-    public function upload($target_path, $file_data, $mode = "add") {
+    public function check_token()
+    {
+        if(!isset($this->option['refresh_token']))
+        {
+            return array('result' => WPVIVID_FAILED,'error' => 'Invalid or expired token. Please remove '.$this -> option['name'].' from the storage list and re-authenticate it.');
+        }
+        $now=time()-10;
+        if ($now>$this->option['created']+$this->option['expires_in'])
+        {
+            $result=$this->getRefreshToken();
+            if($result['result']=='failed')
+            {
+                return array('result' => WPVIVID_FAILED,'error' => $result['error']);
+            }
+            else
+            {
+                $remote_options=WPvivid_Setting::get_remote_option($this->option['id']);
+                if($remote_options!==false)
+                {
+                    $remote_options['access_token']= $result['data']['access_token'];
+                    $remote_options['expires_in'] = $result['data']['expires_in'];
+                    $remote_options['created'] = time();
+                    WPvivid_Setting::update_remote_option($this->option['id'],$remote_options);
+                    $this -> access_token = $remote_options['access_token'];
+                    $this -> created = $remote_options['created'];
+                    $this -> expires_in = $remote_options['expires_in'];
+                    $this -> refresh_token = $this->option['refresh_token'];
+
+                    $ret['result']='success';
+                    return $ret;
+                }
+                else
+                {
+                    return array('result' => WPVIVID_FAILED,'error'=>'get refresh token failed');
+                }
+            }
+        }
+        else
+        {
+            $ret['result']='success';
+            return $ret;
+        }
+    }
+
+    public function upload($target_path, $file_data, $mode = "add")
+    {
         $endpoint = self::CONTENT_URL_V2."files/upload";
         $headers = array(
             "Content-Type: application/octet-stream",
@@ -28,18 +81,44 @@ class Dropbox_Base{
             $postdata = file_get_contents($file_data);
         else
             $postdata = $file_data;
-        
+
         $returnData = $this ->postRequest($endpoint, $headers, $postdata);
+        if(isset($returnData['error_summary']) && preg_match( "/Invalid or expired token. Please remove .* from the storage list and re-authenticate it/", $returnData['error_summary'], $matches ))
+        {
+            $ret=$this->check_token();
+            if($ret['result']=='failed')
+            {
+                return $returnData;
+            }
+            else
+            {
+                $returnData = $this ->postRequest($endpoint, $headers, $postdata);
+            }
+        }
         return $returnData;
     }
 
-    public function upload_session_start() {
+    public function upload_session_start()
+    {
         $endpoint = self::CONTENT_URL_V2."files/upload_session/start";
         $headers = array(
             "Content-Type: application/octet-stream",
             "Dropbox-API-Arg: {\"close\": false}"
         );
+
         $returnData = $this ->postRequest($endpoint, $headers,null);
+        if(isset($returnData['error_summary']) && preg_match( "/Invalid or expired token. Please remove .* from the storage list and re-authenticate it/", $returnData['error_summary'], $matches ))
+        {
+            $ret=$this->check_token();
+            if($ret['result']=='failed')
+            {
+                return $returnData;
+            }
+            else
+            {
+                $returnData = $this ->postRequest($endpoint, $headers,null);
+            }
+        }
         return $returnData;
     }
 
@@ -52,6 +131,18 @@ class Dropbox_Base{
         );
 
         $returnData = $this ->postRequest($endpoint, $headers, $postdata);
+        if(isset($returnData['error_summary']) && preg_match( "/Invalid or expired token. Please remove .* from the storage list and re-authenticate it/", $returnData['error_summary'], $matches ))
+        {
+            $ret=$this->check_token();
+            if($ret['result']=='failed')
+            {
+                return $returnData;
+            }
+            else
+            {
+                $returnData = $this ->postRequest($endpoint, $headers,null);
+            }
+        }
         return $returnData;
     }
 
@@ -114,11 +205,13 @@ class Dropbox_Base{
         return $returnData;
     }
 
-	public static function getUrl($url,$state = ''){
+	public static function getUrl($url,$state = '')
+    {
 		$params = array(
                     'client_id' => self::API_ID,
                     'response_type' => 'code',
                     'redirect_uri' => $url,
+                    'token_access_type'=>'offline',
                     'state' => $state,
                 );
 	    $url = 'https://www.dropbox.com/oauth2/authorize?';
@@ -145,9 +238,45 @@ class Dropbox_Base{
         if($r === false){
             $r['error_summary'] = $error;
         }else{
-            if($chinfo['http_code'] === 401){
-                $r = array();
-                $r['error_summary'] = 'Invalid or expired token. Please remove '.$this -> option['name'].' from the storage list and re-authenticate it.';
+            if($chinfo['http_code'] === 401)
+            {
+                $ret=$this->check_token();
+                if($ret['result']=='success')
+                {
+                    $ch = curl_init($endpoint);
+                    array_push($headers, "Authorization: Bearer " . $this -> access_token);
+
+                    curl_setopt($ch, CURLOPT_POST, TRUE);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+                    $r = curl_exec($ch);
+                    $chinfo = curl_getinfo($ch);
+                    $error = curl_error($ch);
+                    curl_close($ch);
+                    if($r === false)
+                    {
+                        $r['error_summary'] = $error;
+                    }
+                    else
+                    {
+                        if($chinfo['http_code'] === 401)
+                        {
+                            $r = array();
+                            $r['error_summary'] = 'Invalid or expired token. Please remove '.$this -> option['name'].' from the storage list and re-authenticate it.';
+                        }
+                        elseif($chinfo['http_code'] !== 200 && $chinfo['http_code'] !== 206)
+                        {
+                            $r = json_decode($r,true);
+                        }
+                    }
+                }
+                else
+                {
+                    $r = array();
+                    $r['error_summary'] = 'Invalid or expired token. Please remove '.$this -> option['name'].' from the storage list and re-authenticate it.';
+                }
+
             }elseif($chinfo['http_code'] !== 200 && $chinfo['http_code'] !== 206){
                 $r = json_decode($r,true);
             }
@@ -159,5 +288,48 @@ class Dropbox_Base{
     }
     public function setAccessToken($access_token){
     	$this -> access_token = $access_token;
+    }
+
+    public function getRefreshToken()
+    {
+        $options=array();
+        $options['timeout']=30;
+        $options['sslverify']=FALSE;
+        $params = array(
+            'client_id' => self::API_ID,
+            'refresh_token' => $this -> refresh_token,
+            'version'=>1
+        );
+        $url = 'https://auth.wpvivid.com/dropbox_v3/?';
+        $url .= http_build_query($params,'','&');
+
+        $request = wp_remote_request( $url,$options);
+
+        if(!is_wp_error($request) && ($request['response']['code'] == 200))
+        {
+            $json= wp_remote_retrieve_body($request);
+            $body=json_decode($json,true);
+            if(is_null($body))
+            {
+                $ret['result']='failed';
+                $ret['error']='Get refresh token failed';
+                return $ret;
+            }
+
+            if($body['result']=='success')
+            {
+                return $body;
+            }
+            else
+            {
+                return $body;
+            }
+        }
+        else
+        {
+            $ret['result']='failed';
+            $ret['error']='Get refresh token failed';
+            return $ret;
+        }
     }
 }

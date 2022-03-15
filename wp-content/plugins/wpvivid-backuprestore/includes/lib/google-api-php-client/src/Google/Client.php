@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
-use Google\Auth\ApplicationDefaultCredentials;
-use Google\Auth\Cache\MemoryCacheItemPool;
-use Google\Auth\CredentialsLoader;
-use Google\Auth\HttpHandler\HttpHandlerFactory;
-use Google\Auth\OAuth2;
-use Google\Auth\Credentials\ServiceAccountCredentials;
-use Google\Auth\Credentials\UserRefreshCredentials;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Ring\Client\StreamHandler;
-use Psr\Cache\CacheItemPoolInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Log\LoggerInterface;
+use WPvividGoogle\Auth\ApplicationDefaultCredentials;
+use WPvividGoogle\Auth\Cache\MemoryCacheItemPool;
+use WPvividGoogle\Auth\CredentialsLoader;
+use WPvividGoogle\Auth\HttpHandler\HttpHandlerFactory;
+use WPvividGoogle\Auth\OAuth2;
+use WPvividGoogle\Auth\Credentials\ServiceAccountCredentials;
+use WPvividGoogle\Auth\Credentials\UserRefreshCredentials;
+use WPvividGuzzleHttp\Client;
+use WPvividGuzzleHttp\ClientInterface;
+use WPvividGuzzleHttp\Ring\Client\StreamHandler;
+use WPvividPsr\Cache\CacheItemPoolInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Log\LoggerInterface;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler as MonologStreamHandler;
 use Monolog\Handler\SyslogHandler as MonologSyslogHandler;
@@ -1062,7 +1062,8 @@ class Google_Client
       }
     } else {
       // guzzle 6
-      $options['base_uri'] = $this->config['base_path'];
+        $options['base_uri'] = $this->config['base_path'];
+        $options['verify'] = WPVIVID_PLUGIN_DIR.'/vendor/guzzle/guzzle/src/Guzzle/Http/Resources/cacert.pem';
     }
 
     return new Client($options);

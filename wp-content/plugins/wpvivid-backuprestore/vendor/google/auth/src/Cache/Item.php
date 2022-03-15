@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-namespace Google\Auth\Cache;
+namespace WPvividGoogle\Auth\Cache;
 
-use Psr\Cache\CacheItemInterface;
+use WPvividPsr\Cache\CacheItemInterface;
 
 /**
  * A cache item.

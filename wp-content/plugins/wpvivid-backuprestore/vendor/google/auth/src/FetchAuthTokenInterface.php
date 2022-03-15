@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-namespace Google\Auth;
+namespace WPvividGoogle\Auth;
 
 /**
  * An interface implemented by objects that can fetch auth tokens.

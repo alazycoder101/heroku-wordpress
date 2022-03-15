@@ -87,7 +87,10 @@ class WPvivid_mail_report
         {
             $status='Failed';
         }
-        $header='[Backup '.$status.']'.gmdate('m-d-Y H:i:s', $task['status']['start_time']).' - By WPvivid Backup Plugin';
+
+        $offset=get_option('gmt_offset');
+        $localtime=gmdate('m-d-Y H:i:s', $task['status']['start_time']+$offset*60*60);
+        $header='[Backup '.$status.']'.$localtime.' - By WPvivid Backup Plugin';
         return $header;
     }
 
@@ -103,8 +106,9 @@ class WPvivid_mail_report
             $status='failed. '.$task['status']['error'];
         }
         $type=$task['type'];
-        $start_time=date("m-d-Y H:i:s",$task['status']['start_time']);
-        $end_time=date("m-d-Y H:i:s",time());
+        $offset=get_option('gmt_offset');
+        $start_time=date("m-d-Y H:i:s",$task['status']['start_time']+$offset*60*60);
+        $end_time=date("m-d-Y H:i:s",time()+$offset*60*60);
         $running_time=($task['status']['run_time']-$task['status']['start_time']).'s';
         $remote_options= $task['options']['remote_options'];
         if($remote_options!==false)

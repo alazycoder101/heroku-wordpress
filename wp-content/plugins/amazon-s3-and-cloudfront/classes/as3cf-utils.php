@@ -8,6 +8,9 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  */
 
+use DeliciousBrains\WP_Offload_Media\Items\Item;
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
+
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -43,7 +46,40 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * @return string
 		 */
 		public static function trailingslash_prefix( $string ) {
-			return ltrim( trailingslashit( $string ), '/\\' );
+			return static::unleadingslashit( trailingslashit( trim( $string ) ) );
+		}
+
+		/**
+		 * Ensure string has a leading slash, like in absolute paths.
+		 *
+		 * @param $string
+		 *
+		 * @return string
+		 */
+		public static function leadingslashit( $string ) {
+			return '/' . static::unleadingslashit( $string );
+		}
+
+		/**
+		 * Ensure string has no leading slash, like in relative paths.
+		 *
+		 * @param $string
+		 *
+		 * @return string
+		 */
+		public static function unleadingslashit( $string ) {
+			return ltrim( trim( $string ), '/\\' );
+		}
+
+		/**
+		 * Ensure string has a leading and trailing slash, like in absolute directory paths.
+		 *
+		 * @param $string
+		 *
+		 * @return string
+		 */
+		public static function leadingtrailingslashit( $string ) {
+			return static::leadingslashit( trailingslashit( trim( $string ) ) );
 		}
 
 		/**
@@ -68,12 +104,29 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		public static function remove_size_from_filename( $url, $remove_extension = false ) {
 			$url = preg_replace( '/^(\S+)-[0-9]{1,4}x[0-9]{1,4}(\.[a-zA-Z0-9\.]{2,})?/', '$1$2', $url );
 
+			$url = apply_filters( 'as3cf_remove_size_from_filename', $url );
+
 			if ( $remove_extension ) {
 				$ext = pathinfo( $url, PATHINFO_EXTENSION );
 				$url = str_replace( ".$ext", '', $url );
 			}
 
 			return $url;
+		}
+
+		/**
+		 * Is the given size recognized as the full sized image?
+		 *
+		 * @param string|null $size
+		 *
+		 * @return bool
+		 */
+		public static function is_full_size( $size ) {
+			if ( empty( $size ) || in_array( $size, array( 'full', Item::primary_object_key() ) ) ) {
+				return true;
+			}
+
+			return false;
 		}
 
 		/**
@@ -98,9 +151,9 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Parses a URL into its components. Compatible with PHP < 5.4.7.
 		 *
-		 * @param  string $url       The URL to parse.
+		 * @param string $url       The URL to parse.
 		 *
-		 * @param int     $component PHP_URL_ constant for URL component to return.
+		 * @param int    $component PHP_URL_ constant for URL component to return.
 		 *
 		 * @return mixed An array of the parsed components, mixed for a requested component, or false on error.
 		 */
@@ -174,7 +227,7 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		public static function get_attachment_file_paths( $attachment_id, $exists_locally = true, $meta = false, $include_backups = true ) {
 			$file_path = get_attached_file( $attachment_id, true );
 			$paths     = array(
-				'original' => $file_path,
+				Item::primary_object_key() => $file_path,
 			);
 
 			if ( ! $meta ) {
@@ -190,11 +243,21 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			// If file edited, current file name might be different.
 			if ( isset( $meta['file'] ) ) {
 				$paths['file'] = str_replace( $file_name, wp_basename( $meta['file'] ), $file_path );
+
+				// However, if this file path turns out to be exactly the same as the primary objet key, we don't need it.
+				if ( $paths[ Item::primary_object_key() ] === $paths['file'] ) {
+					unset( $paths['file'] );
+				}
 			}
 
 			// Thumb
 			if ( isset( $meta['thumb'] ) ) {
 				$paths['thumb'] = str_replace( $file_name, $meta['thumb'], $file_path );
+			}
+
+			// Original Image (when large image scaled down to threshold size and used as "full").
+			if ( isset( $meta['original_image'] ) ) {
+				$paths['original_image'] = str_replace( $file_name, $meta['original_image'], $file_path );
 			}
 
 			// Sizes
@@ -220,9 +283,6 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			// Allow other processes to add files to be uploaded
 			$paths = apply_filters( 'as3cf_attachment_file_paths', $paths, $attachment_id, $meta );
 
-			// Remove duplicates
-			$paths = array_unique( $paths );
-
 			// Remove paths that don't exist
 			if ( $exists_locally ) {
 				foreach ( $paths as $key => $path ) {
@@ -236,41 +296,8 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		}
 
 		/**
-		 * Get an attachment's edited file paths.
-		 *
-		 * @param int $attachment_id
-		 *
-		 * @return array
-		 */
-		public static function get_attachment_edited_file_paths( $attachment_id ) {
-			$paths = self::get_attachment_file_paths( $attachment_id, false );
-			$paths = array_filter( $paths, function ( $path ) {
-				return preg_match( '/-e[0-9]{13}(?:-[0-9]{1,4}x[0-9]{1,4})?\./', wp_basename( $path ) );
-			} );
-
-			return $paths;
-		}
-
-		/**
-		 * Get an attachment's edited S3 keys.
-		 *
-		 * @param int   $attachment_id
-		 * @param array $provider_object
-		 *
-		 * @return array
-		 */
-		public static function get_attachment_edited_keys( $attachment_id, $provider_object ) {
-			$prefix = trailingslashit( pathinfo( $provider_object['key'], PATHINFO_DIRNAME ) );
-			$paths  = self::get_attachment_edited_file_paths( $attachment_id );
-			$paths  = array_map( function ( $path ) use ( $prefix ) {
-				return array( 'Key' => $prefix . wp_basename( $path ) );
-			}, $paths );
-
-			return $paths;
-		}
-
-		/**
 		 * Get intermediate size from attachment filename.
+		 * If multiple sizes exist with same filename, only the first size found will be returned.
 		 *
 		 * @param int    $attachment_id
 		 * @param string $filename
@@ -293,14 +320,24 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		 * Strip edited image suffix and extension from path.
 		 *
 		 * @param string $path
+		 * @param string $source_type
 		 *
 		 * @return string
 		 */
-		public static function strip_image_edit_suffix_and_extension( $path ) {
+		public static function strip_image_edit_suffix_and_extension( $path, $source_type = 'media-library' ) {
 			$parts    = pathinfo( $path );
 			$filename = preg_replace( '/-e[0-9]{13}/', '', $parts['filename'] );
+			$result   = str_replace( $parts['basename'], $filename, $path );
 
-			return str_replace( $parts['basename'], $filename, $path );
+			/**
+			 * Allow source type specific cleanup
+			 *
+			 * @param string $path
+			 * @param string $source_type
+			 *
+			 * @return string
+			 */
+			return apply_filters( 'as3cf_strip_image_edit_suffix_and_extension', $result, $source_type );
 		}
 
 		/**
@@ -461,19 +498,23 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 		/**
 		 * Ensure returned keys are for correct attachment.
 		 *
-		 * @param array $keys
+		 * @param int    $source_id
+		 * @param array  $keys
+		 * @param string $source_type
 		 *
 		 * @return array
 		 */
-		public static function validate_attachment_keys( $attachment_id, $keys ) {
-			$paths     = self::get_attachment_file_paths( $attachment_id, false );
-			$filenames = array_map( 'wp_basename', $paths );
+		public static function validate_attachment_keys( $source_id, $keys, $source_type ) {
+			if ( Media_Library_Item::source_type() === $source_type ) {
+				$paths     = self::get_attachment_file_paths( $source_id, false );
+				$filenames = array_map( 'wp_basename', $paths );
 
-			foreach ( $keys as $key => $value ) {
-				$filename = wp_basename( $value );
+				foreach ( $keys as $key => $value ) {
+					$filename = wp_basename( $value );
 
-				if ( ! in_array( $filename, $filenames ) ) {
-					unset( $keys[ $key ] );
+					if ( ! in_array( $filename, $filenames ) ) {
+						unset( $keys[ $key ] );
+					}
 				}
 			}
 
@@ -492,6 +533,131 @@ if ( ! class_exists( 'AS3CF_Utils' ) ) {
 			$domain = preg_replace( '@[^a-zA-Z0-9\.\-]@', '', $domain );
 
 			return $domain;
+		}
+
+		/**
+		 * Decode file name in potentially URL encoded URL path.
+		 *
+		 * @param string $file
+		 *
+		 * @return string
+		 */
+		public static function decode_filename_in_path( $file ) {
+			$url = parse_url( $file );
+
+			if ( ! isset( $url['path'] ) ) {
+				// Can't determine path, return original
+				return $file;
+			}
+
+			$file_name = wp_basename( $url['path'] );
+
+			if ( false === strpos( $file_name, '%' ) ) {
+				// File name not encoded, return original
+				return $file;
+			}
+
+			$decoded_file_name = rawurldecode( $file_name );
+
+			return str_replace( $file_name, $decoded_file_name, $file );
+		}
+
+		/**
+		 * Returns indexed array of full size paths, e.g. orig and edited.
+		 *
+		 * @param array $paths Associative array of sizes and relative paths
+		 *
+		 * @return array
+		 *
+		 * @see get_attachment_file_paths
+		 */
+		public static function fullsize_paths( $paths ) {
+			if ( is_array( $paths ) && ! empty( $paths ) ) {
+				return array_values( array_unique( array_intersect_key( $paths, array_flip( array( Item::primary_object_key(), 'file', 'full-orig', 'original_image' ) ) ) ) );
+			} else {
+				return array();
+			}
+		}
+
+		/**
+		 * Converts an array of upload file paths to all be relative paths.
+		 * If any path is not absolute or does begin with current uploads base dir it will not be altered.
+		 *
+		 * @param array $paths Array of upload file paths, absolute or relative.
+		 *
+		 * @return array Input array with values switched to relative upload file paths.
+		 */
+		public static function make_upload_file_paths_relative( $paths ) {
+			if ( empty( $paths ) ) {
+				return array();
+			}
+
+			if ( ! is_array( $paths ) ) {
+				$paths = array( $paths );
+			}
+
+			$uploads = wp_upload_dir();
+			$basedir = trailingslashit( $uploads['basedir'] );
+			$offset  = strlen( $basedir );
+
+			foreach ( $paths as $key => $path ) {
+				if ( 0 === strpos( $path, $basedir ) ) {
+					$paths[ $key ] = substr( $path, $offset );
+				}
+			}
+
+			return $paths;
+		}
+
+		/**
+		 * Encode file names according to RFC 3986 when generating urls
+		 * As per Amazon https://forums.aws.amazon.com/thread.jspa?threadID=55746#jive-message-244233
+		 *
+		 * @param string $file
+		 *
+		 * @return string Encoded filename
+		 */
+		public static function encode_filename_in_path( $file ) {
+			$url = parse_url( $file );
+
+			if ( ! isset( $url['path'] ) ) {
+				// Can't determine path, return original
+				return $file;
+			}
+
+			if ( isset( $url['query'] ) ) {
+				// Manually strip query string, as passing $url['path'] to basename results in corrupt � characters
+				$file_name = wp_basename( str_replace( '?' . $url['query'], '', $file ) );
+			} else {
+				$file_name = wp_basename( $file );
+			}
+
+			if ( false !== strpos( $file_name, '%' ) ) {
+				// File name already encoded, return original
+				return $file;
+			}
+
+			$encoded_file_name = rawurlencode( $file_name );
+
+			if ( $file_name === $encoded_file_name ) {
+				// File name doesn't need encoding, return original
+				return $file;
+			}
+
+			return str_replace( $file_name, $encoded_file_name, $file );
+		}
+
+		/**
+		 * Get a file's real mime type
+		 *
+		 * @param string $file_path
+		 *
+		 * @return string
+		 */
+		public static function get_mime_type( $file_path ) {
+			$file_type = wp_check_filetype_and_ext( $file_path, wp_basename( $file_path ) );
+
+			return $file_type['type'];
 		}
 	}
 }

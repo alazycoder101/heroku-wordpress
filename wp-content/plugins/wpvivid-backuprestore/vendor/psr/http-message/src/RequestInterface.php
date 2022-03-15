@@ -1,6 +1,6 @@
 <?php
 
-namespace Psr\Http\Message;
+namespace WPvividPsr\Http\Message;
 
 /**
  * Representation of an outgoing, client-side request.

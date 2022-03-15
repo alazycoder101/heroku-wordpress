@@ -2000,34 +2000,34 @@ msgid "Authentication failed, the format of the client_secrets.json file is inco
 msgstr "Autenticazione non riuscita, il formato del file client_secrets.json non è corretto. Si consiglia di cancellare e re-installare il plugin per ricreare il file."
 
 #: includes/customclass/class-wpvivid-google-drive.php:272
-msgid "You have authenticated the Google Drive account as your remote storage."
-msgstr "Hai autenticato l'account Google Drive come tuo storage remoto."
+msgid "You have authenticated the WPvividGoogle Drive account as your remote storage."
+msgstr "Hai autenticato l'account WPvividGoogle Drive come tuo storage remoto."
 
 #: includes/customclass/class-wpvivid-google-drive.php:292
-msgid "Google Drive"
-msgstr "Google Drive"
+msgid "WPvividGoogle Drive"
+msgstr "WPvividGoogle Drive"
 
 #: includes/customclass/class-wpvivid-google-drive.php:304
-msgid "Please read <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">this privacy policy</a> for use of our Google Drive authorization app (none of your backup data is sent to us)."
-msgstr "Si prega di leggere <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">questa informativa sulla privacy</a> per l'utilizzo della nostra applicazione di autorizzazione a Google Drive (nessuno dei dati di backup viene inviato a noi)."
+msgid "Please read <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">this privacy policy</a> for use of our WPvividGoogle Drive authorization app (none of your backup data is sent to us)."
+msgstr "Si prega di leggere <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">questa informativa sulla privacy</a> per l'utilizzo della nostra applicazione di autorizzazione a WPvividGoogle Drive (nessuno dei dati di backup viene inviato a noi)."
 
 #: includes/customclass/class-wpvivid-google-drive.php:307
 #: includes/customclass/class-wpvivid-google-drive.php:435
-msgid "Enter Your Google Drive Information"
-msgstr "Inserisci le informazioni del tuo account Google Drive"
+msgid "Enter Your WPvividGoogle Drive Information"
+msgstr "Inserisci le informazioni del tuo account WPvividGoogle Drive"
 
 #: includes/customclass/class-wpvivid-google-drive.php:314
 #: includes/customclass/class-wpvivid-google-drive.php:442
-msgid "Enter a unique alias: e.g. Google Drive-001"
-msgstr "Inserisci un alias univoco: ad esempio Google Drive-001"
+msgid "Enter a unique alias: e.g. WPvividGoogle Drive-001"
+msgstr "Inserisci un alias univoco: ad esempio WPvividGoogle Drive-001"
 
 #: includes/customclass/class-wpvivid-google-drive.php:364
-msgid "Authenticate with Google Drive"
-msgstr "Autenticati con Google Drive"
+msgid "Authenticate with WPvividGoogle Drive"
+msgstr "Autenticati con WPvividGoogle Drive"
 
 #: includes/customclass/class-wpvivid-google-drive.php:369
-msgid "Click the button to get Google authentication and add it to the storage list below."
-msgstr "Clicca il pulsante per ottenere il codice di autenticazione di Google e aggiungerlo alla lista degli storage qui di seguito."
+msgid "Click the button to get WPvividGoogle authentication and add it to the storage list below."
+msgstr "Clicca il pulsante per ottenere il codice di autenticazione di WPvividGoogle e aggiungerlo alla lista degli storage qui di seguito."
 
 #: includes/customclass/class-wpvivid-one-drive.php:240
 msgid "You have authenticated the Microsoft OneDrive account as your remote storage."

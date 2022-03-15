@@ -1,9 +1,9 @@
 <?php
-namespace GuzzleHttp;
+namespace WPvividGuzzleHttp;
 
-use Psr\Http\Message\MessageInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use WPvividPsr\Http\Message\MessageInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
 
 /**
  * Formats log messages using variable substitutions for requests, responses,

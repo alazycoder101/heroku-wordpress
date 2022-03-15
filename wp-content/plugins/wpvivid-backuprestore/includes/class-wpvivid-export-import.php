@@ -118,7 +118,7 @@ class WPvivid_Export_Import
                 <div style="box-sizing: border-box;">
                     <div class="wpvivid-text-space-bottom"><?php _e('Export posts or pages with images in bulk.', 'wpvivid-backuprestore'); ?>
                         <span class="wpvivid-feature-pro">
-                            <a href="https://wpvivid.com/export-content" target="_blank" style="text-decoration: none;"><?php _e('Learn more', 'wpvivid-backuprestore'); ?></a>
+                            <a href="https://docs.wpvivid.com/export-content.html" target="_blank" style="text-decoration: none;"><?php _e('Learn more', 'wpvivid-backuprestore'); ?></a>
                         </span>
                     </div>
                     <div class="wpvivid-text-space-bottom"><?php _e('This will contain all of your posts, pages, comments, terms and images (original images, featured images and thumbnails).', 'wpvivid-backuprestore'); ?></div>
@@ -1553,14 +1553,14 @@ class WPvivid_Export_Import
                 <div style="margin-bottom: 10px;">
                     <label>
                         <input type="checkbox" id="wpvivid_overwrite_existing" />
-                        <span><strong><?php _e('Overwrite existing pages', 'wpvivid-backuprestore'); ?></strong></span>
+                        <span><strong id="wpvivid_import_type"><?php _e('Overwrite existing pages', 'wpvivid-backuprestore'); ?></strong></span>
                     </label>
                 </div>
                 <div style="margin-bottom: 10px;">
                     <span><?php _e('With this option checked, Pages/posts already existing will be overwritten with the updated ones in an import.', 'wpvivid-backuprestore'); ?></span>
                 </div>
-                <input class="button button-primary" type="button" id="wpvivid_start_import" value="<?php esc_attr_e('Start to Import', 'wpvivid-backuprestore'); ?>" />
-                <input class="button button-primary" type="button" id="wpvivid_rechoose_import_file" value="<?php esc_attr_e('Back to Import Page', 'wpvivid-backuprestore'); ?>" />
+                <input class="button button-primary" type="button" id="wpvivid_start_import" value="<?php esc_attr_e('Import', 'wpvivid-backuprestore'); ?>" />
+                <input class="button button-primary" type="button" id="wpvivid_rechoose_import_file" value="<?php esc_attr_e('Back', 'wpvivid-backuprestore'); ?>" />
             </div>
             <div id="wpvivid_import_step3" style="display: none;">
                 <div class="postbox wpvivid-import-log" id="wpvivid_import_log" style="margin-top: 10px; margin-bottom: 0;"></div>
@@ -1796,8 +1796,10 @@ class WPvivid_Export_Import
             function wpvivid_import_step2(data)
             {
                 jQuery('#wpvivid_import_file_data').html('');
+                var import_type = 'pages';
                 jQuery.each(data, function (index, value)
                 {
+                    import_type = value['export_type'];
                     import_file_name=value['file_name'];
                     var list = "";
                     var myDate = new Date(value['time']*1000);
@@ -1808,6 +1810,8 @@ class WPvivid_Export_Import
                     list += "<li>Export time: " + myDate.toLocaleString('en-us') + "</li>";
                     jQuery("#wpvivid_import_file_data").append("<ul>"+ list +"</ul>");
                 });
+
+                jQuery('#wpvivid_import_type').html('Overwrite existing '+import_type+'s');
 
                 jQuery('#wpvivid_import_step1').hide();
                 jQuery('#wpvivid_import_step2').show();

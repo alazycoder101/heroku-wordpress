@@ -24,7 +24,12 @@ class AsgarosForumActivity {
     public function show_activity() {
         $activity_days = (int) $this->asgarosforum->options['activity_days'];
         $activity_days_i18n = number_format_i18n($activity_days);
-        echo '<div class="main-description">'.sprintf(_n('Activity in the last day.', 'Activity in the last %s days.', $activity_days, 'asgaros-forum'), $activity_days_i18n).'</div>';
+
+		$activity_days_singular = __('Activity in the last day.', 'asgaros-forum');
+		$activity_days_plural = sprintf(__('Activity in the last %s days.', 'asgaros-forum'), $activity_days_i18n);
+		$activity_days_string = ($activity_days === 1) ? $activity_days_singular : $activity_days_plural;
+
+        echo '<div class="main-description">'.sprintf($activity_days_string, $activity_days_i18n).'</div>';
 
         $pagination_rendering = $this->asgarosforum->pagination->renderPagination('activity');
         $paginationRendering = ($pagination_rendering) ? '<div class="pages-and-menu">'.$pagination_rendering.'<div class="clear"></div></div>' : '';
@@ -33,14 +38,14 @@ class AsgarosForumActivity {
         $data = $this->load_activity_data();
 
         if (!empty($data)) {
-            $date_today = date($this->asgarosforum->date_format);
-            $date_yesterday = date($this->asgarosforum->date_format, strtotime('-1 days'));
+            $date_today = gmdate($this->asgarosforum->date_format);
+            $date_yesterday = gmdate($this->asgarosforum->date_format, strtotime('-1 days'));
             $last_time = false;
             $first_group = true;
 
             foreach ($data as $activity) {
-                $current_time = date($this->asgarosforum->date_format, strtotime($activity->date));
-                $human_time_diff = sprintf(__('%s ago', 'asgaros-forum'), human_time_diff(strtotime($activity->date), current_time('timestamp')));
+                $current_time = gmdate($this->asgarosforum->date_format, strtotime($activity->date));
+                $human_time_diff = $this->asgarosforum->get_activity_timestamp($activity->date, 'relative');
 
                 if ($current_time == $date_today) {
                     $current_time = __('Today', 'asgaros-forum');
@@ -59,7 +64,7 @@ class AsgarosForumActivity {
                         echo '</div>';
                     }
 
-                    echo '<div class="title-element">'.$current_time.'</div>';
+                    echo '<div class="title-element">'.esc_html($current_time).'</div>';
                     echo '<div class="content-container">';
                 }
 
@@ -71,15 +76,15 @@ class AsgarosForumActivity {
                     $link = $this->asgarosforum->get_link('topic', $activity->parent_id);
                     $link_html = '<a href="'.$link.'">'.$name_topic.'</a>';
                     echo '<div class="content-element activity-element">';
-                    echo '<span class="activity-icon fas fa-comments '.$read_status.'"></span>';
-                    echo sprintf(__('New topic %s created by %s.', 'asgaros-forum'), $link_html, $name_author).' <i class="activity-time">'.$human_time_diff.'</i>';
+                    echo '<span class="activity-icon fas fa-comments '.esc_attr($read_status).'"></span>';
+                    echo sprintf(__('New topic %s created by %s.', 'asgaros-forum'), $link_html, $name_author).' <i class="activity-time">'.esc_html($this->asgarosforum->get_activity_timestamp($activity->date)).'</i>';
                     echo '</div>';
                 } else {
                     $link = $this->asgarosforum->rewrite->get_post_link($activity->id, $activity->parent_id);
                     $link_html = '<a href="'.$link.'">'.$name_topic.'</a>';
                     echo '<div class="content-element activity-element">';
-                    echo '<span class="activity-icon fas fa-comment '.$read_status.'"></span>';
-                    echo sprintf(__('%s replied in %s.', 'asgaros-forum'), $name_author, $link_html).' <i class="activity-time">'.$human_time_diff.'</i>';
+                    echo '<span class="activity-icon fas fa-comment '.esc_attr($read_status).'"></span>';
+                    echo sprintf(__('%s replied in %s.', 'asgaros-forum'), $name_author, $link_html).' <i class="activity-time">'.esc_html($this->asgarosforum->get_activity_timestamp($activity->date)).'</i>';
                     echo '</div>';
                 }
             }
@@ -95,7 +100,7 @@ class AsgarosForumActivity {
         echo $paginationRendering;
     }
 
-    public function load_activity_data($count_all = false) {
+    public function load_activity_data() {
         $ids_categories = $this->asgarosforum->content->get_categories_ids();
 
         if (empty($ids_categories)) {
@@ -106,16 +111,31 @@ class AsgarosForumActivity {
             // Calculate activity end-time.
             $time_current = time();
             $time_end = $time_current - ((int) $this->asgarosforum->options['activity_days'] * 24 * 60 * 60);
-            $time_end = date('Y-m-d H:i:s', $time_end);
+            $time_end = gmdate('Y-m-d H:i:s', $time_end);
 
-            if ($count_all) {
-                return $this->asgarosforum->db->get_var("SELECT COUNT(*) FROM {$this->asgarosforum->tables->posts} p, {$this->asgarosforum->tables->topics} t, (SELECT id FROM {$this->asgarosforum->tables->forums} WHERE parent_id IN ({$ids_categories})) f WHERE p.parent_id = t.id AND t.parent_id = f.id AND t.approved = 1 AND p.date > '{$time_end}';");
-            } else {
-                $start = $this->asgarosforum->current_page * $this->asgarosforum->options['activities_per_page'];
-                $end = $this->asgarosforum->options['activities_per_page'];
+			// Build query-part for pagination.
+			$number_of_topics = $this->asgarosforum->options['activities_per_page'];
+			$topic_offset = $this->asgarosforum->current_page * $number_of_topics;
+			$query_limit = $this->asgarosforum->db->prepare("LIMIT %d, %d", $topic_offset, $number_of_topics);
 
-                return $this->asgarosforum->db->get_results("SELECT p.id, p.parent_id, p.date, p.author_id, t.name FROM {$this->asgarosforum->tables->posts} p, {$this->asgarosforum->tables->topics} t, (SELECT id FROM {$this->asgarosforum->tables->forums} WHERE parent_id IN ({$ids_categories})) f WHERE p.parent_id = t.id AND t.parent_id = f.id AND t.approved = 1 AND p.date > '{$time_end}' ORDER BY p.id DESC LIMIT {$start}, {$end};");
-            }
+			return $this->asgarosforum->db->get_results("SELECT p.id, p.parent_id, p.date, p.author_id, t.name FROM {$this->asgarosforum->tables->posts} p, {$this->asgarosforum->tables->topics} t, (SELECT `id` FROM {$this->asgarosforum->tables->forums} WHERE parent_id IN ({$ids_categories})) f WHERE p.parent_id = t.id AND t.parent_id = f.id AND t.approved = 1 AND p.date > '{$time_end}' ORDER BY p.id DESC {$query_limit};");
+        }
+    }
+
+	public function count_activity_data() {
+        $ids_categories = $this->asgarosforum->content->get_categories_ids();
+
+        if (empty($ids_categories)) {
+            return 0;
+        } else {
+            $ids_categories = implode(',', $ids_categories);
+
+            // Calculate activity end-time.
+            $time_current = time();
+            $time_end = $time_current - ((int) $this->asgarosforum->options['activity_days'] * 24 * 60 * 60);
+            $time_end = gmdate('Y-m-d H:i:s', $time_end);
+
+            return $this->asgarosforum->db->get_var("SELECT COUNT(*) FROM {$this->asgarosforum->tables->posts} p, {$this->asgarosforum->tables->topics} t, (SELECT `id` FROM {$this->asgarosforum->tables->forums} WHERE parent_id IN ({$ids_categories})) f WHERE p.parent_id = t.id AND t.parent_id = f.id AND t.approved = 1 AND p.date > '{$time_end}';");
         }
     }
 

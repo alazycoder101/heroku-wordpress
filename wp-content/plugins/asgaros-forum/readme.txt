@@ -3,9 +3,9 @@ Contributors: Asgaros, qualmy91
 Donate link: https://www.asgaros.de/donate/
 Tags: forum, forums, discussion, multisite, community, bulletin, board, asgaros, support
 Requires at least: 4.9
-Tested up to: 5.6
+Tested up to: 5.9
 Requires PHP: 5.2
-Stable tag: 1.15.9
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,14 +79,102 @@ You can find a list of available hooks and filters on this site:
 [https://www.asgaros.de/support/?view=thread&id=407](https://www.asgaros.de/support/?view=thread&id=407).
 
 == Screenshots ==
-1. The forum overview.
-2. The thread overview.
-3. The thread view.
-4. Creating a new thread.
-5. Manage forums in the administration area.
-6. Manage general options.
+1. The forum overview
+2. The topic overview
+3. The topic view
+4. Creating a new topic
+5. Manage forums in the administration area
+6. Manage general options
 
 == Changelog ==
+= 2.0.0 =
+* Revised pagination
+* Added: Option to hide names of online users in statistics
+* Added: Option to define units for maximum file-size of uploads
+* Added: Forum name to notifications
+* Added: asgarosforum_render_custom_forum_element action
+* Added: asgarosforum_overwrite_forum_status filter
+* Added: asgarosforum_overwrite_post_counter_cache filter
+* Added: asgarosforum_overwrite_topic_counter_cache filter
+* Added: asgarosforum_overwrite_lastpost_forum_cache filter
+* Added: asgarosforum_overwrite_get_topics_query filter
+* Added: asgarosforum_overwrite_get_sticky_topics_query filter
+* Added: asgarosforum_render_custom_forum_element_decision filter
+* Fixed: SQL injection vulnerability in the reaction-functionality
+* Fixed: Usergroup icons could not get saved correctly
+* Fixed: Send notifications to forum-subscribers when there is a new blog-post-topic
+* Fixed: Send notification to siteowner when there is a new unapproved blog-post-topic
+* Fixed: HTML from message-templates got removed after saving them
+* Changed: Move settings related to statistics to its own section
+* Changed: Improve instructions in notifications-template
+* Changed: Improved multiple strings for better clarifications
+* Performance improvements and code optimizations
+* Updated: Font Awesome version 5.15.4
+* Compatibility with WordPress 5.9
+* Compatibility with PHP 8.1
+= 1.15.20 =
+* Fixed: Broken links when URLs contain special characters
+* Fixed: Add missing escaping for output data
+= 1.15.19 =
+* Fixed: Add missing escaping for output data
+= 1.15.18 =
+* Fixed: Add missing sanitizing for input data
+* Fixed: Add missing escaping for output data
+* Fixed: Warnings related to the currently implemented security-improvements
+* Fixed: Forum-icons could not get saved correctly
+* Fixed: Correctly save allowed html-tags for signatures in forum-settings
+* Removed: [Advertising functionality](https://www.asgaros.de/support/topic/removal-of-advertising-functionality/)
+* Performance improvements and code optimizations
+= 1.15.17 =
+* Fixed: Add missing sanitizing for input data
+* Fixed: Broken output due to wrong escape-functions
+= 1.15.16 =
+* Fixed: Display and calculation-issues related to time and timezones
+* Fixed: Ensure safe local redirects within the forum
+* Fixed: Add missing sanitizing for input data
+* Fixed: Add missing escaping for output data
+* Changed: Added some clarifying comments for translators
+* Performance improvements and code optimizations
+= 1.15.15 =
+* Fixed: SQL injection vulnerability in the approval-functionality
+* Fixed: Prevent cross-site request forgery when creating, editing or deleting posts and topics
+* Fixed: Add missing sanitizing for input data
+* Fixed: Use sanitizing instead of escaping functions for input data
+* Fixed: Add missing escaping for output data
+= 1.15.14 =
+* Fixed: Escape forum-name properly in backend
+= 1.15.13 =
+* Fixed: Multiple Unauthenticated SQL Injection vulnerabilities in the subscription-logic
+= 1.15.12 =
+* Added: asgarosforum_filter_before_post_submit filter
+* Added: asgarosforum_filter_before_edit_post_submit filter
+* Added: asgarosforum_filter_before_topic_submit filter
+* Fixed: Warning in permalink-logic when a deleted post contains the forum-shortcode
+* Fixed: Display issues with some themes
+* Improved compatibility with Sassy Social Share
+* Compatibility with WordPress 5.8
+= 1.15.11 =
+* Added: Option to limit the number of awarded points for likes in MyCred integration
+* Added: title-attribute to spoiler-shortcode
+* Added: asgarosforum_filter_username filter
+* Added: asgarosforum_filter_error filter
+* Added: asgarosforum_filter_forum_status_options filter
+* Fixed: Hide empty paragraphs for topics created via WordPress posts
+* Fixed: pre and code-tags were breaking the layout
+* Fixed: Answer-options in polls were ordered randomly on some server-configurations
+* Fixed: Added missing translation strings
+* Updated: Font Awesome version 5.15.3
+* Compatibility with WordPress 5.7
+= 1.15.10 =
+* Added: Option to show usernames in reactions
+* Added: Option to hide site-admins in memberslist
+* Added: Option to change format for activity-timestamps
+* Added: asgarosforum_filter_profile_row filter
+* Fixed: Make it possible to delete empty topics
+* Fixed: Errors when a topic is empty due to problems during post-creation
+* Fixed: Display issues with some themes
+* Changed: Moved post-counter and report-button to the top
+* Performance improvements and code optimizations
 = 1.15.9 =
 * Added: asgarosforum_filter_show_header filter
 * Added: asgarosforum_filter_upload_folder filter

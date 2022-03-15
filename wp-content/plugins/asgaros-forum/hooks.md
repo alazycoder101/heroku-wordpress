@@ -246,8 +246,9 @@ Make some action after the content header
 
 ## Filters
 
+- [asgarosforum_filter_username](#asgarosforum_filter_username)
 - asgarosforum_filter_login_message
-- asgarosforum_filter_post_username
+- [asgarosforum_filter_post_username](#asgarosforum_filter_post_username)
 - asgarosforum_filter_post_content
 - asgarosforum_filter_post_shortcodes
 - asgarosforum_filter_editor_settings
@@ -262,6 +263,9 @@ Make some action after the content header
 - asgarosforum_filter_insert_custom_validation
 - asgarosforum_filter_subject_before_insert
 - asgarosforum_filter_content_before_insert
+- [asgarosforum_filter_before_post_submit](#asgarosforum_filter_before_post_submit)
+- [asgarosforum_filter_before_edit_post_submit](#asgarosforum_filter_before_edit_post_submit)
+- [asgarosforum_filter_before_topic_submit](#asgarosforum_filter_before_topic_submit)
 - asgarosforum_filter_widget_title_length
 - asgarosforum_widget_excerpt_length
 - asgarosforum_subscriber_mails_new_post
@@ -288,13 +292,100 @@ Make some action after the content header
 - asgarosforum_widget_recent_posts_custom_content
 - asgarosforum_widget_recent_topics_custom_content
 - asgarosforum_title_separator
+- [asgarosforum_filter_profile_row](#asgarosforum_filter_profile_row)
 - asgarosforum_signature
 - [asgarosforum_filter_meta_post_type](#asgarosforum_filter_meta_post_type)
 - [asgarosforum_filter_upload_folder](#asgarosforum_filter_upload_folder)
 
+### asgarosforum_filter_username
+
+#### Description
+Change the username to a custom name. 
+
+#### Parameters
+
+##### $user_name
+Username that will be shown in forum.
+
+##### $user_object
+User Object of User.
+
+#### Usage
+
+```php
+<?php
+   add_filter('asgarosforum_filter_username', 'function_name', 10, 2);
+?>
+```
+
+#### Examples
+
+```php
+<?php
+   // Add filter to customize username
+   add_filter('asgarosforum_filter_username', 'show_first_name', 10, 2);
+
+   function show_first_name($username, $user_object){
+   
+      // get first name of user
+      $new_username = $user_object->first_name;
+      
+      // Set default name if user didn't set a first name
+      if (empty($new_username)){
+        $new_username = $username;
+      }
+      
+      return $new_username;
+   }
+?>
+```
+
+#### Source
+
+[forum.php](includes/forum.php)
+[forum-profile.php](includes/forum-profile.php)
+
 ### asgarosforum_filter_login_message
 
 ### asgarosforum_filter_post_username
+
+#### Description
+Change Username in a post. You can also use it to add some further information after the username
+
+#### Usage
+
+```php
+<?php
+   add_filter('asgarosforum_filter_post_username', 'function_name', 10, 2);
+?>
+```
+
+#### Examples
+
+```php
+<?php
+   // Add filter to customize username
+   add_filter('asgarosforum_filter_post_username', 'add_custom_value', 10, 2);
+
+   function add_custom_value($username, $user_id){
+      // Get meta data of user
+      $user_meta=get_userdata($user_id);
+      
+      // Get user roles of user and create string
+      $user_roles= implode(', ', $user_meta->roles) . " ";
+     
+      // Add user role to username
+      $username = $username . $user_roles;
+      
+      // Return string to render
+      return $username;
+   }
+?>
+```
+
+#### Source
+
+[post-element.php](includes/post-element.php)
 
 ### asgarosforum_filter_post_content
 
@@ -323,6 +414,182 @@ Make some action after the content header
 ### asgarosforum_filter_subject_before_insert
 
 ### asgarosforum_filter_content_before_insert
+
+### asgarosforum_filter_before_post_submit
+
+#### Description
+Adjust a post before it is being submitted or cancel the submission.
+
+#### Parameters
+
+##### $add_post
+
+Array with all information of the post:
+
+```php
+$add_post = array(
+                'topic'         => $this->asgarosforum->current_topic, // topic id
+                'forum'         => $this->asgarosforum->current_forum, // forum id
+                'content'       => $this->data_content, // content of the post
+                'author'        => $author_id, // author id
+                'upload_list'   => $upload_list, // list of files to upload
+                'warning'       => null,  // String to output as warning
+                'error'         => null, // String to output as error
+                'redirect'      => null, // URL to redirect
+                'add_post'      => true, // Boolean if post will be added
+            );
+```
+
+#### Usage
+
+```php
+<?php
+    add_filter ( 'asgarosforum_filter_before_post_submit', 'function_name');
+?>
+```
+
+#### Examples
+
+```php
+<?php
+    // Reject post if content is too long
+    add_filter ( 'asgarosforum_filter_before_post_submit', 'reject_long_posts');
+
+    function reject_long_posts( $add_post){
+
+        // Check lenght of content
+        if (strlen($add_post['content']) > 1000){
+            // Set error message
+            $add_post['error'] = "Your post is too long!!";
+            // Dump the submitted post
+            $add_post['add_post'] = false;
+        }
+        
+        return $add_post;
+    }
+?>
+```
+
+#### Source
+
+[forum-content.php](includes/forum-content.php)
+
+### asgarosforum_filter_before_edit_post_submit
+
+#### Description
+Adjust an edited post before it is being submitted or cancel the submission.
+
+#### Parameters
+
+##### $edit_post
+
+Array with all information of the post:
+
+```php
+$edit_post = array(
+                'subject'       => $this->data_content, // subject of the topic
+                'content'       => $this->data_content, // content of the post
+                'editor'        => $this->asgarosforum->permissions->currentUserID,, // editor id
+                'upload_list'   => $upload_list, // list of files to upload
+                'warning'       => null,  // String to output as warning
+                'error'         => null, // String to output as error
+                'redirect'      => null, // URL to redirect
+                'edit_post'      => true, // Boolean if post will be added
+            );
+```
+
+#### Usage
+
+```php
+<?php
+    add_filter ( 'asgarosforum_filter_before_edit_post_submit', 'function_name');
+?>
+```
+
+#### Examples
+
+```php
+<?php
+    // Reject post if content is too long
+    add_filter ( 'asgarosforum_filter_before_edit_post_submit', 'reject_long_posts');
+
+    function reject_long_posts( $edit_post){
+
+        // Check lenght of content
+        if (strlen($edit_post['content']) > 1000){
+            // Set error message
+            $edit_post['error'] = "Your post is too long!!";
+            // Dump the submitted post
+            $edit_post['edit_post'] = false;
+        }
+        
+        return $edit_post;
+    }
+?>
+```
+
+#### Source
+
+[forum-content.php](includes/forum-content.php)
+
+### asgarosforum_filter_before_topic_submit
+
+#### Description
+Adjust a topic before it is being submitted or cancel the submission.
+
+#### Parameters
+
+##### $add_topic
+
+Array with all information of the topic:
+
+```php
+$add_topic = array(
+                'forum'         => $this->asgarosforum->current_forum, // forum id
+                'subject'       => $this->data_subject, // subject of topic
+                'content'       => $this->data_content, // content of the topic
+                'author'        => $author_id, // author id
+                'upload_list'   => $upload_list, // list of files to upload
+                'warning'       => null,  // String to output as warning
+                'error'         => null, // String to output as error
+                'redirect'      => null, // URL to redirect
+                'add_topic'      => true, // Boolean if topic will be added
+            );
+```
+
+#### Usage
+
+```php
+<?php
+    add_filter ( 'asgarosforum_filter_before_topic_submit', 'function_name');
+?>
+```
+
+#### Examples
+
+```php
+<?php
+    // Reject topic if content is too short
+    add_filter ( 'asgarosforum_filter_before_topic_submit', 'reject_long_posts');
+
+    function reject_long_posts( $add_topic){
+
+        // Check lenght of content
+        if (strlen($add_topic['content']) < 50){
+            // Set error message
+            $add_topic['error'] = "Your post is too short!!";
+            // Dump the submitted topic
+            $add_topic['add_topic'] = false;
+        }
+        
+        return $add_topic;
+    }
+?>
+```
+
+#### Source
+
+[forum-content.php](includes/forum-content.php)
 
 ### asgarosforum_filter_widget_title_length
 
@@ -538,6 +805,81 @@ Names of the standard menu entries:
 ### asgarosforum_widget_recent_topics_custom_content
 
 ### asgarosforum_title_separator
+
+### asgarosforum_filter_profile_row
+
+#### Description
+Filters the rows in the Asgaros Forum Profile before they are getting rendered
+
+#### Parameters
+
+##### $profile_rows
+
+Array with profile rows as arrays:
+
+```php
+$profile_rows = array(
+      'name' => array(
+                    'title'     =>  'Title of profile row'
+                    'value'     =>  'Value of profile row',
+                    'type'     =>  '',  // optional type of profile row. 'usergroup' or ''
+                ),
+);
+```
+
+Names of the standard rows:
+
+| name         | Description          |
+|--------------|----------------------|
+| first_name   | First name of user   |
+| usergroup    | Group of user        |
+| website      | Website of user      |
+| last_seen    | Last seen of user    |
+| member_since | User is member since |
+| bio          | Excerpt of users bio |
+| signature    | Users signature      |
+
+
+##### $userData
+
+WP_User object of the profile to render
+
+#### Usage
+
+```php
+<?php
+    add_filter ( 'asgarosforum_filter_profile_row', 'function_name', 10, 2);
+?>
+```
+
+#### Examples
+
+```php
+<?php
+    // Add filter to add custom profile row
+    add_filter ( 'asgarosforum_filter_profile_row', 'my_custom_profile_row', 10, 2);
+
+    // Function to customize the forum menu
+    function my_custom_profile_row( $profile_rows, $userData){
+
+        // Create new profile row
+        $profile_row = array(
+                          'title'    =>  'Last Name',
+                          'value'    =>  $userData->last_name,
+                      );
+
+
+        // Add row at beginning of the user profile
+        array_unshift( $profile_rows, $profile_row);
+
+        return $profile_rows;
+    }
+?>
+```
+
+#### Source
+
+[forum-profile.php](includes/forum-profile.php)
 
 ### asgarosforum_signature
 

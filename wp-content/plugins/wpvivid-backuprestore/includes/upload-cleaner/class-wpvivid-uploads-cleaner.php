@@ -1027,11 +1027,11 @@ class WPvivid_Uploads_Cleaner
 
         $menu['id']='wpvivid_admin_menu_cleaner';
         $menu['parent']='wpvivid_admin_menu';
-        $menu['title']=__('Image Cleaner (Beta)', 'wpvivid-backuprestore');
+        $menu['title']=__('Image Cleaner', 'wpvivid-backuprestore');
         $menu['tab']= 'admin.php?page='.apply_filters('wpvivid_white_label_plugin_name', 'wpvivid-cleaner');
         $menu['href']=$admin_url . 'admin.php?page='.apply_filters('wpvivid_white_label_plugin_name', 'wpvivid-cleaner');
         $menu['capability']='administrator';
-        $menu['index']=3;
+        $menu['index']=4;
         $toolbar_menus[$menu['parent']]['child'][$menu['id']]=$menu;
         return $toolbar_menus;
     }
@@ -1040,10 +1040,10 @@ class WPvivid_Uploads_Cleaner
     {
         $submenu['parent_slug']=apply_filters('wpvivid_white_label_slug', WPVIVID_PLUGIN_SLUG);
         $submenu['page_title']= apply_filters('wpvivid_white_label_display', 'WPvivid Backup');
-        $submenu['menu_title']=__('Image Cleaner (Beta)', 'wpvivid-backuprestore');
+        $submenu['menu_title']=__('Image Cleaner', 'wpvivid-backuprestore');
         $submenu['capability']='administrator';
         $submenu['menu_slug']=strtolower(sprintf('%s-cleaner', apply_filters('wpvivid_white_label_slug', 'wpvivid')));
-        $submenu['index']=3;
+        $submenu['index']=4;
         $submenu['function']=array($this, 'display');
         $submenus[$submenu['menu_slug']]=$submenu;
         return $submenus;
@@ -1075,7 +1075,7 @@ class WPvivid_Uploads_Cleaner
         <div class="wrap" style="max-width:1720px;">
             <h1>
                 <?php
-                echo __('WPvivid Image Cleaner (Beta)', 'wpvivid');
+                echo __('WPvivid Image Cleaner', 'wpvivid');
                 ?>
             </h1>
             <?php
@@ -1089,15 +1089,14 @@ class WPvivid_Uploads_Cleaner
             $this->main_tab->add_tab('Isolated Media','isolate',array($this, 'output_isolate'), $args);
             //$this->main_tab->add_tab('Database','database',array($this, 'output_database'), $args);
             $this->main_tab->display();
-
             if (isset($_GET['tab']))
             {
-                $tab=$_GET['tab'];
+                $tab=esc_html($_GET['tab']);
                 ?>
                 <script>
                     jQuery(document).ready(function($)
                     {
-                        jQuery( document ).trigger( '<?php echo $this->main_tab->container_id ?>-show','<?php echo $tab?>');
+                        jQuery( document ).trigger( '<?php echo $this->main_tab->container_id; ?>-show','<?php echo $tab; ?>');
                     });
                 </script>
                 <?php
@@ -2356,7 +2355,26 @@ class WPvivid_Uploads_Cleaner
                 else
                     $uploads_files[$post]=$media;
             }
+
+            $media=$uploads_scanner->get_media_from_post_meta_elementor($post);
+
+            if(!empty($media))
+            {
+                if(isset($uploads_files[$post]))
+                    $uploads_files[$post]=array_merge($uploads_files[$post],$media);
+                else
+                    $uploads_files[$post]=$media;
+            }
             //$uploads_ids=array_merge($uploads_ids,$media);
+            $media=$uploads_scanner->get_media_from_post_custom_meta($post);
+
+            if(!empty($media))
+            {
+                if(isset($uploads_files[$post]))
+                    $uploads_files[$post]=array_merge($uploads_files[$post],$media);
+                else
+                    $uploads_files[$post]=$media;
+            }
         }
 
         $start+=$limit;
@@ -2475,6 +2493,16 @@ class WPvivid_Uploads_Cleaner
             }
 
             $media=$uploads_scanner->get_media_from_post_meta_elementor($post);
+
+            if(!empty($media))
+            {
+                if(isset($uploads_files[$post]))
+                    $uploads_files[$post]=array_merge($uploads_files[$post],$media);
+                else
+                    $uploads_files[$post]=$media;
+            }
+
+            $media=$uploads_scanner->get_media_from_post_custom_meta($post);
 
             if(!empty($media))
             {
@@ -2777,6 +2805,7 @@ class WPvivid_Uploads_Cleaner
         {
             $regex[]='#'.$file.'$#';
         }
+        $regex[]='#webp$#';
         return $regex;
     }
 
@@ -2831,7 +2860,7 @@ class WPvivid_Uploads_Cleaner
 
             update_option('wpvivid_uc_exclude_files_regex',$options);
 
-            $scanner->delete_selected_files_list($selected_list);
+            $scanner->delete_selected_files_list($sanitize_list);
         }
 
 

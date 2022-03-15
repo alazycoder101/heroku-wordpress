@@ -4,11 +4,11 @@ if (!defined('ABSPATH')) exit;
 
 class AsgarosForumAdmin {
     private $asgarosforum = null;
-    var $saved = false;
-    var $error = false;
-    var $option_views = false;
+    public $saved = false;
+    public $error = false;
+    public $option_views = false;
 
-    function __construct($object) {
+    public function __construct($object) {
         $this->asgarosforum = $object;
 
         // Set the views for the available options.
@@ -29,7 +29,7 @@ class AsgarosForumAdmin {
         add_action('manage_users_custom_column', array($this, 'manage_users_custom_column'), 10, 3);
     }
 
-    function set_option_views() {
+    public function set_option_views() {
         $this->option_views = array(
             'general' => array(
                 'label' => __('General', 'asgaros-forum'),
@@ -83,10 +83,6 @@ class AsgarosForumAdmin {
                 'label' => __('Activity', 'asgaros-forum'),
                 'icon' => 'fas fa-bullhorn'
             ),
-            'ads' => array(
-                'label' => __('Ads', 'asgaros-forum'),
-                'icon' => 'fas fa-ad'
-            ),
             'polls' => array(
                 'label' => __('Polls', 'asgaros-forum'),
                 'icon' => 'fas fa-poll-h'
@@ -98,18 +94,22 @@ class AsgarosForumAdmin {
             'reputation' => array(
                 'label' => __('Reputation', 'asgaros-forum'),
                 'icon' => 'fas fa-medal'
+            ),
+            'statistics' => array(
+                'label' => __('Statistics', 'asgaros-forum'),
+                'icon' => 'fas fa-chart-pie'
             )
         );
     }
 
-    function render_options_header($option) {
+    public function render_options_header($option) {
         echo '<div class="settings-header">';
-            echo '<span class="'.$this->option_views[$option]['icon'].'"></span>';
-            echo $this->option_views[$option]['label'];
+            echo '<span class="'.esc_attr($this->option_views[$option]['icon']).'"></span>';
+            echo esc_html($this->option_views[$option]['label']);
         echo '</div>';
     }
 
-    function user_profile_fields($user) {
+    public function user_profile_fields($user) {
         $output = '';
 
         // Show settings only when current user is admin ...
@@ -167,20 +167,20 @@ class AsgarosForumAdmin {
         }
 
         if (!empty($output)) {
-            echo '<h2>'.__('Forum', 'asgaros-forum').'</h2>';
+            echo '<h2>'.esc_html__('Forum', 'asgaros-forum').'</h2>';
             echo '<table class="form-table">';
             echo $output;
             echo '</table>';
         }
     }
 
-    function user_profile_fields_update($user_id) {
+    public function user_profile_fields_update($user_id) {
         $user_id = absint($user_id);
 
         if (current_user_can('manage_options')) {
             if (!user_can($user_id, 'manage_options')) {
                 if (isset($_POST['asgarosforum_role'])) {
-                    $this->asgarosforum->permissions->set_forum_role($user_id, $_POST['asgarosforum_role']);
+                    $this->asgarosforum->permissions->set_forum_role($user_id, sanitize_key($_POST['asgarosforum_role']));
                 }
             }
 
@@ -200,9 +200,24 @@ class AsgarosForumAdmin {
             if ($this->asgarosforum->permissions->can_use_signature($user_id)) {
                 if (isset($_POST['asgarosforum_signature'])) {
                     if ($this->asgarosforum->options['signatures_html_allowed']) {
-                        update_user_meta($user_id, 'asgarosforum_signature', trim(wp_kses_post(strip_tags($_POST['asgarosforum_signature'], $this->asgarosforum->options['signatures_html_tags']))));
+						// Parse signature before saving.
+						$allowed_signature_html_tags = array();
+
+						if (!empty($this->asgarosforum->options['signatures_html_tags'])) {
+							$tags = $this->asgarosforum->options['signatures_html_tags'];
+							$tags = str_replace('><', ',', $tags);
+							$tags = str_replace('<', '', $tags);
+							$tags = str_replace('>', '', $tags);
+							$tags = explode(',', $tags);
+
+							foreach ($tags as $tag) {
+								$allowed_signature_html_tags[$tag] = array();
+							}
+						}
+
+                        update_user_meta($user_id, 'asgarosforum_signature', trim(wp_kses($_POST['asgarosforum_signature'], $allowed_signature_html_tags)));
                     } else {
-                        update_user_meta($user_id, 'asgarosforum_signature', trim(wp_kses_post(strip_tags($_POST['asgarosforum_signature']))));
+                        update_user_meta($user_id, 'asgarosforum_signature', sanitize_textarea_field($_POST['asgarosforum_signature']));
                     }
                 } else {
                     delete_user_meta($user_id, 'asgarosforum_signature');
@@ -212,16 +227,12 @@ class AsgarosForumAdmin {
     }
 
     // Add all required pages to the menu.
-    function add_admin_pages() {
+    public function add_admin_pages() {
         if ($this->asgarosforum->permissions->isAdministrator('current')) {
             add_menu_page(__('Forum', 'asgaros-forum'), __('Forum', 'asgaros-forum'), 'read', 'asgarosforum-structure', array($this, 'structure_page'), 'none');
             add_submenu_page('asgarosforum-structure', __('Structure', 'asgaros-forum'), __('Structure', 'asgaros-forum'), 'read', 'asgarosforum-structure', array($this, 'structure_page'));
             add_submenu_page('asgarosforum-structure', __('Appearance', 'asgaros-forum'), __('Appearance', 'asgaros-forum'), 'read', 'asgarosforum-appearance', array($this, 'appearance_page'));
             add_submenu_page('asgarosforum-structure', __('Usergroups', 'asgaros-forum'), __('Usergroups', 'asgaros-forum'), 'read', 'asgarosforum-usergroups', array($this, 'usergroups_page'));
-
-            if ($this->asgarosforum->options['enable_ads']) {
-                add_submenu_page('asgarosforum-structure', __('Ads', 'asgaros-forum'), __('Ads', 'asgaros-forum'), 'read', 'asgarosforum-ads', array($this, 'ads_page'));
-            }
 
             do_action('asgarosforum_add_admin_submenu_page');
 
@@ -229,27 +240,23 @@ class AsgarosForumAdmin {
         }
     }
 
-    function options_page() {
-        require('views/options.php');
+    public function options_page() {
+        require 'views/options.php';
     }
 
-    function structure_page() {
-        require('views/structure.php');
+    public function structure_page() {
+        require 'views/structure.php';
     }
 
-    function appearance_page() {
-        require('views/appearance.php');
+    public function appearance_page() {
+        require 'views/appearance.php';
     }
 
-    function usergroups_page() {
-        require('views/usergroups.php');
+    public function usergroups_page() {
+        require 'views/usergroups.php';
     }
 
-    function ads_page() {
-        require('views/ads.php');
-    }
-
-    function enqueue_admin_scripts($hook) {
+    public function enqueue_admin_scripts($hook) {
         wp_enqueue_style('asgarosforum-fontawesome', $this->asgarosforum->plugin_url.'libs/fontawesome/css/all.min.css', array(), $this->asgarosforum->version);
         wp_enqueue_style('asgarosforum-fontawesome-compat-v4', $this->asgarosforum->plugin_url.'libs/fontawesome/css/v4-shims.min.css', array(), $this->asgarosforum->version);
         wp_enqueue_style('asgarosforum-admin-css', $this->asgarosforum->plugin_url.'admin/css/admin.css', array(), $this->asgarosforum->version);
@@ -261,7 +268,7 @@ class AsgarosForumAdmin {
         }
     }
 
-    function save_settings() {
+    public function save_settings() {
         // Only save changes when the user is an forum/site administrator.
         if ($this->asgarosforum->permissions->isAdministrator('current')) {
             if (isset($_POST['af_options_submit'])) {
@@ -284,7 +291,7 @@ class AsgarosForumAdmin {
                 check_admin_referer('asgaros_forum_delete_forum');
 
                 if (!empty($_POST['forum-id']) && is_numeric($_POST['forum-id']) && !empty($_POST['forum-category']) && is_numeric($_POST['forum-category'])) {
-                    $this->delete_forum($_POST['forum-id'], $_POST['forum-category']);
+                    $this->delete_forum(sanitize_key($_POST['forum-id']), sanitize_key($_POST['forum-category']));
                 }
             } else if (isset($_POST['af-create-edit-category-submit'])) {
                 // Verify nonce first.
@@ -296,7 +303,7 @@ class AsgarosForumAdmin {
                 check_admin_referer('asgaros_forum_delete_category');
 
                 if (!empty($_POST['category-id']) && is_numeric($_POST['category-id'])) {
-                    $this->delete_category($_POST['category-id']);
+                    $this->delete_category(sanitize_key($_POST['category-id']));
                 }
             } else if (isset($_POST['af-create-edit-usergroup-category-submit'])) {
                 // Verify nonce first.
@@ -325,41 +332,21 @@ class AsgarosForumAdmin {
                 check_admin_referer('asgaros_forum_delete_usergroup');
 
                 if (!empty($_POST['usergroup-id']) && is_numeric($_POST['usergroup-id'])) {
-                    AsgarosForumUserGroups::deleteUserGroup($_POST['usergroup-id']);
+                    AsgarosForumUserGroups::deleteUserGroup(sanitize_key($_POST['usergroup-id']));
                 }
             } else if (isset($_POST['asgaros-forum-delete-usergroup-category'])) {
                 // Verify nonce first.
                 check_admin_referer('asgaros_forum_delete_usergroup_category');
 
                 if (!empty($_POST['usergroup-category-id']) && is_numeric($_POST['usergroup-category-id'])) {
-                    AsgarosForumUserGroups::deleteUserGroupCategory($_POST['usergroup-category-id']);
-                }
-            } else if (isset($_POST['af-create-edit-ad-submit'])) {
-                // Verify nonce first.
-                check_admin_referer('asgaros_forum_save_ad');
-
-                $ad_id          = $_POST['ad_id'];
-                $ad_name        = trim($_POST['ad_name']);
-                $ad_code        = trim($_POST['ad_code']);
-                $ad_active      = isset($_POST['ad_active']) ? 1 : 0;
-                $ad_locations   = isset($_POST['ad_locations']) ? implode(',', $_POST['ad_locations']) : '';
-
-                $this->asgarosforum->ads->save_ad($ad_id, $ad_name, $ad_code, $ad_active, $ad_locations);
-                $this->saved = true;
-            } else if (isset($_POST['asgaros-forum-delete-ad'])) {
-                // Verify nonce first.
-                check_admin_referer('asgaros_forum_delete_ad');
-
-                if (!empty($_POST['ad_id']) && is_numeric($_POST['ad_id'])) {
-                    $this->asgarosforum->ads->delete_ad($_POST['ad_id']);
-                    $this->saved = true;
+                    AsgarosForumUserGroups::deleteUserGroupCategory(sanitize_key($_POST['usergroup-category-id']));
                 }
             }
         }
     }
 
     /* OPTIONS */
-    function save_options() {
+    public function save_options() {
         $saved_ops = array();
 
         foreach ($this->asgarosforum->options_default as $k => $v) {
@@ -369,10 +356,13 @@ class AsgarosForumAdmin {
                 } else if (is_bool($v)) {
                     $saved_ops[$k] = (bool)$_POST[$k];
                 } else if ($k === 'allowed_filetypes') {
-                    $tmp = stripslashes(strtolower(trim($_POST[$k])));
+                    $tmp = strtolower(sanitize_text_field($_POST[$k]));
                     $saved_ops[$k] = (!empty($tmp)) ? $tmp : $v;
-                } else {
-                    $tmp = stripslashes(trim($_POST[$k]));
+				} else if (in_array($k, array('signatures_html_tags', 'mail_template_new_post_message', 'mail_template_new_topic_message', 'mail_template_mentioned_message'))) {
+					$tmp = wp_kses_post($_POST[$k]);
+                    $saved_ops[$k] = (!empty($tmp)) ? $tmp : $v;
+				} else {
+                    $tmp = sanitize_text_field($_POST[$k]);
                     $saved_ops[$k] = (!empty($tmp)) ? $tmp : $v;
                 }
             } else {
@@ -388,12 +378,12 @@ class AsgarosForumAdmin {
         $this->saved = true;
     }
 
-    function save_appearance() {
+    public function save_appearance() {
         $saved_ops = array();
 
         foreach ($this->asgarosforum->appearance->options_default as $k => $v) {
             if (isset($_POST[$k])) {
-                $tmp = stripslashes(trim($_POST[$k]));
+				$tmp = sanitize_text_field($_POST[$k]);
                 $saved_ops[$k] = (!empty($tmp)) ? $tmp : $v;
             } else {
                 $saved_ops[$k] = $v;
@@ -405,11 +395,11 @@ class AsgarosForumAdmin {
     }
 
     /* STRUCTURE */
-    function save_category() {
-        $category_id        = $_POST['category_id'];
-        $category_name      = trim($_POST['category_name']);
-        $category_access    = trim($_POST['category_access']);
-        $category_order     = (is_numeric($_POST['category_order'])) ? $_POST['category_order'] : 1;
+    public function save_category() {
+        $category_id        = sanitize_key($_POST['category_id']);
+        $category_name      = sanitize_text_field($_POST['category_name']);
+        $category_access    = sanitize_key($_POST['category_access']);
+        $category_order     = (is_numeric($_POST['category_order'])) ? sanitize_key($_POST['category_order']) : 1;
 
         if (!empty($category_name)) {
             if ($category_id === 'new') {
@@ -434,22 +424,22 @@ class AsgarosForumAdmin {
         }
     }
 
-    function save_forum() {
+    public function save_forum() {
         // ID of the forum.
-        $forum_id           = $_POST['forum_id'];
+        $forum_id           = sanitize_key($_POST['forum_id']);
 
         // Determine parent IDs.
-        $parent_ids          = explode('_', $_POST['forum_parent']);
+        $parent_ids          = explode('_', sanitize_key($_POST['forum_parent']));
         $forum_category     = $parent_ids[0];
         $forum_parent_forum = $parent_ids[1];
 
         // Additional data.
-        $forum_name         = trim($_POST['forum_name']);
-        $forum_description  = trim($_POST['forum_description']);
-        $forum_icon         = trim($_POST['forum_icon']);
+        $forum_name         = sanitize_text_field($_POST['forum_name']);
+        $forum_description  = sanitize_text_field($_POST['forum_description']);
+        $forum_icon         = sanitize_text_field($_POST['forum_icon']);
         $forum_icon         = (empty($forum_icon)) ? 'fas fa-comments' : $forum_icon;
-        $forum_status       = $_POST['forum_status'];
-        $forum_order        = (is_numeric($_POST['forum_order'])) ? $_POST['forum_order'] : 0;
+        $forum_status       = sanitize_key($_POST['forum_status']);
+        $forum_order        = (is_numeric($_POST['forum_order'])) ? sanitize_key($_POST['forum_order']) : 0;
 
         if (!empty($forum_name)) {
             if ($forum_id === 'new') {
@@ -491,7 +481,7 @@ class AsgarosForumAdmin {
         }
     }
 
-    function delete_category($categoryID) {
+    public function delete_category($categoryID) {
         $forums = $this->asgarosforum->db->get_col("SELECT id FROM {$this->asgarosforum->tables->forums} WHERE parent_id = {$categoryID};");
 
         if (!empty($forums)) {
@@ -503,7 +493,7 @@ class AsgarosForumAdmin {
         wp_delete_term($categoryID, 'asgarosforum-category');
     }
 
-    function delete_forum($forum_id, $category_id) {
+    public function delete_forum($forum_id, $category_id) {
         // Delete all subforums first
         $subforums = $this->asgarosforum->get_forums($category_id, $forum_id);
 
@@ -532,41 +522,41 @@ class AsgarosForumAdmin {
     }
 
     /* USERGROUPS */
-    function render_admin_header($title, $titleUpdated) {
+    public function render_admin_header($title, $titleUpdated) {
         // Workaround to ensure that admin-notices are shown outside of our panel.
         echo '<h1 id="asgaros-panel-notice-area"></h1>';
 
         echo '<div id="asgaros-panel">';
             echo '<div class="header-panel">';
                 echo '<div class="sub-panel-left">';
-                    echo '<img src="'.$this->asgarosforum->plugin_url.'admin/images/logo.png">';
+                    echo '<img src="'.esc_url($this->asgarosforum->plugin_url.'admin/images/logo.png').'">';
                 echo '</div>';
                 echo '<div class="sub-panel-left">';
-                    echo '<h1>'.$title.'</h1>';
+                    echo '<h1>'.esc_html($title).'</h1>';
                 echo '</div>';
                 echo '<div class="sub-panel-right">';
                     echo '<a href="https://www.asgaros.de/support/" target="_blank">';
                         echo '<span class="asgaros-panel-icon fas fa-user"></span>';
-                        echo __('Official Support Forum', 'asgaros-forum');
+                        echo esc_html__('Official Support Forum', 'asgaros-forum');
                     echo '</a>';
                     echo '&bull;';
                     echo '<a href="https://www.asgaros.de/docs/" target="_blank">';
                         echo '<span class="asgaros-panel-icon fas fa-book"></span>';
-                        echo __('Documentation', 'asgaros-forum');
+                        echo esc_html__('Documentation', 'asgaros-forum');
                     echo '</a>';
                     echo '&bull;';
                     echo '<a href="https://www.asgaros.de/donate/" target="_blank">';
                         echo '<span class="asgaros-panel-icon donate-icon fas fa-heart"></span>';
-                        echo __('Donate', 'asgaros-forum');
+                        echo esc_html__('Donate', 'asgaros-forum');
                     echo '</a>';
                 echo '</div>';
                 echo '<div class="clear"></div>';
             echo '</div>';
 
             if ($this->error) {
-                echo '<div class="error-panel"><p>'.$this->error.'</p></div>';
+                echo '<div class="error-panel"><p>'.esc_html($this->error).'</p></div>';
             } else if ($this->saved) {
-                echo '<div class="updated-panel"><p>'.$titleUpdated.'</p></div>';
+                echo '<div class="updated-panel"><p>'.esc_html($titleUpdated).'</p></div>';
             }
 
         echo '</div>';

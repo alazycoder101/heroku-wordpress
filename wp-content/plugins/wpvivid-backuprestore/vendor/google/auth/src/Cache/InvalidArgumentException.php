@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-namespace Google\Auth\Cache;
+namespace WPvividGoogle\Auth\Cache;
 
-use Psr\Cache\InvalidArgumentException as PsrInvalidArgumentException;
+use WPvividPsr\Cache\InvalidArgumentException as PsrInvalidArgumentException;
 
 class InvalidArgumentException extends \InvalidArgumentException implements PsrInvalidArgumentException
 {

@@ -794,6 +794,12 @@ class WPvivid_RestoreDB
         }
         */
 
+        if(preg_match('/\/\*!.*\*\//', $query, $matches))
+        {
+            $annotation_content = $matches[0];
+            $query = str_replace($annotation_content, '', $query);
+        }
+
         $this->execute_sql($query);
 
         return $table_name;
@@ -821,7 +827,16 @@ class WPvivid_RestoreDB
             }
         }
         //$query=str_replace('INSERT INTO', 'INSERT IGNORE INTO', $query);
-        $this->execute_sql($query);
+
+        $pos_mainwp_child=strpos($query,'mainwp_child_');
+        $pos_ws_menu_editor_pro=strpos($query,'ws_menu_editor_pro');
+        if($pos_mainwp_child!==false && $pos_ws_menu_editor_pro === false)
+        {
+            $wpvivid_plugin->restore_data->write_log('skip insert item: '.$query,'notice');
+        }
+        else{
+            $this->execute_sql($query);
+        }
     }
 
     private function drop_table($query)
@@ -948,7 +963,7 @@ class WPvivid_RestoreDB
                             if(!empty($old_path)&&!empty($new_path))
                             {
                                 $old_path_data= $row['path'];
-                                $new_path_data=str_replace($old_path,$new_path,$old_path_data);
+                                $new_path_data=$this->str_replace_first($old_path,$new_path,$old_path_data);
                                 $update[] = '`path` = "' . $new_path_data . '"';
                             }
 
@@ -1103,6 +1118,13 @@ class WPvivid_RestoreDB
             }
         }
         $wpvivid_plugin->restore_data->write_log('finish replace rows', 'notice');
+    }
+
+    public function str_replace_first($from, $to, $content)
+    {
+        $from = '/'.preg_quote($from, '/').'/';
+
+        return preg_replace($from, $to, $content, 1);
     }
 
     private function replace_row_data($old_data)
@@ -1363,11 +1385,32 @@ class WPvivid_RestoreDB
                         }
                     }
                 }
+
+                $tmp_old_site_url = str_replace(':', '%3A', $this->old_site_url);
+                $tmp_old_site_url = str_replace('/', '%2F', $tmp_old_site_url);
+
+                $tmp_new_site_url = str_replace(':', '%3A', $this->new_site_url);
+                $tmp_new_site_url = str_replace('/', '%2F', $tmp_new_site_url);
+
+                $from[]=$tmp_old_site_url;
+                $to[]=$tmp_new_site_url;
             }
             else
             {
                 $from[]=$this->old_site_url;
                 $to[]=$this->new_site_url;
+
+                $from[]=str_replace('/', '\/', $this->old_site_url);
+                $to[]=str_replace('/', '\/', $this->new_site_url);
+
+                $tmp_old_site_url = str_replace(':', '%3A', $this->old_site_url);
+                $tmp_old_site_url = str_replace('/', '%2F', $tmp_old_site_url);
+
+                $tmp_new_site_url = str_replace(':', '%3A', $this->new_site_url);
+                $tmp_new_site_url = str_replace('/', '%2F', $tmp_new_site_url);
+
+                $from[]=$tmp_old_site_url;
+                $to[]=$tmp_new_site_url;
             }
         }
 

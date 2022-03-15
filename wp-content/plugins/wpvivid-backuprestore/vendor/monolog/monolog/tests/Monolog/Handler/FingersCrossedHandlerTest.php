@@ -15,7 +15,7 @@ use Monolog\TestCase;
 use Monolog\Logger;
 use Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy;
 use Monolog\Handler\FingersCrossed\ChannelLevelActivationStrategy;
-use Psr\Log\LogLevel;
+use WPvividPsr\Log\LogLevel;
 
 class FingersCrossedHandlerTest extends TestCase
 {

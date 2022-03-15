@@ -209,9 +209,12 @@ class CurlHandle
                 $args[] = $handle;
 
                 // PHP 5.5 pushed the handle onto the start of the args
-                if (is_resource($args[0])) {
+                if (false !== $args[0]) {
                     array_shift($args);
                 }
+                /*if (is_resource($args[0])) {
+                    array_shift($args);
+                }*/
 
                 call_user_func_array(array($mediator, 'progress'), $args);
             };
@@ -233,7 +236,10 @@ class CurlHandle
      */
     public function __construct($handle, $options)
     {
-        if (!is_resource($handle)) {
+        /*if (!is_resource($handle)) {
+            throw new InvalidArgumentException('Invalid handle provided');
+        }*/
+        if (false === $handle) {
             throw new InvalidArgumentException('Invalid handle provided');
         }
         if (is_array($options)) {
@@ -259,8 +265,12 @@ class CurlHandle
      */
     public function close()
     {
-        if (is_resource($this->handle)) {
+        /*if (is_resource($this->handle)) {
             curl_close($this->handle);
+        }*/
+        if (false !== $this->handle && null !== $this->handle) {
+            curl_close($this->handle);
+            unset($this->handle);
         }
         $this->handle = null;
     }
@@ -272,7 +282,8 @@ class CurlHandle
      */
     public function isAvailable()
     {
-        return is_resource($this->handle);
+        return false !== $this->handle;
+        //return is_resource($this->handle);
     }
 
     /**
@@ -322,9 +333,12 @@ class CurlHandle
      */
     public function getInfo($option = null)
     {
-        if (!is_resource($this->handle)) {
+        if (false === $this->handle) {
             return null;
         }
+        /*if (!is_resource($this->handle)) {
+            return null;
+        }*/
 
         if (null !== $option) {
             return curl_getinfo($this->handle, $option) ?: null;

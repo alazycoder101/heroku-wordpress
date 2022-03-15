@@ -1994,33 +1994,33 @@ msgid "Authentication failed, the format of the client_secrets.json file is inco
 msgstr ""
 
 #: includes/customclass/class-wpvivid-google-drive.php:272
-msgid "You have authenticated the Google Drive account as your remote storage."
+msgid "You have authenticated the WPvividGoogle Drive account as your remote storage."
 msgstr ""
 
 #: includes/customclass/class-wpvivid-google-drive.php:292
-msgid "Google Drive"
+msgid "WPvividGoogle Drive"
 msgstr ""
 
 #: includes/customclass/class-wpvivid-google-drive.php:304
-msgid "Please read <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">this privacy policy</a> for use of our Google Drive authorization app (none of your backup data is sent to us)."
+msgid "Please read <a target=\"_blank\" href=\"https://wpvivid.com/privacy-policy\" style=\"text-decoration: none;\">this privacy policy</a> for use of our WPvividGoogle Drive authorization app (none of your backup data is sent to us)."
 msgstr ""
 
 #: includes/customclass/class-wpvivid-google-drive.php:307
 #: includes/customclass/class-wpvivid-google-drive.php:435
-msgid "Enter Your Google Drive Information"
+msgid "Enter Your WPvividGoogle Drive Information"
 msgstr ""
 
 #: includes/customclass/class-wpvivid-google-drive.php:314
 #: includes/customclass/class-wpvivid-google-drive.php:442
-msgid "Enter a unique alias: e.g. Google Drive-001"
+msgid "Enter a unique alias: e.g. WPvividGoogle Drive-001"
 msgstr ""
 
 #: includes/customclass/class-wpvivid-google-drive.php:364
-msgid "Authenticate with Google Drive"
+msgid "Authenticate with WPvividGoogle Drive"
 msgstr ""
 
 #: includes/customclass/class-wpvivid-google-drive.php:369
-msgid "Click the button to get Google authentication and add it to the storage list below."
+msgid "Click the button to get WPvividGoogle authentication and add it to the storage list below."
 msgstr ""
 
 #: includes/customclass/class-wpvivid-one-drive.php:240

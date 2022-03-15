@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-namespace Google\Auth;
+namespace WPvividGoogle\Auth;
 
-use Google\Auth\Credentials\InsecureCredentials;
-use Google\Auth\Credentials\ServiceAccountCredentials;
-use Google\Auth\Credentials\UserRefreshCredentials;
+use WPvividGoogle\Auth\Credentials\InsecureCredentials;
+use WPvividGoogle\Auth\Credentials\ServiceAccountCredentials;
+use WPvividGoogle\Auth\Credentials\UserRefreshCredentials;
 
 /**
  * CredentialsLoader contains the behaviour used to locate and find default
@@ -146,11 +146,11 @@ abstract class CredentialsLoader implements FetchAuthTokenInterface
         callable $httpHandler = null,
         callable $tokenCallback = null
     ) {
-        $version = \GuzzleHttp\ClientInterface::VERSION;
+        $version = \WPvividGuzzleHttp\ClientInterface::VERSION;
 
         switch ($version[0]) {
             case '5':
-                $client = new \GuzzleHttp\Client($httpClientOptions);
+                $client = new \WPvividGuzzleHttp\Client($httpClientOptions);
                 $client->setDefaultOption('auth', 'google_auth');
                 $subscriber = new Subscriber\AuthTokenSubscriber(
                     $fetcher,
@@ -165,10 +165,10 @@ abstract class CredentialsLoader implements FetchAuthTokenInterface
                     $httpHandler,
                     $tokenCallback
                 );
-                $stack = \GuzzleHttp\HandlerStack::create();
+                $stack = \WPvividGuzzleHttp\HandlerStack::create();
                 $stack->push($middleware);
 
-                return new \GuzzleHttp\Client([
+                return new \WPvividGuzzleHttp\Client([
                    'handler' => $stack,
                    'auth' => 'google_auth',
                 ] + $httpClientOptions);

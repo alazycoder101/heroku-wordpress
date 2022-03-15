@@ -748,7 +748,7 @@ class Wpvivid_BackupUploader
                 wpvivid_post_request(ajax_data, function (data)
                 {
                     var backuplist_count = data;
-                    if(backuplist_count >= backup_max_count){
+                    if(parseInt(backuplist_count) >= parseInt(backup_max_count)){
                         alert("The backup retention limit for localhost(web server) is reached, please either increase the retention from WPvivid General Settings, or manually delete some old backups.");
                     }
                     else {

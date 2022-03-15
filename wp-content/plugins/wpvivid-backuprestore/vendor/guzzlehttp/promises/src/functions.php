@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp\Promise;
+namespace WPvividGuzzleHttp\Promise;
 
 /**
  * Get the global task queue used for promise resolution.

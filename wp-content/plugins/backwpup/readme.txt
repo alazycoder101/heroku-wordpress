@@ -1,10 +1,10 @@
 === BackWPup - WordPress Backup Plugin ===
-Contributors: inpsyde, danielhuesken, Bueltge, nullbyte, wido, dinamiko
+Contributors: inpsyde, danielhuesken, Bueltge, nullbyte, wido, dinamiko, cocreation
 Tags: backup, database backup, cloud backup, restore, wordpress backup
 Requires at least: 3.9
-Tested up to: 5.5
+Tested up to: 5.8
 Requires PHP: 5.6
-Stable tag: 3.8.0
+Stable tag: 3.10.0
 License: GPLv2+
 
 Schedule complete automatic backups of your WordPress installation. Decide which content will be stored (Dropbox, S3…). This is the free version
@@ -37,6 +37,8 @@ The **backup plugin** **[BackWPup](https://backwpup.com/)** can be used to save 
 * NEW - PRO: Encrypt backup archives and restore from encrypted backups.
 
 In case you need to comply with the new GDPR regulation, check out our post [BacKWPup, Backups and GDPR](https://backwpup.com/docs/backwpup-backups-and-gdpr/).
+
+<div style="padding:56.25% 0 0 0;position:relative;"><iframe src="https://player.vimeo.com/video/510138536?loop=1&color=c9ff23&title=0&byline=0&portrait=0" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div><script src="https://player.vimeo.com/api/player.js"></script>
 
 = Requirements =
 * WordPress 3.9 and PHP 5.3.3 required! (read more about [recommended php version and why you should switch to modern php](https://inpsyde.com/en/wordpress-recommended-php-version-update-php))
@@ -164,6 +166,44 @@ Yes. You need to have writing access to the wp-config.php file (usually residing
 [You can find a detailed tutorial in the BackWPup documentation.](https://backwpup.com/docs/install-backwpup-pro-activate-licence/)
 
 == Changelog ==
+
+= Version 3.10.0 =
+Release Date: September 1, 2021
+
+* Added: Support for Dropbox short-lived access tokens
+* Fixed (pro): Prevent out of memory error on HiDrive backups
+* Fixed (pro): Small files uploaded twice to HiDrive
+* Fixed (pro): Fatal error on plugin update if $transient is null
+* Fixed (pro): Restore of stored functions, procedures, and triggers
+* Fixed: Export of stored functions, procedures, and triggers including delimiters
+* Fixed: Support emojis and other 4-byte characters in database dump
+* Fixed: PHP 8 deprecation notice in XML export
+
+= Version 3.9.0 =
+Release Date: June 10, 2021
+
+* Added (pro): Migrate website to another URL
+* Added (pro): Validation for database credentials on restore
+* Added: PHP notice for outdated PHP versions less than 7.2
+* Fixed (pro): License deactivated on settings save
+* Fixed (pro): Corrupted path name in Google Drive destination
+* Fixed (pro): Unable to download backup from Google Drive
+* Fixed: Unable to connect to custom S3 endpoints
+* Fixed: Intermittent error selecting restore strategy
+* Fixed: Memory leaks when uploading to S3
+* Fixed: PHP 7.4 Deprecation notices
+* Fixed: PHP 8 compatibility issues
+* Fixed: Remove BackWPup user roles on uninstall in multisite
+* Fixed: Correctly handle relative upload paths
+* Fixed: Display welcome page even after consent dialog clicked
+* Fixed: Exclude non backup files from the backups page
+* Fixed: Format dates as ISO-formatted dates instead of binary hex in MySQL backup
+* Fixed: Don't pre-fill database credentials when backing up non-WordPress database
+* Fixed: Description of replacement patterns for archive name
+* Fixed: Added missing destinations to destination list in about page
+* Fixed: Made BackWPup banner local
+* Removed: Phone home client
+* Removed: Remote admin notices
 
 = Version 3.8.0 =
 Release Date: September 22, 2020

@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Uri;
-use Psr\Http\Message\RequestInterface;
+use WPvividGuzzleHttp\Psr7;
+use WPvividGuzzleHttp\Psr7\Request;
+use WPvividGuzzleHttp\Psr7\Uri;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * Manage large file uploads, which may be media but can be any type

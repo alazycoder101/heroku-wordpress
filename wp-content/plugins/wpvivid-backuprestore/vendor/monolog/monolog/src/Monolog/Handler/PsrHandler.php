@@ -12,7 +12,7 @@
 namespace Monolog\Handler;
 
 use Monolog\Logger;
-use Psr\Log\LoggerInterface;
+use WPvividPsr\Log\LoggerInterface;
 
 /**
  * Proxies log messages to an existing PSR-3 compliant logger.

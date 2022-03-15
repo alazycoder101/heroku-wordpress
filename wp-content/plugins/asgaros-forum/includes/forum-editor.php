@@ -52,7 +52,6 @@ class AsgarosForumEditor {
 			'wp_more'
 		);
 
-
         if ($this->asgarosforum->executePlugin && $editor_id === 'message') {
 			// Build array of available buttons.
 			$forum_buttons = array(
@@ -190,8 +189,8 @@ class AsgarosForumEditor {
 			$this->asgarosforum->render_notice(__('You are not allowed to do this.', 'asgaros-forum'));
         } else {
             $post = false;
-            $subject = (isset($_POST['subject'])) ? trim($_POST['subject']) : '';
-            $message = (isset($_POST['message'])) ? trim($_POST['message']) : '';
+            $subject = (isset($_POST['subject'])) ? sanitize_text_field($_POST['subject']) : '';
+            $message = (isset($_POST['message'])) ? wp_kses_post($_POST['message']) : '';
 
             if ($editor_view === 'addpost') {
                 if (!isset($_POST['message']) && isset($_GET['quote'])) {
@@ -235,12 +234,12 @@ class AsgarosForumEditor {
 
 			// We need the tabindex attribute in the form for scrolling.
 			?>
-            <form id="forum-editor-form" class="<?php echo $editor_view; ?>-editor" tabindex="-1" name="addform" method="post" action="<?php echo $actionURL; ?>" enctype="multipart/form-data"<?php if ($inOtherView && !isset($_POST['subject']) && !isset($_POST['message'])) { echo ' style="display: none;"'; } ?>>
-                <div class="title-element"><?php if ($inOtherView) { echo $editorTitle; } ?></div>
+            <form id="forum-editor-form" class="<?php echo esc_attr($editor_view); ?>-editor" tabindex="-1" name="addform" method="post" action="<?php echo esc_url($actionURL); ?>" enctype="multipart/form-data"<?php if ($inOtherView && !isset($_POST['subject']) && !isset($_POST['message'])) { echo ' style="display: none;"'; } ?>>
+                <div class="title-element"><?php if ($inOtherView) { echo esc_html($editorTitle); } ?></div>
                 <div class="editor-element">
                     <?php if ($editor_view === 'addtopic' || ($editor_view == 'editpost' && $this->asgarosforum->is_first_post($post->id))) { ?>
                         <div class="editor-row-subject">
-                            <label for="subject"><?php _e('Subject:', 'asgaros-forum'); ?></label>
+                            <label for="subject"><?php esc_html_e('Subject:', 'asgaros-forum'); ?></label>
                             <span>
                                 <input class="editor-subject-input" type="text" id="subject" maxlength="255" name="subject" value="<?php echo esc_html(stripslashes($subject)); ?>">
                             </span>
@@ -259,23 +258,26 @@ class AsgarosForumEditor {
                     echo '<div class="editor-row editor-row-submit">';
                         if ($editor_view === 'addtopic') {
                             echo '<input type="hidden" name="submit_action" value="add_topic">';
+                            wp_nonce_field('asgaros_forum_add_topic');
                         } else if ($editor_view === 'addpost') {
                             echo '<input type="hidden" name="submit_action" value="add_post">';
+                            wp_nonce_field('asgaros_forum_add_post');
                         } else if ($editor_view === 'editpost') {
                             echo '<input type="hidden" name="submit_action" value="edit_post">';
+                            wp_nonce_field('asgaros_forum_edit_post');
                         }
 
 						echo '<div class="left">';
 						if ($inOtherView) {
-							echo '<a href="'.$actionURL.'" class="button button-red cancel">'.__('Cancel', 'asgaros-forum').'</a>';
+							echo '<a href="'.esc_url($actionURL).'" class="button button-red cancel">'.esc_html__('Cancel', 'asgaros-forum').'</a>';
 						} else {
 							if ($editor_view === 'editpost') {
 								$actionURL = $this->asgarosforum->get_link('topic', $this->asgarosforum->current_topic);
 							}
-							echo '<a href="'.$actionURL.'" class="button button-red">'.__('Cancel', 'asgaros-forum').'</a>';
+							echo '<a href="'.esc_url($actionURL).'" class="button button-red">'.esc_html__('Cancel', 'asgaros-forum').'</a>';
 						}
 						echo '</div>';
-	                    echo '<div class="right"><input class="button button-normal" type="submit" value="'.__('Submit', 'asgaros-forum').'"></div>';
+	                    echo '<div class="right"><input class="button button-normal" type="submit" value="'.esc_attr__('Submit', 'asgaros-forum').'"></div>';
                     echo '</div>';
                 echo '</div>';
             echo '</form>';

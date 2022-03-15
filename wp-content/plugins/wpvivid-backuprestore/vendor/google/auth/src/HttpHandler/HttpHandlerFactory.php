@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace Google\Auth\HttpHandler;
+namespace WPvividGoogle\Auth\HttpHandler;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
+use WPvividGuzzleHttp\Client;
+use WPvividGuzzleHttp\ClientInterface;
 
 class HttpHandlerFactory
 {

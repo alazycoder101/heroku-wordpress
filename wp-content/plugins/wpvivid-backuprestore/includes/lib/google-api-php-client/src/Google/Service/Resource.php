@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use GuzzleHttp\Psr7\Request;
+use WPvividGuzzleHttp\Psr7\Request;
 
 /**
  * Implements the actual methods/resources of the discovered Google API using magic function

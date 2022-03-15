@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-namespace Google\Auth\Middleware;
+namespace WPvividGoogle\Auth\Middleware;
 
-use GuzzleHttp\Psr7;
-use Psr\Http\Message\RequestInterface;
+use WPvividGuzzleHttp\Psr7;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * SimpleMiddleware is a Guzzle Middleware that implements Google's Simple API

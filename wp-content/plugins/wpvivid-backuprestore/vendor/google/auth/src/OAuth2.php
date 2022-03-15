@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-namespace Google\Auth;
+namespace WPvividGoogle\Auth;
 
-use Google\Auth\HttpHandler\HttpHandlerFactory;
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\Request;
+use WPvividGoogle\Auth\HttpHandler\HttpHandlerFactory;
+use WPvividGuzzleHttp\Psr7;
+use WPvividGuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
+use WPvividPsr\Http\Message\UriInterface;
 
 /**
  * OAuth2 supports authentication by OAuth2 2-legged flows.

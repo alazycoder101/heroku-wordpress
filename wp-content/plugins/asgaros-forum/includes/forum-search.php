@@ -16,7 +16,7 @@ class AsgarosForumSearch {
 
     public function initialize() {
         if (!empty($_GET['keywords'])) {
-            $keywords = trim($_GET['keywords']);
+            $keywords = sanitize_text_field($_GET['keywords']);
             $this->search_keywords_for_query = esc_sql($keywords);
             $this->search_keywords_for_output = stripslashes(esc_html($keywords));
         }
@@ -33,7 +33,7 @@ class AsgarosForumSearch {
             echo '<div id="forum-search">';
             echo '<span class="search-icon fas fa-search"></span>';
 
-            echo '<form method="get" action="'.$this->asgarosforum->get_link('search').'">';
+            echo '<form method="get" action="'.esc_url($this->asgarosforum->get_link('search')).'">';
 
             // Workaround for broken search when using plain permalink structure.
             if (!$this->asgarosforum->rewrite->use_permalinks) {
@@ -42,17 +42,17 @@ class AsgarosForumSearch {
 
             // Workaround for broken search in posts when using plain permalink structure.
             if (!empty($_GET['p'])) {
-                $value = esc_html(trim($_GET['p']));
-                echo '<input name="p" type="hidden" value="'.$value.'">';
+                $value = sanitize_key($_GET['p']);
+                echo '<input name="p" type="hidden" value="'.esc_attr($value).'">';
             }
 
             // Workaround for broken search in pages when using plain permalink structure.
             if (!empty($_GET['page_id'])) {
-                $value = esc_html(trim($_GET['page_id']));
-                echo '<input name="page_id" type="hidden" value="'.$value.'">';
+                $value = sanitize_key($_GET['page_id']);
+                echo '<input name="page_id" type="hidden" value="'.esc_attr($value).'">';
             }
 
-            echo '<input name="keywords" type="search" placeholder="'.__('Search ...', 'asgaros-forum').'" value="'.$this->search_keywords_for_output.'">';
+            echo '<input name="keywords" type="search" placeholder="'.esc_html__('Search ...', 'asgaros-forum').'" value="'.esc_attr($this->search_keywords_for_output).'">';
             echo '</form>';
             echo '</div>';
         }
@@ -65,8 +65,8 @@ class AsgarosForumSearch {
         echo $paginationRendering;
 
         echo '<div class="title-element">';
-            echo __('Search results:', 'asgaros-forum').' '.$this->search_keywords_for_output;
-            echo '<span class="last-post-headline">'.__('Last post', 'asgaros-forum').'</span>';
+            echo esc_html__('Search results:', 'asgaros-forum').' '.esc_html($this->search_keywords_for_output);
+            echo '<span class="last-post-headline">'.esc_html__('Last post', 'asgaros-forum').'</span>';
         echo '</div>';
         echo '<div class="content-container">';
 

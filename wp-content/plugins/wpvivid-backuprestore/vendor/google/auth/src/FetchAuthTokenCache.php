@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-namespace Google\Auth;
+namespace WPvividGoogle\Auth;
 
-use Psr\Cache\CacheItemPoolInterface;
+use WPvividPsr\Cache\CacheItemPoolInterface;
 
 /**
  * A class to implement caching for any object implementing

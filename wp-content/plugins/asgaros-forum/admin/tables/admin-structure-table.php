@@ -2,14 +2,14 @@
 
 if (!defined('ABSPATH')) exit;
 
-if (!class_exists('WP_List_Table')){
-    require_once(ABSPATH.'wp-admin/includes/class-wp-list-table.php');
+if (!class_exists('WP_List_Table')) {
+    require_once ABSPATH.'wp-admin/includes/class-wp-list-table.php';
 }
 
 class Asgaros_Forum_Admin_Structure_Table extends WP_List_Table {
-    var $table_data = array();
+    public $table_data = array();
 
-    function __construct($table_data) {
+    public function __construct($table_data) {
         $this->table_data = $table_data;
 
         parent::__construct(
@@ -21,11 +21,11 @@ class Asgaros_Forum_Admin_Structure_Table extends WP_List_Table {
         );
     }
 
-    function column_default($item, $column_name) {
+    public function column_default($item, $column_name) {
         return $item[$column_name];
     }
 
-    function column_name($item) {
+    public function column_name($item) {
         $forumIcon = trim(esc_html(stripslashes($item['icon'])));
         $forumIcon = (empty($forumIcon)) ? 'fas fa-comments' : $forumIcon;
 
@@ -43,13 +43,12 @@ class Asgaros_Forum_Admin_Structure_Table extends WP_List_Table {
             $columnHTML .= '<div class="parentforum">';
         }
 
-
         $columnHTML .= '<span class="make-bold">';
         $forum_icon = trim(esc_html(stripslashes($item['icon'])));
         $forum_icon = (empty($forum_icon)) ? 'fas fa-comments' : $forum_icon;
         $columnHTML .= '<span class="forum-icon '.$forum_icon.'"></span>';
 
-        $columnHTML .= stripslashes($item['name']).' <span class="element-id">('.__('ID', 'asgaros-forum').': '.$item['id'].')</span></span>';
+        $columnHTML .= esc_html(stripslashes($item['name'])).' <span class="element-id">('.__('ID', 'asgaros-forum').': '.$item['id'].')</span></span>';
         $columnHTML .= '<br>';
         $columnHTML .= '<span class="forum-description">';
 
@@ -66,21 +65,22 @@ class Asgaros_Forum_Admin_Structure_Table extends WP_List_Table {
         return $columnHTML;
     }
 
-    function column_status($item) {
-        switch ($item['forum_status']) {
-            case 'normal':
-                return __('Normal', 'asgaros-forum');
-            break;
-            case 'closed':
-                return __('Closed', 'asgaros-forum');
-            break;
-            case 'approval':
-                return __('Approval', 'asgaros-forum');
-            break;
-        }
+    public function column_status($item) {
+		// Available options for forum-status.
+		$forum_status_options = array(
+			'normal'    => __('Normal', 'asgaros-forum'),
+			'closed'    => __('Closed', 'asgaros-forum'),
+			'approval'  => __('Approval', 'asgaros-forum'),
+		);
+
+		$forum_status_options = apply_filters('asgarosforum_filter_forum_status_options', $forum_status_options);
+
+		if (!empty($forum_status_options[$item['forum_status']])) {
+			return $forum_status_options[$item['forum_status']];
+		}
     }
 
-    function column_actions($item) {
+    public function column_actions($item) {
         $actionHTML = '';
         $actionHTML .= '<a href="#" class="forum-delete-link link-delete" data-value-id="'.$item['id'].'" data-value-category="'.$item['parent_id'].'" data-value-editor-title="'.__('Delete Forum', 'asgaros-forum').'">';
         $actionHTML .= __('Delete Forum', 'asgaros-forum');
@@ -100,7 +100,7 @@ class Asgaros_Forum_Admin_Structure_Table extends WP_List_Table {
         return $actionHTML;
     }
 
-    function get_columns() {
+    public function get_columns() {
         $columns = array(
             'name'      => __('Name:', 'asgaros-forum'),
             'status'    => __('Status:', 'asgaros-forum'),
@@ -111,7 +111,7 @@ class Asgaros_Forum_Admin_Structure_Table extends WP_List_Table {
         return $columns;
     }
 
-    function prepare_items() {
+    public function prepare_items() {
         global $asgarosforum;
 
         $columns = $this->get_columns();

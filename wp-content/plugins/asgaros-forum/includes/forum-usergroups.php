@@ -93,10 +93,10 @@ class AsgarosForumUserGroups {
         return $status;
     }
 
-    public static function insertUserGroupsOfForumCategory($forumCategoryID, $userGroups) {
-        // Only insert usergroups to a forum category when there are some. Otherwise delete them all.
-        if (!empty($userGroups)) {
-            update_term_meta($forumCategoryID, 'usergroups', $userGroups);
+    public static function insertUserGroupsOfForumCategory($forumCategoryID, $user_group_ids) {
+        // Only assign usergroup-IDs to a forum category when there are some. Otherwise delete them all.
+        if (!empty($user_group_ids)) {
+            update_term_meta($forumCategoryID, 'usergroups', $user_group_ids);
         } else {
             self::deleteUserGroupsOfForumCategory($forumCategoryID);
         }
@@ -358,10 +358,12 @@ class AsgarosForumUserGroups {
         $user_ids = self::get_ids_of_users_in_usergroup($usergroup_id);
 
         if (!empty($user_ids)) {
-            return get_users(array(
+            $query = new AsgarosForumUserQuery(array(
                 'fields'    => array('ID', 'display_name'),
                 'include'   => $user_ids
             ));
+
+            return $query->results;
         }
 
         return false;
@@ -437,13 +439,32 @@ class AsgarosForumUserGroups {
 	}
 
     public static function saveUserGroup() {
-        $usergroup_id           = $_POST['usergroup_id'];
-        $usergroup_name         = $_POST['usergroup_name'];
-        $usergroup_category     = $_POST['usergroup_category'];
-        $usergroup_color        = $_POST['usergroup_color'];
-        $usergroup_visibility   = (isset($_POST['usergroup_visibility'])) ? 'hidden' : 'normal';
-        $usergroup_auto_add     = (isset($_POST['usergroup_auto_add'])) ? 'yes' : 'no';
-        $usergroup_icon         = $_POST['usergroup_icon'];
+		// Ensure usergroup-ID is set.
+		if (empty($_POST['usergroup_id'])) {
+			return;
+		}
+
+        $usergroup_id = sanitize_key($_POST['usergroup_id']);
+
+		// Ensure usergroup-name is set.
+		if (empty($_POST['usergroup_name'])) {
+			return;
+		}
+
+		$usergroup_name = sanitize_text_field($_POST['usergroup_name']);
+
+		// Ensure usergroup-category is set.
+		if (empty($_POST['usergroup_category'])) {
+			return;
+		}
+
+        $usergroup_category = sanitize_key($_POST['usergroup_category']);
+
+		// Set other values.
+		$usergroup_color = sanitize_hex_color($_POST['usergroup_color']);
+        $usergroup_visibility = (isset($_POST['usergroup_visibility'])) ? 'hidden' : 'normal';
+        $usergroup_auto_add = (isset($_POST['usergroup_auto_add'])) ? 'yes' : 'no';
+        $usergroup_icon = sanitize_text_field($_POST['usergroup_icon']);
 
         if ($usergroup_id === 'new') {
             return self::insertUserGroup($usergroup_category, $usergroup_name, $usergroup_color, $usergroup_visibility, $usergroup_auto_add, $usergroup_icon);
@@ -453,8 +474,8 @@ class AsgarosForumUserGroups {
     }
 
     public static function saveUserGroupCategory() {
-        $category_id    = $_POST['usergroup_category_id'];
-        $category_name  = $_POST['usergroup_category_name'];
+        $category_id    = sanitize_key($_POST['usergroup_category_id']);
+        $category_name  = sanitize_text_field($_POST['usergroup_category_name']);
 
         if ($category_id === 'new') {
             return self::insertUserGroupCategory($category_name);
@@ -468,14 +489,14 @@ class AsgarosForumUserGroups {
         $userGroupsOfForumCategory = self::getUserGroupsOfForumCategory($categoryID);
 
         if (!empty($userGroupsOfForumCategory)) {
-            echo ' &middot; '.__('Usergroups:', 'asgaros-forum').' ';
+            echo ' &middot; '.esc_html__('Usergroups:', 'asgaros-forum').' ';
 
             foreach ($userGroupsOfForumCategory as $key => $userGroup) {
                 if ($key > 0) {
                     echo ', ';
                 }
 
-                echo $userGroup->name;
+                echo esc_html($userGroup->name);
             }
         }
     }
@@ -485,20 +506,20 @@ class AsgarosForumUserGroups {
 
         if (!empty($userGroupCategories)) {
             echo '<tr id="usergroups-editor">';
-                echo '<th><label>'.__('Usergroups:', 'asgaros-forum').'</label></th>';
+                echo '<th><label>'.esc_html__('Usergroups:', 'asgaros-forum').'</label></th>';
                 echo '<td>';
                     foreach ($userGroupCategories as $category) {
-                        echo '<span class="usergroup-category-name">'.$category->name.':</span>';
+                        echo '<span class="usergroup-category-name">'.esc_html($category->name).':</span>';
 
                         $userGroups = self::getUserGroupsOfCategory($category->term_id);
 
                         foreach ($userGroups as $usergroup) {
-                            echo '<label><input type="checkbox" name="category_usergroups[]" value="'.$usergroup->term_id.'">';
+                            echo '<label><input type="checkbox" name="category_usergroups[]" value="'.esc_attr($usergroup->term_id).'">';
                             echo self::render_usergroup_tag($usergroup);
                             echo '</label>';
                         }
                     }
-                    echo '<span class="description">'.__('When usergroups are selected, only users of the selected usergroups will have access to the category.', 'asgaros-forum').'</span>';
+                    echo '<span class="description">'.esc_html__('When usergroups are selected, only users of the selected usergroups will have access to the category.', 'asgaros-forum').'</span>';
                 echo '</td>';
             echo '</tr>';
         }
@@ -512,13 +533,17 @@ class AsgarosForumUserGroups {
             $userGroupsOfForumCategoryString = implode(',', $userGroupsIDsOfForumCategory);
         }
 
-        echo '<input type="hidden" id="category_'.$categoryID.'_usergroups" value="'.$userGroupsOfForumCategoryString.'">';
+        echo '<input type="hidden" id="category_'.esc_attr($categoryID).'_usergroups" value="'.esc_attr($userGroupsOfForumCategoryString).'">';
     }
 
     public static function saveUserGroupsOfForumCategory($forumCategoryID) {
-        $userGroups = isset($_POST['category_usergroups']) ? $_POST['category_usergroups'] : '';
+		$user_group_ids = array();
 
-        self::insertUserGroupsOfForumCategory($forumCategoryID, $userGroups);
+		if (!empty($_POST['category_usergroups'])) {
+			$user_group_ids = array_map('sanitize_key', $_POST['category_usergroups']);
+		}
+
+        self::insertUserGroupsOfForumCategory($forumCategoryID, $user_group_ids);
     }
 
     public static function filterCategories($unfilteredCategories) {
@@ -675,7 +700,7 @@ class AsgarosForumUserGroups {
         if (!self::$asgarosforum->prevent_query_modifications) {
     		if ($pagenow == 'users.php') {
                 if (!empty($_GET['forum-user-group'])) {
-        			$userGroupID = $_GET['forum-user-group'];
+        			$userGroupID = sanitize_key($_GET['forum-user-group']);
         			$term = self::getUserGroup($userGroupID);
 
                     if (!empty($term)) {
@@ -760,7 +785,7 @@ class AsgarosForumUserGroups {
 
     public function bulk_actions_admin_notices() {
         if (!empty($_REQUEST['forum_user_groups_assigned'])) {
-            printf('<div class="updated"><p>'.__('Usergroups assignments updated.', 'asgaros-forum').'</p></div>');
+            printf('<div class="updated"><p>'.esc_html__('Usergroups assignments updated.', 'asgaros-forum').'</p></div>');
         }
     }
 

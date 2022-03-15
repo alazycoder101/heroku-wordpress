@@ -7,13 +7,13 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Symfony\\Component\\EventDispatcher\\' => array($vendorDir . '/symfony/event-dispatcher'),
-    'Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
-    'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-message/src'),
-    'Psr\\Cache\\' => array($vendorDir . '/psr/cache/src'),
+    'WPvividPsr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
+    'WPvividPsr\\Http\\Message\\' => array($vendorDir . '/psr/http-message/src'),
+    'WPvividPsr\\Cache\\' => array($vendorDir . '/psr/cache/src'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
-    'GuzzleHttp\\Psr7\\' => array($vendorDir . '/guzzlehttp/psr7/src'),
-    'GuzzleHttp\\Promise\\' => array($vendorDir . '/guzzlehttp/promises/src'),
-    'GuzzleHttp\\' => array($vendorDir . '/guzzlehttp/guzzle/src'),
-    'Google\\Auth\\' => array($vendorDir . '/google/auth/src'),
+    'WPvividGuzzleHttp\\Psr7\\' => array($vendorDir . '/guzzlehttp/psr7/src'),
+    'WPvividGuzzleHttp\\Promise\\' => array($vendorDir . '/guzzlehttp/promises/src'),
+    'WPvividGuzzleHttp\\' => array($vendorDir . '/guzzlehttp/guzzle/src'),
+    'WPvividGoogle\\Auth\\' => array($vendorDir . '/google/auth/src'),
     'Firebase\\JWT\\' => array($vendorDir . '/firebase/php-jwt/src'),
 );

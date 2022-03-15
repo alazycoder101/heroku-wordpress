@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-namespace Google\Auth\Credentials;
+namespace WPvividGoogle\Auth\Credentials;
 
-use Google\Auth\CredentialsLoader;
-use Google\Auth\OAuth2;
+use WPvividGoogle\Auth\CredentialsLoader;
+use WPvividGoogle\Auth\OAuth2;
 
 /**
  * Authenticates requests using Google's Service Account credentials via

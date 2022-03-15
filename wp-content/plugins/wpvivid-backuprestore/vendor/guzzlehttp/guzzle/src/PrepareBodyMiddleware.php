@@ -1,9 +1,9 @@
 <?php
-namespace GuzzleHttp;
+namespace WPvividGuzzleHttp;
 
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
-use Psr\Http\Message\RequestInterface;
+use WPvividGuzzleHttp\Promise\PromiseInterface;
+use WPvividGuzzleHttp\Psr7;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * Prepares requests that contain a body, adding the Content-Length,

@@ -1616,7 +1616,7 @@ class MailChimp_WooCommerce_MailChimpApi
     public function getGDPRFields($list_id)
     {
         $one_member = $this->get("lists/$list_id/members?fields=members.marketing_permissions&count=1");
-        $fields = false;
+        $fields = array();
         
         if (is_array($one_member) &&
             isset($one_member['members']) &&
@@ -1821,7 +1821,7 @@ class MailChimp_WooCommerce_MailChimpApi
         curl_close($curl);
 
         if ($err) {
-            throw new MailChimp_WooCommerce_Error('CURL error :: '.$err, '500');
+            throw new MailChimp_WooCommerce_Error('CURL error :: '.$err, 500);
         }
 
         $data = json_decode($response, true);
@@ -1850,16 +1850,20 @@ class MailChimp_WooCommerce_MailChimpApi
             return $data;
         }
 
+        $error_status = isset($data['status']) ? (int) $data['status'] : (int) $http_code;
+
         if ($http_code >= 400 && $http_code <= 500) {
             if ($http_code == 403) {
                 throw new MailChimp_WooCommerce_RateLimitError();
             }
-
-            throw new MailChimp_WooCommerce_Error($data['title'] .' :: '.$data['detail'], $data['status']);
+            $error_message = isset($data['title']) ? $data['title'] : '';
+            $error_message .= isset($data['detail']) ? $data['detail'] : '';
+            throw new MailChimp_WooCommerce_Error($error_message, $error_status);
         }
 
         if ($http_code >= 500) {
-            throw new MailChimp_WooCommerce_ServerError($data['detail'], $data['status']);
+            $error_message = isset($data['detail']) ? $data['detail'] : '';
+            throw new MailChimp_WooCommerce_ServerError($error_message, $error_status);
         }
 
         if (!is_array($data)) {
@@ -1883,7 +1887,7 @@ class MailChimp_WooCommerce_MailChimpApi
             foreach ($data['errors'] as $error) {
                 $message .= '<p>'.$error['field'].': '.$error['message'].'</p>';
             }
-            throw new MailChimp_WooCommerce_Error($message, $data['status']);
+            throw new MailChimp_WooCommerce_Error($message, (int) $data['status']);
         }
 
         // make sure the response is correct from the data in the response array
@@ -1891,7 +1895,7 @@ class MailChimp_WooCommerce_MailChimpApi
             if (isset($data['http_code']) && $data['http_code'] == 403) {
                 throw new MailChimp_WooCommerce_RateLimitError();
             }
-            throw new MailChimp_WooCommerce_Error($data['detail'], $data['status']);
+            throw new MailChimp_WooCommerce_Error($data['detail'], (int) $data['status']);
         }
 
         return false;

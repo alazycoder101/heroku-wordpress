@@ -7,25 +7,25 @@ class AsgarosForumAppearance {
 	private $skin_path = 'skin';
 	private $default_theme = 'default';
 	private $asgarosforum = null;
-	private $themes_root;		// Path to themes directory.
-	private $themes = array();	// Array of available themes.
-	private $current_theme;		// The current theme.
+	private $themes_root;       // Path to themes directory.
+	private $themes = array();  // Array of available themes.
+	private $current_theme;     // The current theme.
 	public $options = array();
 	public $options_default = array(
-		'theme'                     	=> 'default',
-		'custom_color'              	=> '#256db3',
-		'custom_accent_color'			=> '#054d98',
-        'custom_text_color'         	=> '#444444',
+		'theme'                         => 'default',
+		'custom_color'                  => '#256db3',
+		'custom_accent_color'           => '#054d98',
+        'custom_text_color'             => '#444444',
 		'custom_text_color_light'       => '#888888',
-		'custom_link_color'         	=> '#256db3',
-        'custom_background_color'		=> '#ffffff',
-		'custom_background_color_alt'	=> '#fafafa',
-        'custom_border_color'       	=> '#eeeeee',
-		'custom_read_indicator_color'	=> '#a2a2a2',
-		'custom_unread_indicator_color'	=> '#256db3',
-		'custom_font'					=> 'Verdana, Tahoma, sans-serif',
-		'custom_font_size'				=> '13px',
-		'custom_css'					=> ''
+		'custom_link_color'             => '#256db3',
+        'custom_background_color'       => '#ffffff',
+		'custom_background_color_alt'   => '#fafafa',
+        'custom_border_color'           => '#eeeeee',
+		'custom_read_indicator_color'   => '#a2a2a2',
+		'custom_unread_indicator_color' => '#256db3',
+		'custom_font'                   => 'Verdana, Tahoma, sans-serif',
+		'custom_font_size'              => '13px',
+		'custom_css'                    => ''
 	);
 
 	public function __construct($object) {
@@ -67,8 +67,8 @@ class AsgarosForumAppearance {
 	private function find_themes() {
 		// Always ensure that the default theme is available.
 		$this->themes[$this->default_theme] = array(
-			'name'	=> __('Default Theme', 'asgaros-forum'),
-			'url'	=> $this->asgarosforum->plugin_url.$this->skin_path
+			'name'  => __('Default Theme', 'asgaros-forum'),
+			'url'   => $this->asgarosforum->plugin_url.$this->skin_path
 		);
 
 		// Create themes directory if it doesnt exist.
@@ -84,8 +84,8 @@ class AsgarosForumAppearance {
 					if (is_dir($themepath) && is_file($themepath.'/style.css') && is_file($themepath.'/widgets.css')) {
 						$trimmed = preg_filter('/^.*\//', '', $themepath, 1);
 						$this->themes[$trimmed] = array(
-							'name'	=> $trimmed,
-							'url'	=> content_url($this->theme_path.'/'.$trimmed)
+							'name'  => $trimmed,
+							'url'   => content_url($this->theme_path.'/'.$trimmed)
 						);
 					}
 				}
@@ -154,12 +154,12 @@ class AsgarosForumAppearance {
 			}
 
 			// Create meta-tags.
-			echo '<link rel="canonical" href="'.$link.'" />'.PHP_EOL;
-			echo '<meta name="description" content="'.$description.'" />'.PHP_EOL;
-			echo '<meta property="og:url" content="'.$link.'" />'.PHP_EOL;
-			echo '<meta property="og:title" content="'.$title.'" />'.PHP_EOL;
-			echo '<meta property="og:description" content="'.$description.'" />'.PHP_EOL;
-			echo '<meta property="og:site_name" content="'.get_bloginfo('name').'" />'.PHP_EOL;
+			echo '<link rel="canonical" href="'.esc_url($link).'" />'.PHP_EOL;
+			echo '<meta name="description" content="'.esc_attr($description).'" />'.PHP_EOL;
+			echo '<meta property="og:url" content="'.esc_url($link).'" />'.PHP_EOL;
+			echo '<meta property="og:title" content="'.esc_attr($title).'" />'.PHP_EOL;
+			echo '<meta property="og:description" content="'.esc_attr($description).'" />'.PHP_EOL;
+			echo '<meta property="og:site_name" content="'.esc_attr(get_bloginfo('name')).'" />'.PHP_EOL;
 
             // Try to set og:image-tag when we are in a topic. A check for the element-ID
             // is required to prevent an error in case that this topic does not exist.
@@ -170,13 +170,13 @@ class AsgarosForumAppearance {
 					$image_url = $this->asgarosforum->extract_image_url($first_post->text);
 
 					if ($image_url) {
-						echo '<meta property="og:image" content="'.$image_url.'" />'.PHP_EOL;
+						echo '<meta property="og:image" content="'.esc_url($image_url).'" />'.PHP_EOL;
 					}
 				}
 			}
 
-			echo '<meta name="twitter:title" content="'.$title.'" />'.PHP_EOL;
-			echo '<meta name="twitter:description" content="'.$description.'" />'.PHP_EOL;
+			echo '<meta name="twitter:title" content="'.esc_attr($title).'" />'.PHP_EOL;
+			echo '<meta name="twitter:description" content="'.esc_attr($description).'" />'.PHP_EOL;
 
 			do_action('asgarosforum_wp_head');
 
@@ -319,7 +319,8 @@ class AsgarosForumAppearance {
 			$custom_css .= '#af-wrapper .action-panel-description,'.PHP_EOL;
 			$custom_css .= '#af-wrapper #forum-breadcrumbs,'.PHP_EOL;
 			$custom_css .= '#af-wrapper #forum-breadcrumbs a,'.PHP_EOL;
-			$custom_css .= '#af-wrapper .forum-post-date,'.PHP_EOL;
+            $custom_css .= '#af-wrapper .forum-post-date,'.PHP_EOL;
+            $custom_css .= '#af-wrapper .forum-post-date a,'.PHP_EOL;
 			$custom_css .= '#af-wrapper .post-footer,'.PHP_EOL;
 			$custom_css .= '#af-wrapper .post-footer a,'.PHP_EOL;
 			$custom_css .= '#af-wrapper .signature,'.PHP_EOL;
@@ -369,7 +370,8 @@ class AsgarosForumAppearance {
 			$custom_css .= '#af-wrapper #profile-layer,'.PHP_EOL;
 			$custom_css .= '#af-wrapper .spoiler .spoiler-head,'.PHP_EOL;
 			$custom_css .= '#af-wrapper .report-content,'.PHP_EOL;
-			$custom_css .= '#af-wrapper #poll-panel,'.PHP_EOL;
+            $custom_css .= '#af-wrapper #poll-panel,'.PHP_EOL;
+            $custom_css .= '#af-wrapper .post-reactions-summary .reaction-names,'.PHP_EOL;
 			$custom_css .= '#af-wrapper #profile-content {'.PHP_EOL;
 			    $custom_css .= 'background-color: '.$this->options['custom_background_color_alt'].' !important;'.PHP_EOL;
 			$custom_css .= '}'.PHP_EOL;
@@ -414,7 +416,8 @@ class AsgarosForumAppearance {
 			$custom_css .= '#af-wrapper #poll-options,'.PHP_EOL;
 			$custom_css .= '#af-wrapper #poll-panel,'.PHP_EOL;
 			$custom_css .= '#af-wrapper #poll-panel #poll-headline,'.PHP_EOL;
-			$custom_css .= '#af-wrapper #poll-results .poll-result-bar,'.PHP_EOL;
+            $custom_css .= '#af-wrapper #poll-results .poll-result-bar,'.PHP_EOL;
+            $custom_css .= '#af-wrapper .post-reactions-summary .reaction-names,'.PHP_EOL;
 			$custom_css .= '#af-wrapper #usergroups-filter {'.PHP_EOL;
 			    $custom_css .= 'border-color: '.$this->options['custom_border_color'].' !important;'.PHP_EOL;
 			$custom_css .= '}'.PHP_EOL;

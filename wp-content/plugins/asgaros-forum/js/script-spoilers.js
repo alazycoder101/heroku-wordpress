@@ -8,7 +8,7 @@
                 icon: 'spoiler',
                 tooltip: 'Spoiler',
                 onclick: function() {
-                    editor.insertContent("[spoiler][/spoiler]");
+                    editor.insertContent('[spoiler title=""][/spoiler]');
                 }
             });
         });
@@ -16,6 +16,6 @@
         // Toggles a clicked spoiler.
         $('#af-wrapper .spoiler .spoiler-head').click(function() {
     		$(this).toggleClass('closed').toggleClass('opened').next().toggle();
-    	});    
+    	});
     });
 })(jQuery);

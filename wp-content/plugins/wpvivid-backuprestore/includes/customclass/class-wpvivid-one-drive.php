@@ -35,6 +35,7 @@ class WPvivid_one_drive extends WPvivid_Remote
 {
     public $options;
     public $callback;
+    public $add_remote;
     public function __construct($options=array())
     {
         if(empty($options))
@@ -42,6 +43,9 @@ class WPvivid_one_drive extends WPvivid_Remote
             if(!defined('WPVIVID_INIT_STORAGE_TAB_ONE_DRIVE'))
             {
                 add_action('init', array($this, 'handle_auth_actions'));
+                //wpvivid_one_drive_add_remote
+                add_action('wp_ajax_wpvivid_one_drive_add_remote',array( $this,'finish_add_remote'));
+
                 add_action('wpvivid_add_storage_tab',array($this,'wpvivid_add_storage_tab_one_drive'), 12);
                 add_action('wpvivid_add_storage_page',array($this,'wpvivid_add_storage_page_one_drive'), 12);
                 add_action('wpvivid_edit_remote_page',array($this,'wpvivid_edit_storage_page_one_drive'), 12);
@@ -57,6 +61,7 @@ class WPvivid_one_drive extends WPvivid_Remote
         {
             $this->options=$options;
         }
+        $this->add_remote=false;
     }
 
     public function pre_add_remote($remote,$id)
@@ -71,187 +76,104 @@ class WPvivid_one_drive extends WPvivid_Remote
 
     public function handle_auth_actions()
     {
-        if (isset($_GET['action']))
+        if (isset($_GET['action']) && isset($_GET['page']))
         {
-            if($_GET['action']=='wpvivid_one_drive_auth')
+            if($_GET['page'] === 'WPvivid')
             {
-                try {
-                    if (!isset($_GET['name']) || empty($_GET['name'])) {
-                        echo '<div class="notice notice-warning is-dismissible"><p>'.__('Warning: An alias for remote storage is required.', 'wpvivid-backuprestore').'</p></div>';
-                        return;
-                    }
-
-                    $_GET['name'] = sanitize_text_field($_GET['name']);
-
-                    $remoteslist = WPvivid_Setting::get_all_remote_options();
-                    foreach ($remoteslist as $key => $value) {
-                        if (isset($value['name']) && $value['name'] == $_GET['name']) {
-                            echo '<div class="notice notice-warning is-dismissible"><p>'.__('Warning: The alias already exists in storage list.', 'wpvivid-backuprestore').'</p></div>';
-                            return;
-                        }
-                    }
-
-                    $auth_id = uniqid('wpvivid-auth-');
-
-                    $url = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
-                        . '?client_id=' . urlencode('37668be9-b55f-458f-b6a3-97e6f8aa10c9')
-                        . '&scope=' . urlencode('offline_access files.readwrite')
-                        . '&response_type=code'
-                        . '&redirect_uri=' . urlencode('https://auth.wpvivid.com/onedrive_v2/')
-                        . '&state=' . urlencode(admin_url() . 'admin.php?page=WPvivid' . '&action=wpvivid_one_drive_finish_auth&name=' . $_GET['name'] . '&default=' . $_GET['default'].'&auth_id='.$auth_id)
-                        . '&display=popup'
-                        . '&locale=en';
-                    header('Location: ' . esc_url_raw($url));
-                }
-                catch (Exception $e){
-                    echo '<div class="notice notice-error"><p>'.$e->getMessage().'</p></div>';
-                }
-            }
-            else if($_GET['action']=='wpvivid_one_drive_finish_auth')
-            {
-                try
+                if($_GET['action']=='wpvivid_one_drive_auth')
                 {
-                    if (isset($_GET['auth_error']))
+                    try {
+                        $auth_id = uniqid('wpvivid-auth-');
+                        $remote_options['auth_id']=$auth_id;
+                        update_option('wpvivid_tmp_remote_options',$remote_options);
+                        $url = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
+                            . '?client_id=' . urlencode('37668be9-b55f-458f-b6a3-97e6f8aa10c9')
+                            . '&scope=' . urlencode('offline_access files.readwrite')
+                            . '&response_type=code'
+                            . '&redirect_uri=' . urlencode('https://auth.wpvivid.com/onedrive_v2/')
+                            . '&state=' . urlencode(admin_url() . 'admin.php?page=WPvivid' . '&action=wpvivid_one_drive_finish_auth&main_tab=storage&sub_tab=one_drive&sub_page=storage_account_one_drive&auth_id='.$auth_id)
+                            . '&display=popup'
+                            . '&locale=en';
+                        header('Location: ' . esc_url_raw($url));
+                    }
+                    catch (Exception $e){
+                        echo '<div class="notice notice-error"><p>'.$e->getMessage().'</p></div>';
+                    }
+                }
+                else if($_GET['action']=='wpvivid_one_drive_finish_auth')
+                {
+                    try
                     {
-                        $error = urldecode($_GET['auth_error']);
-                        header('Location: ' . admin_url() . 'admin.php?page=' . WPVIVID_PLUGIN_SLUG . '&action=wpvivid_one_drive&result=error&resp_msg=' . $error);
-                        return;
-                    }
-
-                    $remoteslist = WPvivid_Setting::get_all_remote_options();
-                    foreach ($remoteslist as $key => $value) {
-                        if (isset($value['auth_id']) && isset($_GET['auth_id']) && $value['auth_id'] == $_GET['auth_id']) {
-                            _e('<div class="notice notice-success is-dismissible"><p>You have authenticated the Microsoft OneDrive account as your remote storage.</p></div>');
+                        if (isset($_GET['auth_error']))
+                        {
+                            $error = urldecode($_GET['auth_error']);
+                            header('Location: ' . admin_url() . 'admin.php?page=' . WPVIVID_PLUGIN_SLUG . '&action=wpvivid_one_drive&result=error&resp_msg=' . $error);
                             return;
                         }
-                    }
 
-                    global $wpvivid_plugin;
-
-                    $remote_options['type'] = WPVIVID_REMOTE_ONEDRIVE;
-                    $remote_options['token']['access_token']=$_POST['access_token'];
-                    $remote_options['token']['refresh_token']=$_POST['refresh_token'];
-                    $remote_options['token']['expires']=time()+$_POST['expires_in'];
-
-                    $remote_options['name'] = $_GET['name'];
-                    $remote_options['default'] = $_GET['default'];
-                    $remote_options['path'] = WPVIVID_ONEDRIVE_DEFAULT_FOLDER;
-                    $remote_options['auth_id'] = $_GET['auth_id'];
-                    $ret = $wpvivid_plugin->remote_collection->add_remote($remote_options);
-
-                    if ($ret['result'] == 'success') {
-                        header('Location: ' . admin_url() . 'admin.php?page=' . WPVIVID_PLUGIN_SLUG . '&action=wpvivid_one_drive&result=success');
-                        return;
-                    } else {
-                        header('Location: ' . admin_url() . 'admin.php?page=' . WPVIVID_PLUGIN_SLUG . '&action=wpvivid_one_drive&result=error&resp_msg=' . $ret['error']);
-                        return;
-                    }
-                }
-                catch (Exception $e){
-                    echo '<div class="notice notice-error"><p>'.$e->getMessage().'</p></div>';
-                }
-            }
-            else if($_GET['action']=='wpvivid_one_drive')
-            {
-                try {
-                    if (isset($_GET['result'])) {
-                        if ($_GET['result'] == 'success') {
-                            add_action('show_notice', array($this, 'wpvivid_show_notice_add_onedrive_success'));
-                        } else if ($_GET['result'] == 'error') {
-                            add_action('show_notice', array($this, 'wpvivid_show_notice_add_onedrive_error'));
+                        $remoteslist = WPvivid_Setting::get_all_remote_options();
+                        foreach ($remoteslist as $key => $value)
+                        {
+                            if (isset($value['auth_id']) && isset($_GET['auth_id']) && $value['auth_id'] == sanitize_text_field($_GET['auth_id']))
+                            {
+                                _e('<div class="notice notice-success is-dismissible"><p>You have authenticated the Microsoft OneDrive account as your remote storage.</p></div>');
+                                return;
+                            }
                         }
-                    }
-                }
-                catch (Exception $e){
-                    echo '<div class="notice notice-error"><p>'.$e->getMessage().'</p></div>';
-                }
-            }
-            else if($_GET['action']=='wpvivid_one_drive_update_auth')
-            {
-                try {
-                    if (!isset($_GET['name']) || empty($_GET['name'])) {
-                        echo '<div class="notice notice-warning is-dismissible"><p>'.__('Warning: An alias for remote storage is required.', 'wpvivid-backuprestore').'</p></div>';
-                        return;
-                    }
 
-                    $_GET['name'] = sanitize_text_field($_GET['name']);
-                    $auth_id = uniqid('wpvivid-auth-');
-                    $remoteslist = WPvivid_Setting::get_all_remote_options();
-                    foreach ($remoteslist as $key => $value) {
-                        if (isset($value['name']) && $value['name'] == $_GET['name'] && $key != $_GET['id']) {
-                            echo '<div class="notice notice-warning is-dismissible"><p>'.__('Warning: The alias already exists in storage list.', 'wpvivid-backuprestore').'</p></div>';
+                        $tmp_options=get_option('wpvivid_tmp_remote_options',false);
+                        if($tmp_options===false)
+                        {
                             return;
                         }
-                    }
+                        else
+                        {
+                            if($tmp_options['auth_id']===$_GET['auth_id'])
+                            {
+                                if(empty($_POST['refresh_token']))
+                                {
+                                    if(empty($tmp_options['token']['refresh_token']))
+                                    {
+                                        $err = 'No refresh token was received from OneDrive, which means that you entered client secret incorrectly, or that you did not re-authenticated yet after you corrected it. Please authenticate again.';
+                                        header('Location: ' . admin_url() . 'admin.php?page=' . WPVIVID_PLUGIN_SLUG . '&action=wpvivid_one_drive&result=error&resp_msg='.$err);
 
-                    $url = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
-                        . '?client_id=' . urlencode('37668be9-b55f-458f-b6a3-97e6f8aa10c9')
-                        . '&scope=' . urlencode('offline_access files.readwrite')
-                        . '&response_type=code'
-                        . '&redirect_uri=' . urlencode('https://auth.wpvivid.com/onedrive_v2/')
-                        . '&state=' . urlencode(admin_url() . 'admin.php?page=WPvivid' . '&action=wpvivid_one_drive_update_finish_auth&name=' . $_GET['name'] . '&id=' . $_GET['id'].'&auth_id='.$auth_id)
-                        . '&display=popup'
-                        . '&locale=en';
-                    header('Location: ' . esc_url_raw($url));
-                }
-                catch (Exception $e){
-                    echo '<div class="notice notice-error"><p>'.$e->getMessage().'</p></div>';
-                }
-            }
-            else if($_GET['action']=='wpvivid_one_drive_update_finish_auth')
-            {
-                try {
-                    if (isset($_GET['auth_error'])) {
-                        $error = urldecode($_GET['auth_error']);
-                        header('Location: ' . admin_url() . 'admin.php?page=' . WPVIVID_PLUGIN_SLUG . '&action=wpvivid_one_drive_update&result=error&resp_msg=' . $error);
-
-                        return;
-                    }
-
-                    $remoteslist = WPvivid_Setting::get_all_remote_options();
-                    foreach ($remoteslist as $key => $value) {
-                        if (isset($value['auth_id']) && isset($_GET['auth_id']) && $value['auth_id'] == $_GET['auth_id']) {
-                            _e('<div class="notice notice-success is-dismissible"><p>You have successfully updated the storage alias.</p></div>');
-                            return;
+                                        return;
+                                    }
+                                }
+                                else
+                                {
+                                    $tmp_options['type'] = WPVIVID_REMOTE_ONEDRIVE;
+                                    $tmp_options['token']['access_token']=sanitize_text_field($_POST['access_token']);
+                                    $tmp_options['token']['refresh_token']=sanitize_text_field($_POST['refresh_token']);
+                                    $tmp_options['token']['expires']=time()+$_POST['expires_in'];
+                                    update_option('wpvivid_tmp_remote_options',$tmp_options);
+                                }
+                                $this->add_remote=true;
+                            }
+                            else
+                            {
+                                return;
+                            }
                         }
                     }
-
-                    global $wpvivid_plugin;
-
-                    $remote_options['type'] = WPVIVID_REMOTE_ONEDRIVE;
-                    $remote_options['token']['access_token']=$_POST['access_token'];
-                    $remote_options['token']['refresh_token']=$_POST['refresh_token'];
-                    $remote_options['token']['expires']=time()+$_POST['expires_in'];
-                    $remote_options['name'] = $_GET['name'];
-                    $remote_options['path'] = WPVIVID_ONEDRIVE_DEFAULT_FOLDER;
-                    $remote_options['auth_id'] = $_GET['auth_id'];
-                    $ret = $wpvivid_plugin->remote_collection->update_remote($_GET['id'], $remote_options);
-
-                    if ($ret['result'] == 'success') {
-                        header('Location: ' . admin_url() . 'admin.php?page=' . WPVIVID_PLUGIN_SLUG . '&action=wpvivid_one_drive_update&result=success');
-                        return;
-                    } else {
-                        header('Location: ' . admin_url() . 'admin.php?page=' . WPVIVID_PLUGIN_SLUG . '&action=wpvivid_one_drive_update&result=error&resp_msg=' . $ret['error']);
-                        return;
+                    catch (Exception $e){
+                        echo '<div class="notice notice-error"><p>'.$e->getMessage().'</p></div>';
                     }
                 }
-                catch (Exception $e){
-                    echo '<div class="notice notice-error"><p>'.$e->getMessage().'</p></div>';
-                }
-            }
-            else if($_GET['action']=='wpvivid_one_drive_update')
-            {
-                try {
-                    if (isset($_GET['result'])) {
-                        if ($_GET['result'] == 'success') {
-                            add_action('show_notice', array($this, 'wpvivid_show_notice_edit_onedrive_success'));
-                        } else if ($_GET['result'] == 'error') {
-                            add_action('show_notice', array($this, 'wpvivid_show_notice_edit_onedrive_error'));
+                else if($_GET['action']=='wpvivid_one_drive')
+                {
+                    try {
+                        if (isset($_GET['result'])) {
+                            if ($_GET['result'] == 'success') {
+                                add_action('show_notice', array($this, 'wpvivid_show_notice_add_onedrive_success'));
+                            } else if ($_GET['result'] == 'error') {
+                                add_action('show_notice', array($this, 'wpvivid_show_notice_add_onedrive_error'));
+                            }
                         }
                     }
-                }
-                catch (Exception $e){
-                    echo '<div class="notice notice-error"><p>'.$e->getMessage().'</p></div>';
+                    catch (Exception $e){
+                        echo '<div class="notice notice-error"><p>'.$e->getMessage().'</p></div>';
+                    }
                 }
             }
         }
@@ -262,15 +184,7 @@ class WPvivid_one_drive extends WPvivid_Remote
     public function wpvivid_show_notice_add_onedrive_error(){
         global $wpvivid_plugin;
         $wpvivid_plugin->wpvivid_handle_remote_storage_error($_GET['resp_msg'], 'Add OneDrive Remote');
-        echo '<div class="notice notice-error"><p>'.$_GET['resp_msg'].'</p></div>';
-    }
-    public function wpvivid_show_notice_edit_onedrive_success(){
-        echo '<div class="notice notice-success is-dismissible"><p>'.__('You have successfully updated the storage alias.', 'wpvivid-backuprestore').'</p></div>';
-    }
-    public function wpvivid_show_notice_edit_onedrive_error(){
-        global $wpvivid_plugin;
-        $wpvivid_plugin->wpvivid_handle_remote_storage_error($_GET['resp_msg'], 'Update OneDrive Remote');
-        echo '<div class="notice notice-error"><p>'.$_GET['resp_msg'].'</p></div>';
+        echo '<div class="notice notice-error"><p>'.esc_html($_GET['resp_msg']).'</p></div>';
     }
 
     public function wpvivid_add_storage_tab_one_drive()
@@ -286,133 +200,223 @@ class WPvivid_one_drive extends WPvivid_Remote
     {
         global $wpvivid_plugin;
         $root_path=apply_filters('wpvivid_get_root_path', WPVIVID_REMOTE_ONEDRIVE);
-        ?>
-        <div id="storage_account_one_drive" class="storage-account-page" style="display:none;">
-            <div style="background-color:#f1f1f1; padding: 10px;">
-                <?php _e('Please read <a target="_blank" href="https://wpvivid.com/privacy-policy" style="text-decoration: none;">this privacy policy</a> for use of our Microsoft OneDrive authorization app (none of your backup data is sent to us).', 'wpvivid-backuprestore'); ?>
+        if($this->add_remote)
+        {
+            ?>
+            <div id="storage_account_one_drive" class="storage-account-page" style="display:none;">
+                <div style="background-color:#f1f1f1; padding: 10px;">
+                    <?php _e('Please read <a target="_blank" href="https://wpvivid.com/privacy-policy" style="text-decoration: none;">this privacy policy</a> for use of our Microsoft OneDrive authorization app (none of your backup data is sent to us).', 'wpvivid-backuprestore'); ?>
+                </div>
+                <div style="color:#8bc34a; padding: 10px 10px 10px 0;">
+                    <strong>Authentication is done, please continue to enter the storge information, then click 'Add Now' button to save it.</strong>
+                </div>
+                <div style="padding: 10px 10px 10px 0;">
+                    <strong><?php _e('Enter Your Microsoft OneDrive Information', 'wpvivid-backuprestore'); ?></strong>
+                </div>
+                <table class="wp-list-table widefat plugins" style="width:100%;">
+                    <tbody>
+                    <tr>
+                        <td class="plugin-title column-primary">
+                            <div class="wpvivid-storage-form">
+                                <input type="text" class="regular-text" autocomplete="off" option="one_drive" name="name" placeholder="<?php esc_attr_e('Enter a unique alias: e.g. OneDrive-001', 'wpvivid-backuprestore'); ?>" onkeyup="value=value.replace(/[^a-zA-Z0-9\-_]/g,'')" />
+                            </div>
+                        </td>
+                        <td class="column-description desc">
+                            <div class="wpvivid-storage-form-desc">
+                                <i><?php _e('A name to help you identify the storage if you have multiple remote storage connected.', 'wpvivid-backuprestore'); ?></i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="plugin-title column-primary">
+                            <div class="wpvivid-storage-form">
+                                <input type="text" class="regular-text" autocomplete="off" option="one_drive" name="path" value="<?php esc_attr_e($root_path.WPVIVID_ONEDRIVE_DEFAULT_FOLDER); ?>" readonly="readonly" />
+                            </div>
+                        </td>
+                        <td class="column-description desc">
+                            <div class="wpvivid-storage-form-desc">
+                                <i><?php _e('All backups will be uploaded to this directory.', 'wpvivid-backuprestore'); ?></i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="plugin-title column-primary">
+                            <div class="wpvivid-storage-form">
+                                <input type="text" class="regular-text" autocomplete="off" value="mywebsite01" readonly="readonly" />
+                            </div>
+                        </td>
+                        <td class="column-description desc">
+                            <div class="wpvivid-storage-form-desc">
+                                <a href="https://docs.wpvivid.com/wpvivid-backup-pro-microsoft-onedrive-custom-folder-name.html"><?php _e('Pro feature: Create a directory for storing the backups of the site', 'wpvivid-backuprestore'); ?></a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="plugin-title column-primary">
+                            <div class="wpvivid-storage-select">
+                                <label>
+                                    <input type="checkbox" option="one_drive" name="default" checked /><?php _e('Set as the default remote storage.', 'wpvivid-backuprestore'); ?>
+                                </label>
+                            </div>
+                        </td>
+                        <td class="column-description desc">
+                            <div class="wpvivid-storage-form-desc">
+                                <i><?php _e('Once checked, all this sites backups sent to a remote storage destination will be uploaded to this storage by default.', 'wpvivid-backuprestore'); ?></i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="plugin-title column-primary">
+                            <div class="wpvivid-storage-form">
+                                <input id="wpvivid_one_drive_auth" class="button-primary" type="submit" value="<?php esc_attr_e('Add Now', 'wpvivid-backuprestore'); ?>">
+                            </div>
+                        </td>
+                        <td class="column-description desc">
+                            <div class="wpvivid-storage-form-desc">
+                                <i><?php _e('Click the button to add the storage.', 'wpvivid-backuprestore'); ?></i>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
-            <div style="padding: 10px 10px 10px 0;">
-                <strong><?php _e('Enter Your Microsoft OneDrive Information', 'wpvivid-backuprestore'); ?></strong>
-            </div>
-            <table class="wp-list-table widefat plugins" style="width:100%;">
-                <tbody>
-                <tr>
-                    <td class="plugin-title column-primary">
-                        <div class="wpvivid-storage-form">
-                            <input type="text" class="regular-text" autocomplete="off" option="one_drive" name="name" placeholder="<?php esc_attr_e('Enter a unique alias: e.g. OneDrive-001', 'wpvivid-backuprestore'); ?>" onkeyup="value=value.replace(/[^a-zA-Z0-9\-_]/g,'')" />
-                        </div>
-                    </td>
-                    <td class="column-description desc">
-                        <div class="wpvivid-storage-form-desc">
-                            <i><?php _e('A name to help you identify the storage if you have multiple remote storage connected.', 'wpvivid-backuprestore'); ?></i>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="plugin-title column-primary">
-                        <div class="wpvivid-storage-form">
-                            <input type="text" class="regular-text" autocomplete="off" option="one_drive" name="path" value="<?php esc_attr_e($root_path.WPVIVID_ONEDRIVE_DEFAULT_FOLDER); ?>" readonly="readonly" />
-                        </div>
-                    </td>
-                    <td class="column-description desc">
-                        <div class="wpvivid-storage-form-desc">
-                            <i><?php _e('All backups will be uploaded to this directory.', 'wpvivid-backuprestore'); ?></i>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="plugin-title column-primary">
-                        <div class="wpvivid-storage-form">
-                            <input type="text" class="regular-text" autocomplete="off" value="mywebsite01" readonly="readonly" />
-                        </div>
-                    </td>
-                    <td class="column-description desc">
-                        <div class="wpvivid-storage-form-desc">
-                            <a href="https://wpvivid.com/wpvivid-backup-pro-microsoft-onedrive-custom-folder-name?utm_source=client_onedrive&utm_medium=inner_link&utm_campaign=access"><?php _e('Pro feature: Create a directory for storing the backups of the site', 'wpvivid-backuprestore'); ?></a>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="plugin-title column-primary">
-                        <div class="wpvivid-storage-select">
-                            <label>
-                                <input type="checkbox" option="one_drive" name="default" checked /><?php _e('Set as the default remote storage.', 'wpvivid-backuprestore'); ?>
-                            </label>
-                        </div>
-                    </td>
-                    <td class="column-description desc">
-                        <div class="wpvivid-storage-form-desc">
-                            <i><?php _e('Once checked, all this sites backups sent to a remote storage destination will be uploaded to this storage by default.', 'wpvivid-backuprestore'); ?></i>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="plugin-title column-primary">
-                        <div class="wpvivid-storage-form">
-                            <input onclick="wpvivid_one_drive_auth();" class="button-primary" type="submit" value="<?php esc_attr_e('Authenticate with Microsoft OneDrive', 'wpvivid-backuprestore'); ?>">
-                        </div>
-                    </td>
-                    <td class="column-description desc">
-                        <div class="wpvivid-storage-form-desc">
-                            <i><?php _e('Click the button to get Microsoft authentication and add it to the storage list below.', 'wpvivid-backuprestore'); ?></i>
-                        </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-        <script>
-            function wpvivid_check_onedrive_storage_alias(storage_alias){
-                var find = 1;
-                jQuery('#wpvivid_remote_storage_list tr').each(function (i) {
-                    jQuery(this).children('td').each(function (j) {
-                        if (j == 3) {
-                            if (jQuery(this).text() == storage_alias) {
-                                find = -1;
-                                return false;
+            <script>
+                function wpvivid_check_onedrive_storage_alias(storage_alias)
+                {
+                    var find = 1;
+                    jQuery('#wpvivid_remote_storage_list tr').each(function (i) {
+                        jQuery(this).children('td').each(function (j) {
+                            if (j == 3) {
+                                if (jQuery(this).text() == storage_alias) {
+                                    find = -1;
+                                    return false;
+                                }
                             }
+                        });
+                    });
+                    return find;
+                }
+
+                jQuery('#wpvivid_one_drive_auth').click(function()
+                {
+                    wpvivid_one_drive_auth();
+                });
+
+                function wpvivid_one_drive_auth()
+                {
+                    wpvivid_settings_changed = false;
+                    var name='';
+                    var path='';
+                    jQuery('input:text[option=one_drive]').each(function()
+                    {
+                        var key = jQuery(this).prop('name');
+                        if(key==='name')
+                        {
+                            name = jQuery(this).val();
                         }
                     });
-                });
-                return find;
-            }
-            function wpvivid_one_drive_auth()
-            {
-                wpvivid_settings_changed = false;
-                var name='';
-                var path='';
-                jQuery('input:text[option=one_drive]').each(function()
-                {
-                    var key = jQuery(this).prop('name');
-                    if(key==='name')
+
+                    var remote_default='0';
+
+                    jQuery('input:checkbox[option=one_drive]').each(function()
                     {
-                        name = jQuery(this).val();
+                        if(jQuery(this).prop('checked')) {
+                            remote_default='1';
+                        }
+                        else {
+                            remote_default='0';
+                        }
+                    });
+                    if(name == ''){
+                        alert(wpvividlion.remotealias);
                     }
-                });
-
-                var remote_default='0';
-
-                jQuery('input:checkbox[option=one_drive]').each(function()
-                {
-                    if(jQuery(this).prop('checked')) {
-                        remote_default='1';
+                    else if(wpvivid_check_onedrive_storage_alias(name) === -1){
+                        alert(wpvividlion.remoteexist);
                     }
                     else {
-                        remote_default='0';
+                        var ajax_data;
+                        var remote_from = wpvivid_ajax_data_transfer('one_drive');
+                        ajax_data = {
+                            'action': 'wpvivid_one_drive_add_remote',
+                            'remote': remote_from
+                        };
+                        jQuery('#wpvivid_one_drive_auth').css({'pointer-events': 'none', 'opacity': '0.4'});
+                        jQuery('#wpvivid_remote_notice').html('');
+                        wpvivid_post_request(ajax_data, function (data)
+                        {
+                            try
+                            {
+                                var jsonarray = jQuery.parseJSON(data);
+                                if (jsonarray.result === 'success')
+                                {
+                                    jQuery('#wpvivid_one_drive_auth').css({'pointer-events': 'auto', 'opacity': '1'});
+                                    jQuery('input:text[option=one_drive]').each(function(){
+                                        jQuery(this).val('');
+                                    });
+                                    jQuery('input:password[option=one_drive]').each(function(){
+                                        jQuery(this).val('');
+                                    });
+                                    wpvivid_handle_remote_storage_data(data);
+                                    location.href='admin.php?page=WPvivid&action=wpvivid_one_drive&main_tab=storage&sub_tab=one_drive&sub_page=storage_account_one_drive&result=success';
+                                }
+                                else if (jsonarray.result === 'failed')
+                                {
+                                    jQuery('#wpvivid_remote_notice').html(jsonarray.notice);
+                                    jQuery('input[option=add-remote]').css({'pointer-events': 'auto', 'opacity': '1'});
+                                }
+                            }
+                            catch (err)
+                            {
+                                alert(err);
+                                jQuery('input[option=add-remote]').css({'pointer-events': 'auto', 'opacity': '1'});
+                            }
+
+                        }, function (XMLHttpRequest, textStatus, errorThrown)
+                        {
+                            var error_message = wpvivid_output_ajaxerror('adding the remote storage', textStatus, errorThrown);
+                            alert(error_message);
+                            jQuery('#wpvivid_one_drive_auth').css({'pointer-events': 'auto', 'opacity': '1'});
+                        });
                     }
-                });
-                if(name == ''){
-                    alert(wpvividlion.remotealias);
                 }
-                else if(wpvivid_check_onedrive_storage_alias(name) === -1){
-                    alert(wpvividlion.remoteexist);
+            </script>
+            <?php
+        }
+        else
+        {
+            ?>
+            <div id="storage_account_one_drive" class="storage-account-page" style="display:none;">
+                <div style="background-color:#f1f1f1; padding: 10px;">
+                    <?php _e('Please read <a target="_blank" href="https://wpvivid.com/privacy-policy" style="text-decoration: none;">this privacy policy</a> for use of our Microsoft OneDrive authorization app (none of your backup data is sent to us).', 'wpvivid-backuprestore'); ?>
+                </div>
+                <div style="padding: 10px 10px 10px 0;">
+                    <strong><?php _e('To add OneDrive, please get Microsoft authentication first. Once authenticated, you will be redirected to this page, then you can add storage information and save it', 'wpvivid-backuprestore'); ?></strong>
+                </div>
+                <table class="wp-list-table widefat plugins" style="width:100%;">
+                    <tbody>
+                    <tr>
+                        <td class="plugin-title column-primary">
+                            <div class="wpvivid-storage-form">
+                                <input onclick="wpvivid_one_drive_auth();" class="button-primary" type="submit" value="<?php esc_attr_e('Authenticate with Microsoft OneDrive', 'wpvivid-backuprestore'); ?>">
+                            </div>
+                        </td>
+                        <td class="column-description desc">
+                            <div class="wpvivid-storage-form-desc">
+                                <i><?php _e('Click to get Microsoft authentication.', 'wpvivid-backuprestore'); ?></i>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <script>
+                function wpvivid_one_drive_auth()
+                {
+                    location.href = '<?php echo admin_url() . 'admin.php?page=WPvivid' . '&action=wpvivid_one_drive_auth'?>';
                 }
-                else {
-                    location.href = '<?php echo admin_url() . 'admin.php?page=WPvivid' . '&action=wpvivid_one_drive_auth&name='?>' + name + '&default=' + remote_default;
-                }
-            }
-        </script>
-        <?php
+            </script>
+            <?php
+        }
     }
 
     public function wpvivid_edit_storage_page_one_drive()
@@ -439,7 +443,7 @@ class WPvivid_one_drive extends WPvivid_Remote
                 <tr>
                     <td class="plugin-title column-primary">
                         <div class="wpvivid-storage-form">
-                            <input onclick="wpvivid_one_drive_update_auth();" class="button-primary" type="submit" value="<?php esc_attr_e('Save Changes', 'wpvivid-backuprestore'); ?>">
+                            <input class="button-primary" type="submit" option="edit-remote" value="<?php esc_attr_e('Save Changes', 'wpvivid-backuprestore'); ?>">
                         </div>
                     </td>
                     <td class="column-description desc">
@@ -710,6 +714,7 @@ class WPvivid_one_drive extends WPvivid_Remote
         $args['method']='POST';
         $args['wpvivid_refresh_token']=1;
         $args['timeout']=15;
+        $args['sslverify']=FALSE;
         $args['body']=array( 'wpvivid_refresh_token' => '1', 'refresh_token' => $this->options['token']['refresh_token']);
         $response=wp_remote_post('https://auth.wpvivid.com/onedrive_v2/',$args);
         if(!is_wp_error($response) && ($response['response']['code'] == 200))
@@ -1244,5 +1249,73 @@ class WPvivid_one_drive extends WPvivid_Remote
             $storage_type = 'root/';
         }
         return $storage_type;
+    }
+
+    public function finish_add_remote()
+    {
+        global $wpvivid_plugin;
+        $wpvivid_plugin->ajax_check_security();
+        try {
+            if (empty($_POST) || !isset($_POST['remote']) || !is_string($_POST['remote'])) {
+                die();
+            }
+
+            $tmp_remote_options =get_option('wpvivid_tmp_remote_options',array());
+            delete_option('wpvivid_tmp_remote_options');
+            if(empty($tmp_remote_options)||$tmp_remote_options['type']!==WPVIVID_REMOTE_ONEDRIVE)
+            {
+                die();
+            }
+
+            $json = $_POST['remote'];
+            $json = stripslashes($json);
+            $remote_options = json_decode($json, true);
+            if (is_null($remote_options)) {
+                die();
+            }
+
+            $remote_options['path'] = WPVIVID_ONEDRIVE_DEFAULT_FOLDER;
+            $remote_options=array_merge($remote_options,$tmp_remote_options);
+
+            $ret = $wpvivid_plugin->remote_collection->add_remote($remote_options);
+
+            if ($ret['result'] == 'success') {
+                $html = '';
+                $html = apply_filters('wpvivid_add_remote_storage_list', $html);
+                $ret['html'] = $html;
+                $pic = '';
+                $pic = apply_filters('wpvivid_schedule_add_remote_pic', $pic);
+                $ret['pic'] = $pic;
+                $dir = '';
+                $dir = apply_filters('wpvivid_get_remote_directory', $dir);
+                $ret['dir'] = $dir;
+                $schedule_local_remote = '';
+                $schedule_local_remote = apply_filters('wpvivid_schedule_local_remote', $schedule_local_remote);
+                $ret['local_remote'] = $schedule_local_remote;
+                $remote_storage = '';
+                $remote_storage = apply_filters('wpvivid_remote_storage', $remote_storage);
+                $ret['remote_storage'] = $remote_storage;
+                $remote_select_part = '';
+                $remote_select_part = apply_filters('wpvivid_remote_storage_select_part', $remote_select_part);
+                $ret['remote_select_part'] = $remote_select_part;
+                $default = array();
+                $remote_array = apply_filters('wpvivid_archieve_remote_array', $default);
+                $ret['remote_array'] = $remote_array;
+                $success_msg = __('You have successfully added a remote storage.', 'wpvivid-backuprestore');
+                $ret['notice'] = apply_filters('wpvivid_add_remote_notice', true, $success_msg);
+            }
+            else{
+                $ret['notice'] = apply_filters('wpvivid_add_remote_notice', false, $ret['error']);
+            }
+
+        }
+        catch (Exception $error) {
+            $message = 'An exception has occurred. class: '.get_class($error).';msg: '.$error->getMessage().';code: '.$error->getCode().';line: '.$error->getLine().';in_file: '.$error->getFile().';';
+            error_log($message);
+            echo json_encode(array('result'=>'failed','error'=>$message));
+            die();
+        }
+        echo json_encode($ret);
+        die();
     }
 }

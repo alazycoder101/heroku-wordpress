@@ -116,7 +116,7 @@ class WPvivid_Mysqldump
             'databases' => false,
             'default-character-set' => WPvivid_Mysqldump::UTF8,
             'disable-keys' => true,
-            'extended-insert' => true,
+            'extended-insert' => false,
             'events' => false,
             'hex-blob' => true, /* faster than escaped content */
             'net_buffer_length' => self::MAXLINESIZE,

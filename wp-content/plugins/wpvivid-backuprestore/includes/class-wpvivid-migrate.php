@@ -1096,7 +1096,7 @@ class WPvivid_Migrate
 
     public function wpvivid_migrate_part_tip($html){
         $backupdir=WPvivid_Setting::get_backupdir();
-        $html .= '<p>'.__('<strong>Tips: </strong>The unstable connection between sites could cause a failure of files transfer. In this case, uploading backups to destination site is a good alternative to the automatic website migration.', 'wpvivid-backuprestore').'</p>
+        $html .= '<p>'.__('<strong>Tips: </strong>Some web hosts may restrict the connection between the two sites, so you may get a 403 error or unstable connection issue when performing auto migration. In that case, it is recommended to manually transfer the site.', 'wpvivid-backuprestore').'</p>
                     <p><strong>'.__('How to migrate Wordpress site manually to a new domain(site) with WPvivid backup plugin?', 'wpvivid-backuprestore').'</strong></p>
                     <p>'.__('1. Download a backup in backups list to your computer.', 'wpvivid-backuprestore').'</p>
                     <p>'.__('2. Upload the backup to destination site. There are two ways available to use:', 'wpvivid-backuprestore').'</p>
@@ -1125,7 +1125,7 @@ class WPvivid_Migrate
                         <span class="wpvivid-element-space-right" style="color: #ddd;">'.__('Choose what to migrate', 'wpvivid-backuprestore').'</span>
                     </div>
                     <span class="wpvivid-feature-pro">
-                        <a href="https://wpvivid.com/custom-migration-overview?utm_source=client_migration_custom_backup&utm_medium=inner_link&utm_campaign=access" style="text-decoration: none;">'.__('Pro feature: learn more', 'wpvivid-backuprestore').'</a>
+                        <a href="https://docs.wpvivid.com/custom-migration-overview.html" style="text-decoration: none;">'.__('Pro feature: learn more', 'wpvivid-backuprestore').'</a>
                     </span>
                   </label><br>';
         return $html;
@@ -1156,12 +1156,12 @@ class WPvivid_Migrate
                     $task_msg = WPvivid_taskmanager::get_task($task['id']);
                     $wpvivid_plugin->update_last_backup_task($task_msg);
                 }
+                //<div id="wpvivid_estimate_backup_info" style="float:left;">
+                //                            <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('Database Size:', 'wpvivid-backuprestore') . '</span><span>' . $list_tasks[$task['id']]['task_info']['db_size'] . '</span></div>
+                //                            <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('File Size:', 'wpvivid-backuprestore') . '</span><span>' . $list_tasks[$task['id']]['task_info']['file_size'] . '</span></div>
+                //                         </div>
                 $list_tasks[$task['id']]['progress_html'] = '<div class="action-progress-bar" id="wpvivid_upload_progress_bar">
                             <div class="action-progress-bar-percent" id="wpvivid_upload_progress_bar_percent" style="height:24px;width:' . $list_tasks[$task['id']]['task_info']['backup_percent'] . '"></div>
-                         </div>
-                         <div id="wpvivid_estimate_backup_info" style="float:left;">
-                            <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('Database Size:', 'wpvivid-backuprestore') . '</span><span>' . $list_tasks[$task['id']]['task_info']['db_size'] . '</span></div>
-                            <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('File Size:', 'wpvivid-backuprestore') . '</span><span>' . $list_tasks[$task['id']]['task_info']['file_size'] . '</span></div>
                          </div>
                          <div id="wpvivid_estimate_upload_info" style="float: left;"> 
                             <div class="backup-basic-info"><span class="wpvivid-element-space-right">' . __('Total Size:', 'wpvivid-backuprestore') . '</span><span>' . $list_tasks[$task['id']]['task_info']['total'] . '</span></div>

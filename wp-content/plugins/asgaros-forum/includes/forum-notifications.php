@@ -21,9 +21,9 @@ class AsgarosForumNotifications {
         $this->asgarosforum->breadcrumbs->add_breadcrumb($element_link, $element_title);
     }
 
-    function show_subscription_navigation($current_view) {
+    public function show_subscription_navigation($current_view) {
         if ($this->asgarosforum->options['allow_subscriptions'] && is_user_logged_in()) {
-            switch($current_view) {
+            switch ($current_view) {
                 case 'topic':
                     $this->show_topic_subscription_link($this->asgarosforum->current_topic);
                 break;
@@ -60,7 +60,7 @@ class AsgarosForumNotifications {
             }
         }
 
-        echo '<a href="'.$link.'">'.$text.'</a>';
+        echo '<a href="'.esc_url($link).'">'.wp_kses_post($text).'</a>';
     }
 
     // Generates an (un)subscription link based on subscription status for forums.
@@ -84,7 +84,7 @@ class AsgarosForumNotifications {
             }
         }
 
-        echo '<a href="'.$link.'">'.$text.'</a>';
+        echo '<a href="'.esc_url($link).'">'.wp_kses_post($text).'</a>';
     }
 
     // Generates an subscription option in the editor based on subscription status.
@@ -102,10 +102,10 @@ class AsgarosForumNotifications {
 
             if ($subscription_level == 3) {
                 $link = $this->asgarosforum->get_link('subscriptions');
-                echo '<a href="'.$link.'">'.__('You are subscribed to <b>all</b> topics.', 'asgaros-forum').'</a>';
+                echo '<a href="'.esc_url($link).'">'.wp_kses_post(__('You are subscribed to <b>all</b> topics.', 'asgaros-forum')).'</a>';
             } else {
                 echo '<label class="checkbox-label">';
-                    echo '<input type="checkbox" name="subscribe_checkbox" '.checked($this->is_subscribed('topic', $this->asgarosforum->current_topic), true, false).'><span>'.__('<b>Subscribe</b> to this topic.', 'asgaros-forum').'</span>';
+                    echo '<input type="checkbox" name="subscribe_checkbox" '.checked($this->is_subscribed('topic', $this->asgarosforum->current_topic), true, false).'><span>'.wp_kses_post(__('<b>Subscribe</b> to this topic.', 'asgaros-forum')).'</span>';
                 echo '</label>';
             }
 
@@ -128,13 +128,13 @@ class AsgarosForumNotifications {
 
     // Subscribes the current user to the current topic.
     public function subscribe_topic($topic_id) {
-        // Dont subscribe to a topic when it is not approved.
-        if (!$this->asgarosforum->approval->is_topic_approved($topic_id)) {
-            return;
-        }
-
         // Check first if this topic exists.
         if ($this->asgarosforum->content->topic_exists($topic_id)) {
+            // Dont subscribe to a topic when it is not approved.
+            if (!$this->asgarosforum->approval->is_topic_approved($topic_id)) {
+                return;
+            }
+
             // Only subscribe user if he is not already subscribed for this topic.
             if (!$this->is_subscribed('topic', $topic_id)) {
                 add_user_meta(get_current_user_id(), 'asgarosforum_subscription_topic', $topic_id);
@@ -171,7 +171,7 @@ class AsgarosForumNotifications {
 
     // Update the subscription-status for a topic based on the editor-checkbox.
     public function update_topic_subscription_status($topic_id) {
-        if (isset($_POST['subscribe_checkbox']) && $_POST['subscribe_checkbox']) {
+		if (isset($_POST['subscribe_checkbox']) && sanitize_key($_POST['subscribe_checkbox'])) {
             $this->subscribe_topic($topic_id);
         } else {
             $this->unsubscribe_topic($topic_id);
@@ -203,6 +203,7 @@ class AsgarosForumNotifications {
         // Get more data.
         $post_link = $this->asgarosforum->rewrite->get_post_link($post_id, $topic->id);
         $topic_name = esc_html(stripslashes($topic->name));
+        $forum_name = esc_html(stripslashes($forum->name));
         $author_name = $this->asgarosforum->getUsername($post->author_id);
 
         // Prepare subject.
@@ -218,6 +219,7 @@ class AsgarosForumNotifications {
             '###AUTHOR###'  => $author_name,
             '###LINK###'    => '<a href="'.$post_link.'">'.$post_link.'</a>',
             '###TITLE###'   => $topic_name,
+            '###FORUM###'   => $forum_name,
             '###CONTENT###' => $message_content
         );
 
@@ -273,7 +275,7 @@ class AsgarosForumNotifications {
         }
 
         // Generate mailing list.
-        foreach($topic_subscribers as $subscriber) {
+        foreach ($topic_subscribers as $subscriber) {
             $this->add_to_mailing_list($subscriber->user_email);
         }
 
@@ -307,6 +309,7 @@ class AsgarosForumNotifications {
         // Get more data.
         $topic_link = $this->asgarosforum->rewrite->get_link('topic', $topic_id);
         $topic_name = esc_html(stripslashes($topic->name));
+        $forum_name = esc_html(stripslashes($forum->name));
         $author_name = $this->asgarosforum->getUsername($post->author_id);
 
         // Prepare subject.
@@ -322,6 +325,7 @@ class AsgarosForumNotifications {
             '###AUTHOR###'  => $author_name,
             '###LINK###'    => '<a href="'.$topic_link.'">'.$topic_link.'</a>',
             '###TITLE###'   => $topic_name,
+            '###FORUM###'   => $forum_name,
             '###CONTENT###' => $message_content
         );
 
@@ -392,7 +396,7 @@ class AsgarosForumNotifications {
             }
 
             // Generate mailing list.
-            foreach($forum_subscribers as $subscriber) {
+            foreach ($forum_subscribers as $subscriber) {
                 $this->add_to_mailing_list($subscriber->user_email);
             }
 
@@ -470,7 +474,7 @@ class AsgarosForumNotifications {
 
         $mail_headers = $this->get_mail_headers();
 
-        foreach($mails as $mail) {
+        foreach ($mails as $mail) {
             $message = $this->apply_replacements($mail, $message_template, $replacements);
 
             wp_mail($mail, $subject, $message, $mail_headers);
@@ -487,8 +491,8 @@ class AsgarosForumNotifications {
     }
 
     public function get_mail_headers() {
-        $sender_name = wp_specialchars_decode(esc_html(stripslashes($this->asgarosforum->options['notification_sender_name'])), ENT_QUOTES);;
-        $sender_mail = wp_specialchars_decode(esc_html(stripslashes($this->asgarosforum->options['notification_sender_mail'])), ENT_QUOTES);;
+        $sender_name = wp_specialchars_decode(esc_html(stripslashes($this->asgarosforum->options['notification_sender_name'])), ENT_QUOTES);
+        $sender_mail = wp_specialchars_decode(esc_html(stripslashes($this->asgarosforum->options['notification_sender_mail'])), ENT_QUOTES);
 
         $header = array();
         $header[] = 'From: '.$sender_name.' <'.$sender_mail.'>';
@@ -535,28 +539,28 @@ class AsgarosForumNotifications {
         // Render subscription settings.
         echo '<div class="title-element title-element-dark">';
             echo '<span class="title-element-icon fas fa-envelope"></span>';
-            echo __('Subscription Settings', 'asgaros-forum');
+            echo esc_html__('Subscription Settings', 'asgaros-forum');
         echo '</div>';
 
         echo '<div id="subscriptions-panel" class="content-container">';
-            echo '<form method="post" action="'.$this->asgarosforum->get_link('subscriptions').'">';
+            echo '<form method="post" action="'.esc_url($this->asgarosforum->get_link('subscriptions')).'">';
                 echo '<div class="action-panel">';
                     echo '<label class="action-panel-option">';
-                        echo '<input type="radio" name="subscription_level" value="1" '.checked($subscription_level, 1, false).'>'.__('Individual Subscriptions', 'asgaros-forum');
+                        echo '<input type="radio" name="subscription_level" value="1" '.checked($subscription_level, 1, false).'>'.esc_html__('Individual Subscriptions', 'asgaros-forum');
                         echo '<span class="action-panel-description">';
-                            _e('You get notified about activity in forums and topics you are subscribed to.', 'asgaros-forum');
+                            esc_html_e('You get notified about activity in forums and topics you are subscribed to.', 'asgaros-forum');
                         echo '</span>';
                     echo '</label>';
                     echo '<label class="action-panel-option">';
-                        echo '<input type="radio" name="subscription_level" value="2" '.checked($subscription_level, 2, false).'>'.__('New Topics', 'asgaros-forum');
+                        echo '<input type="radio" name="subscription_level" value="2" '.checked($subscription_level, 2, false).'>'.esc_html__('New Topics', 'asgaros-forum');
                         echo '<span class="action-panel-description">';
-                            _e('You get notified about all new topics.', 'asgaros-forum');
+							esc_html_e('You get notified about all new topics.', 'asgaros-forum');
                         echo '</span>';
                     echo '</label>';
                     echo '<label class="action-panel-option">';
-                        echo '<input type="radio" name="subscription_level" value="3" '.checked($subscription_level, 3, false).'>'.__('New Topics & Posts', 'asgaros-forum');
+                        echo '<input type="radio" name="subscription_level" value="3" '.checked($subscription_level, 3, false).'>'.esc_html__('New Topics & Posts', 'asgaros-forum');
                         echo '<span class="action-panel-description">';
-                            _e('You get notified about all new topics and posts.', 'asgaros-forum');
+							esc_html_e('You get notified about all new topics and posts.', 'asgaros-forum');
                         echo '</span>';
                     echo '</label>';
                 echo '</div>';
@@ -625,7 +629,7 @@ class AsgarosForumNotifications {
 
     // Renders a list of a certain subscription type for the current user.
     public function render_subscriptions_list($title, $data, $type, $all = false) {
-        echo '<div class="title-element">'.$title.'</div>';
+        echo '<div class="title-element">'.esc_html($title).'</div>';
         echo '<div class="content-container">';
 
         if ($all) {
@@ -639,8 +643,8 @@ class AsgarosForumNotifications {
         } else {
             foreach ($data as $item) {
                 echo '<div class="content-element subscription">';
-                    echo '<a href="'.$this->asgarosforum->get_link($type, $item->id).'" title="'.esc_html(stripslashes($item->name)).'">'.esc_html(stripslashes($item->name)).'</a>';
-                    echo '<a class="unsubscribe-link" href="'.$this->asgarosforum->get_link('subscriptions', false, array('unsubscribe_'.$type => $item->id)).'">'.__('Unsubscribe', 'asgaros-forum').'</a>';
+                    echo '<a href="'.esc_url($this->asgarosforum->get_link($type, absint($item->id))).'" title="'.esc_html($item->name).'">'.esc_html($item->name).'</a>';
+                    echo '<a class="unsubscribe-link" href="'.esc_url($this->asgarosforum->get_link('subscriptions', false, array('unsubscribe_'.esc_attr($type) => $item->id))).'">'.esc_html__('Unsubscribe', 'asgaros-forum').'</a>';
                 echo '</div>';
             }
         }
@@ -667,5 +671,3 @@ class AsgarosForumNotifications {
         return $data;
     }
 }
-
-?>

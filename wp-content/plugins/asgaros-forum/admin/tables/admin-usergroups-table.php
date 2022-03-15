@@ -2,14 +2,14 @@
 
 if (!defined('ABSPATH')) exit;
 
-if (!class_exists('WP_List_Table')){
-    require_once(ABSPATH.'wp-admin/includes/class-wp-list-table.php');
+if (!class_exists('WP_List_Table')) {
+    require_once ABSPATH.'wp-admin/includes/class-wp-list-table.php';
 }
 
 class Asgaros_Forum_Admin_UserGroups_Table extends WP_List_Table {
-    var $table_data = array();
+    public $table_data = array();
 
-    function __construct($table_data) {
+    public function __construct($table_data) {
         $this->table_data = $table_data;
 
         parent::__construct(
@@ -21,11 +21,11 @@ class Asgaros_Forum_Admin_UserGroups_Table extends WP_List_Table {
         );
     }
 
-    function column_default($item, $column_name) {
+    public function column_default($item, $column_name) {
         return $item[$column_name];
     }
 
-    function column_name($item) {
+    public function column_name($item) {
         $users_i18n = number_format_i18n($item['users']);
 
         $columnHTML = '';
@@ -34,7 +34,6 @@ class Asgaros_Forum_Admin_UserGroups_Table extends WP_List_Table {
         $columnHTML .= '<input type="hidden" id="usergroup_'.$item['term_id'].'_visibility" value="'.esc_html(stripslashes($item['visibility'])).'">';
         $columnHTML .= '<input type="hidden" id="usergroup_'.$item['term_id'].'_auto_add" value="'.esc_html(stripslashes($item['auto_add'])).'">';
         $columnHTML .= '<input type="hidden" id="usergroup_'.$item['term_id'].'_icon" value="'.esc_html(stripslashes($item['icon'])).'">';
-
 
         $columnHTML .= '<div class="usergroup-color" style="background-color: '.$item['color'].';"></div>';
         $columnHTML .= '<a class="usergroup-name" href="'.admin_url('users.php?forum-user-group='.$item['term_id']).'" style="color: '.$item['color'].';">';
@@ -57,7 +56,7 @@ class Asgaros_Forum_Admin_UserGroups_Table extends WP_List_Table {
         return $columnHTML;
     }
 
-    function column_visibility($item) {
+    public function column_visibility($item) {
         if ($item['visibility'] == 'hidden') {
             return __('Hidden', 'asgaros-forum');
         } else {
@@ -65,7 +64,7 @@ class Asgaros_Forum_Admin_UserGroups_Table extends WP_List_Table {
         }
     }
 
-    function column_auto_add($item) {
+    public function column_auto_add($item) {
         if ($item['auto_add'] == 'yes') {
             return __('Yes', 'asgaros-forum');
         } else {
@@ -73,7 +72,7 @@ class Asgaros_Forum_Admin_UserGroups_Table extends WP_List_Table {
         }
     }
 
-    function column_actions($item) {
+    public function column_actions($item) {
         $columnHTML = '';
         $columnHTML .= '<a href="#" class="usergroup-delete-link link-delete" data-value-id="'.$item['term_id'].'" data-value-editor-title="'.__('Delete Usergroup', 'asgaros-forum').'">'.__('Delete', 'asgaros-forum').'</a>';
         $columnHTML .= ' &middot; ';
@@ -82,7 +81,7 @@ class Asgaros_Forum_Admin_UserGroups_Table extends WP_List_Table {
         return $columnHTML;
     }
 
-    function get_columns() {
+    public function get_columns() {
         $columns = array(
             'name'          => __('Name:', 'asgaros-forum'),
             'visibility'    => __('Visibility:', 'asgaros-forum'),
@@ -93,7 +92,7 @@ class Asgaros_Forum_Admin_UserGroups_Table extends WP_List_Table {
         return $columns;
     }
 
-    function prepare_items() {
+    public function prepare_items() {
         $columns = $this->get_columns();
         $this->_column_headers = array($columns);
 

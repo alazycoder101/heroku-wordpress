@@ -1,7 +1,7 @@
 <?php
-namespace GuzzleHttp\Exception;
+namespace WPvividGuzzleHttp\Exception;
 
-use Psr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * Exception thrown when a connection cannot be established.

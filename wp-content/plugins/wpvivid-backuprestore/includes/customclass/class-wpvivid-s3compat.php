@@ -751,7 +751,7 @@ class Wpvivid_S3Compat extends WPvivid_Remote{
     }
     private function compare_php_version(){
         if(version_compare(WPVIVID_GOOGLE_NEED_PHP_VERSION,phpversion()) > 0){
-            return array('result' => WPVIVID_FAILED,error => 'The required PHP version is higher than '.WPVIVID_S3COMPAT_NEED_PHP_VERSION.'. After updating your PHP version, please try again.');
+            return array('result' => WPVIVID_FAILED,'error' => 'The required PHP version is higher than '.WPVIVID_S3COMPAT_NEED_PHP_VERSION.'. After updating your PHP version, please try again.');
         }
         return array('result' => WPVIVID_SUCCESS);
     }

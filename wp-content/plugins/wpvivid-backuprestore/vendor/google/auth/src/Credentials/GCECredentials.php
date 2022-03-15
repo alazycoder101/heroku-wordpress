@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-namespace Google\Auth\Credentials;
+namespace WPvividGoogle\Auth\Credentials;
 
-use Google\Auth\CredentialsLoader;
-use Google\Auth\HttpHandler\HttpHandlerFactory;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ServerException;
-use GuzzleHttp\Psr7\Request;
+use WPvividGoogle\Auth\CredentialsLoader;
+use WPvividGoogle\Auth\HttpHandler\HttpHandlerFactory;
+use WPvividGuzzleHttp\Exception\ClientException;
+use WPvividGuzzleHttp\Exception\RequestException;
+use WPvividGuzzleHttp\Exception\ServerException;
+use WPvividGuzzleHttp\Psr7\Request;
 
 /**
  * GCECredentials supports authorization on Google Compute Engine.

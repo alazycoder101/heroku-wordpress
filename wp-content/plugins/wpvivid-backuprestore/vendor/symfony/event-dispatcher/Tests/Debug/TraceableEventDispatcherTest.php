@@ -152,7 +152,7 @@ class TraceableEventDispatcherTest extends TestCase
 
     public function testLogger()
     {
-        $logger = $this->getMockBuilder('Psr\Log\LoggerInterface')->getMock();
+        $logger = $this->getMockBuilder('WPvividPsr\Log\LoggerInterface')->getMock();
 
         $dispatcher = new EventDispatcher();
         $tdispatcher = new TraceableEventDispatcher($dispatcher, new Stopwatch(), $logger);
@@ -167,7 +167,7 @@ class TraceableEventDispatcherTest extends TestCase
 
     public function testLoggerWithStoppedEvent()
     {
-        $logger = $this->getMockBuilder('Psr\Log\LoggerInterface')->getMock();
+        $logger = $this->getMockBuilder('WPvividPsr\Log\LoggerInterface')->getMock();
 
         $dispatcher = new EventDispatcher();
         $tdispatcher = new TraceableEventDispatcher($dispatcher, new Stopwatch(), $logger);

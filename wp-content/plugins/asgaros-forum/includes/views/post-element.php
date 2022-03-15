@@ -19,8 +19,8 @@ $user_online_class = ($this->online->is_user_online($post->author_id)) ? 'user-o
 
 $user_data = get_userdata($post->author_id);
 
-echo '<div class="post-element '.$highlight_class.' '.$first_post_class.'" id="postid-'.$post->id.'">';
-    echo '<div class="post-author '.$user_online_class.'">';
+echo '<div class="post-element '.esc_attr($highlight_class).' '.esc_attr($first_post_class).'" id="postid-'.esc_attr($post->id).'">';
+    echo '<div class="post-author '.esc_attr($user_online_class).'">';
         // Show avatar if activated.
         if ($this->options['enable_avatars']) {
             $avatar_size = apply_filters('asgarosforum_filter_avatar_size', 120);
@@ -46,17 +46,17 @@ echo '<div class="post-element '.$highlight_class.' '.$first_post_class.'" id="p
                 // Show author posts counter if activated.
                 if ($this->options['show_author_posts_counter']) {
                     $author_posts_i18n = number_format_i18n($post->author_posts);
-                    echo '<small class="post-counter">'.sprintf(_n('%s Post', '%s Posts', $post->author_posts, 'asgaros-forum'), $author_posts_i18n).'</small>';
+                    echo '<small class="post-counter">'.sprintf(_n('%s Post', '%s Posts', absint($post->author_posts), 'asgaros-forum'), esc_html($author_posts_i18n)).'</small>';
                 }
 
                 // Show marker for topic-author.
                 if ($this->current_view != 'post' && $this->options['highlight_authors'] && ($counter > 1 || $this->current_page > 0) && $topicStarter != 0 && $topicStarter == $post->author_id) {
-                    echo '<small class="topic-author">'.__('Topic Author', 'asgaros-forum').'</small>';
+                    echo '<small class="topic-author">'.esc_html__('Topic Author', 'asgaros-forum').'</small>';
                 }
 
                 // Show marker for banned user.
                 if ($this->permissions->isBanned($post->author_id)) {
-                    echo '<small class="banned">'.__('Banned', 'asgaros-forum').'</small>';
+                    echo '<small class="banned">'.esc_html__('Banned', 'asgaros-forum').'</small>';
                 }
             echo '</div>';
 
@@ -78,7 +78,14 @@ echo '<div class="post-element '.$highlight_class.' '.$first_post_class.'" id="p
     echo '<div class="post-wrapper">';
         // Post header.
         echo '<div class="forum-post-header">';
-            echo '<div class="forum-post-date">'.$this->format_date($post->date).'</div>';
+            echo '<div class="forum-post-date">';
+                // Show post counter.
+                if ($this->current_view != 'post') {
+                    echo '<a href="'.esc_url($this->rewrite->get_post_link($post->id, $this->current_topic, ($this->current_page + 1))).'">#'.absint(($this->options['posts_per_page'] * $this->current_page) + $counter).'</a> &middot; ';
+                }
+
+                echo esc_html($this->format_date($post->date));
+            echo '</div>';
 
             if ($this->current_view != 'post') {
                 echo $this->show_post_menu($post->id, $post->author_id, $counter, $post->date);
@@ -93,7 +100,7 @@ echo '<div class="post-element '.$highlight_class.' '.$first_post_class.'" id="p
             $post_content = wp_kses($post->text, $allowed_html);
             $post_content = stripslashes($post_content);
 
-            echo '<div id="post-quote-container-'.$post->id.'" style="display: none;"><blockquote><div class="quotetitle">'.__('Quote from', 'asgaros-forum').' '.$this->getUsername($post->author_id).' '.sprintf(__('on %s', 'asgaros-forum'), $this->format_date($post->date)).'</div>'.wpautop($post_content).'</blockquote><br></div>';
+            echo '<div id="post-quote-container-'.esc_attr($post->id).'" style="display: none;"><blockquote><div class="quotetitle">'.esc_html__('Quote from', 'asgaros-forum').' '.$this->getUsername($post->author_id).' '.sprintf(__('on %s', 'asgaros-forum'), $this->format_date($post->date)).'</div>'.wpautop($post_content).'</blockquote><br></div>';
 
             // Automatically embed contents if enabled.
             if ($this->options['embed_content']) {
@@ -138,21 +145,12 @@ echo '<div class="post-element '.$highlight_class.' '.$first_post_class.'" id="p
                             echo sprintf(__('Last edited on %s', 'asgaros-forum'), $this->format_date($post->date_edit));
                         }
 
-                        if ($this->current_view != 'post') {
-                            echo '&nbsp;&middot;&nbsp;';
-                        }
-
                         echo '</span>';
-                    }
-
-                    if ($this->current_view != 'post') {
-                        // Show report button.
-                        $this->reports->render_report_button($post->id, $this->current_topic);
-
-                        echo '<a href="'.$this->rewrite->get_post_link($post->id, $this->current_topic, ($this->current_page + 1)).'">#'.(($this->options['posts_per_page'] * $this->current_page) + $counter).'</a>';
                     }
                 echo '</div>';
             echo '</div>';
+
+            $this->reactions->render_reactions_summary_area($post->id);
         }
 
         // Show signature.

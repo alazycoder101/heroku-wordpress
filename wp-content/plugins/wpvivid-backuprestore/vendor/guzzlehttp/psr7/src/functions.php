@@ -1,12 +1,12 @@
 <?php
-namespace GuzzleHttp\Psr7;
+namespace WPvividGuzzleHttp\Psr7;
 
-use Psr\Http\Message\MessageInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UriInterface;
+use WPvividPsr\Http\Message\MessageInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
+use WPvividPsr\Http\Message\ServerRequestInterface;
+use WPvividPsr\Http\Message\StreamInterface;
+use WPvividPsr\Http\Message\UriInterface;
 
 /**
  * Returns the string representation of an HTTP message.

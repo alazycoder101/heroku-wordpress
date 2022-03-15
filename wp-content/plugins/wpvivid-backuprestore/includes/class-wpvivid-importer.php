@@ -154,7 +154,7 @@ class WPvivid_Export_List extends WP_List_Table
                         '.$item['file_name'].'
                     </div>
                      <div style="padding-bottom: 5px;">
-                        <div class="backuptime">Data Modified: ' . __(date('M d, Y H:i', $item['time']), 'wpvivid-backuprestore') . '</div>              
+                        <div class="backuptime">Data Modified: ' . __(date('M-d-Y H:i', $item['time']), 'wpvivid-backuprestore') . '</div>              
                     </div>
                 </td>';
     }

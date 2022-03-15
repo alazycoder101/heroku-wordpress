@@ -11,8 +11,8 @@
 
 namespace Monolog;
 
-use Psr\Log\LoggerInterface;
-use Psr\Log\LogLevel;
+use WPvividPsr\Log\LoggerInterface;
+use WPvividPsr\Log\LogLevel;
 use ReflectionExtension;
 
 /**

@@ -43,7 +43,7 @@ class AsgarosForumUnread {
 
             // Get IDs of excluded topics.
             if (isset($_COOKIE['asgarosforum_unread_exclude'])) {
-                $this->excluded_items = maybe_unserialize($_COOKIE['asgarosforum_unread_exclude']);
+                $this->excluded_items = maybe_unserialize(sanitize_text_field($_COOKIE['asgarosforum_unread_exclude']));
             }
         }
     }
@@ -61,19 +61,24 @@ class AsgarosForumUnread {
         }
 
         // Redirect to the forum overview.
-        wp_redirect(html_entity_decode($this->asgarosforum->get_link('home')));
+        wp_safe_redirect(html_entity_decode($this->asgarosforum->get_link('home')));
         exit;
     }
 
     // Marks a topic as read when an user opens it.
     public function mark_topic_read() {
         if ($this->asgarosforum->current_topic) {
-            $this->excluded_items[$this->asgarosforum->current_topic] = (int) $this->asgarosforum->get_lastpost_in_topic($this->asgarosforum->current_topic)->id;
+            $lastpost = $this->asgarosforum->get_lastpost_in_topic($this->asgarosforum->current_topic);
 
-            if ($this->user_id) {
-                update_user_meta($this->user_id, 'asgarosforum_unread_exclude', $this->excluded_items);
-            } else {
-                setcookie('asgarosforum_unread_exclude', maybe_serialize($this->excluded_items), 2147483647, COOKIEPATH, COOKIE_DOMAIN);
+            // Ensure that a lastpost exists. This is a required check in case a topic is empty due to problems during post-creation.
+            if (!empty($lastpost)) {
+                $this->excluded_items[$this->asgarosforum->current_topic] = (int) $lastpost->id;
+
+                if ($this->user_id) {
+                    update_user_meta($this->user_id, 'asgarosforum_unread_exclude', $this->excluded_items);
+                } else {
+                    setcookie('asgarosforum_unread_exclude', maybe_serialize($this->excluded_items), 2147483647, COOKIEPATH, COOKIE_DOMAIN);
+                }
             }
         }
     }
@@ -88,62 +93,91 @@ class AsgarosForumUnread {
         if ($this->user_id) {
             return get_user_meta($this->user_id, 'asgarosforum_unread_cleared', true);
         } else if (isset($_COOKIE['asgarosforum_unread_cleared'])) {
-            return $_COOKIE['asgarosforum_unread_cleared'];
+            return sanitize_text_field($_COOKIE['asgarosforum_unread_cleared']);
         } else {
             return "1000-01-01 00:00:00";
         }
     }
 
-    public function get_status_forum($id, $topics_available) {
+    public function get_status_forum($forum_id, $topic_counter) {
         // Only do the checks when there are topics available.
-        if ($topics_available) {
-            // Prepare list with IDs of already visited topics.
-            $visited_topics = "0";
+        if ($topic_counter) {
+            // Check first if the given forum has an unread topic.
+			if ($this->get_forum_unread_status($forum_id) === 'unread') {
+				return 'unread';
+			}
 
-            if (!empty($this->excluded_items) && !is_string($this->excluded_items)) {
-                $visited_topics = implode(',', array_keys($this->excluded_items));
-            }
+			// Also check the sub-forums of the given forum for unread topics.
+			$subforums = $this->asgarosforum->get_subforums($forum_id);
 
-            // Try to find a post in a topic which has not been visited yet since last marking.
-            $sql = "";
-
-            // We need to use slightly different queries here because we cant determine if a post was created by the visiting guest.
-            if ($this->user_id) {
-                $sql = "SELECT p.id FROM {$this->asgarosforum->tables->forums} AS f, {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->posts} AS p WHERE (f.id = {$id} OR f.parent_forum = {$id}) AND t.parent_id = f.id AND p.parent_id = t.id AND p.parent_id NOT IN({$visited_topics}) AND p.date > '{$this->get_last_visit()}' AND t.approved = 1 AND p.author_id <> {$this->user_id} LIMIT 1;";
-            } else {
-                $sql = "SELECT p.id FROM {$this->asgarosforum->tables->forums} AS f, {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->posts} AS p WHERE (f.id = {$id} OR f.parent_forum = {$id}) AND t.parent_id = f.id AND p.parent_id = t.id AND p.parent_id NOT IN({$visited_topics}) AND p.date > '{$this->get_last_visit()}' AND t.approved = 1 LIMIT 1;";
-            }
-
-            $unread_check = $this->asgarosforum->db->get_results($sql);
-
-            if (!empty($unread_check)) {
-                return 'unread';
-            }
-
-            // Get last post of all topics which have been visited since last marking.
-            $sql = "";
-
-            // Again we need to use slightly different queries here because we cant determine if a post was created by the visiting guest.
-            if ($this->user_id) {
-                $sql = "SELECT MAX(p.id) AS max_id, p.parent_id FROM {$this->asgarosforum->tables->forums} AS f, {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->posts} AS p WHERE (f.id = {$id} OR f.parent_forum = {$id}) AND t.parent_id = f.id AND p.parent_id = t.id AND p.parent_id IN({$visited_topics}) AND t.approved = 1 AND p.author_id <> {$this->user_id} GROUP BY p.parent_id;";
-            } else {
-                $sql = "SELECT MAX(p.id) AS max_id, p.parent_id FROM {$this->asgarosforum->tables->forums} AS f, {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->posts} AS p WHERE (f.id = {$id} OR f.parent_forum = {$id}) AND t.parent_id = f.id AND p.parent_id = t.id AND p.parent_id IN({$visited_topics}) AND t.approved = 1 GROUP BY p.parent_id;";
-            }
-
-            $unread_check = $this->asgarosforum->db->get_results($sql);
-
-            if (!empty($unread_check)) {
-                // Check for every visited topic if it contains a newer post.
-                foreach ($unread_check as $key => $last_post) {
-                    if (isset($this->excluded_items[$last_post->parent_id]) && $last_post->max_id > $this->excluded_items[$last_post->parent_id]) {
-                        return 'unread';
-                    }
-                }
-            }
+			if (!empty($subforums)) {
+				foreach ($subforums as $subforum) {
+					if ($this->get_forum_unread_status($subforum->id) === 'unread') {
+						return 'unread';
+					}
+				}
+			}
         }
 
         return 'read';
     }
+
+	// Checks if a specific forum has unread topics. It does not check sub-forums.
+	public function get_forum_unread_status($forum_id) {
+		// Allow overwriting forum-status.
+		$overwrite_forum_status = apply_filters('asgarosforum_overwrite_forum_status', false, $forum_id);
+
+		if ($overwrite_forum_status !== false) {
+			return $overwrite_forum_status;
+		}
+
+		// Prepare list with IDs of already visited topics.
+		$visited_topics = "0";
+
+		if (!empty($this->excluded_items) && !is_string($this->excluded_items)) {
+			$visited_topics = implode(',', array_keys($this->excluded_items));
+		}
+
+		// Try to find a post in a topic which has not been visited yet since last marking.
+		$sql = "";
+
+		// We need to use slightly different queries here because we cant determine if a post was created by the visiting guest.
+		if ($this->user_id) {
+			$sql = "SELECT p.id FROM {$this->asgarosforum->tables->forums} AS f, {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->posts} AS p WHERE f.id = {$forum_id} AND t.parent_id = f.id AND p.parent_id = t.id AND p.parent_id NOT IN({$visited_topics}) AND p.date > '{$this->get_last_visit()}' AND t.approved = 1 AND p.author_id <> {$this->user_id} LIMIT 1;";
+		} else {
+			$sql = "SELECT p.id FROM {$this->asgarosforum->tables->forums} AS f, {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->posts} AS p WHERE f.id = {$forum_id} AND t.parent_id = f.id AND p.parent_id = t.id AND p.parent_id NOT IN({$visited_topics}) AND p.date > '{$this->get_last_visit()}' AND t.approved = 1 LIMIT 1;";
+		}
+
+		$unread_check = $this->asgarosforum->db->get_results($sql);
+
+		if (!empty($unread_check)) {
+			return 'unread';
+		}
+
+		// Get last post of all topics which have been visited since last marking.
+		$sql = "";
+
+		// Again we need to use slightly different queries here because we cant determine if a post was created by the visiting guest.
+		if ($this->user_id) {
+			$sql = "SELECT MAX(p.id) AS max_id, p.parent_id FROM {$this->asgarosforum->tables->forums} AS f, {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->posts} AS p WHERE f.id = {$forum_id} AND t.parent_id = f.id AND p.parent_id = t.id AND p.parent_id IN({$visited_topics}) AND t.approved = 1 AND p.author_id <> {$this->user_id} GROUP BY p.parent_id;";
+		} else {
+			$sql = "SELECT MAX(p.id) AS max_id, p.parent_id FROM {$this->asgarosforum->tables->forums} AS f, {$this->asgarosforum->tables->topics} AS t, {$this->asgarosforum->tables->posts} AS p WHERE f.id = {$forum_id} AND t.parent_id = f.id AND p.parent_id = t.id AND p.parent_id IN({$visited_topics}) AND t.approved = 1 GROUP BY p.parent_id;";
+		}
+
+		$unread_check = $this->asgarosforum->db->get_results($sql);
+
+		if (!empty($unread_check)) {
+			// Check for every visited topic if it contains a newer post.
+			foreach ($unread_check as $key => $last_post) {
+				if (isset($this->excluded_items[$last_post->parent_id]) && $last_post->max_id > $this->excluded_items[$last_post->parent_id]) {
+					return 'unread';
+				}
+			}
+		}
+
+		// If we reach this point, then the forum has no unread topics.
+		return 'read';
+	}
 
     public function get_status_topic($topic_id) {
         $lastpost = $this->asgarosforum->get_lastpost_in_topic($topic_id);
@@ -182,29 +216,29 @@ class AsgarosForumUnread {
     public function show_unread_controls() {
         echo '<div id="read-unread">';
             echo '<span class="indicator unread"></span>';
-            echo '<span class="indicator-label">'.__('New posts', 'asgaros-forum').'</span>';
+            echo '<span class="indicator-label">'.esc_html__('New posts', 'asgaros-forum').'</span>';
             echo '<span class="indicator read"></span>';
-            echo '<span class="indicator-label">'.__('Nothing new', 'asgaros-forum').'</span>';
+            echo '<span class="indicator-label">'.esc_html__('Nothing new', 'asgaros-forum').'</span>';
 
             echo '<span class="indicator-label">';
                 echo '<span class="fas fa-check"></span>';
-                echo '<a href="'.$this->asgarosforum->get_link('markallread').'">'.__('Mark All Read', 'asgaros-forum').'</a>';
+                echo '<a href="'.esc_url($this->asgarosforum->get_link('markallread')).'">'.esc_html__('Mark All Read', 'asgaros-forum').'</a>';
             echo '</span>';
 
             echo '<span class="indicator-label">';
                 echo '<span class="fas fa-history"></span>';
-                echo '<a href="'.$this->asgarosforum->get_link('unread').'">'.__('Show Unread Topics', 'asgaros-forum').'</a>';
+                echo '<a href="'.esc_url($this->asgarosforum->get_link('unread')).'">'.esc_html__('Show Unread Topics', 'asgaros-forum').'</a>';
             echo '</span>';
 
             echo '<div class="clear"></div>';
         echo '</div>';
     }
 
-    function show_unread_menu() {
+    public function show_unread_menu() {
         echo '<div class="forum-menu">';
-            echo '<a class="button button-normal" href="'.$this->asgarosforum->get_link('markallread').'">';
+            echo '<a class="button button-normal" href="'.esc_url($this->asgarosforum->get_link('markallread')).'">';
                 echo '<span class="menu-icon fas fa-check"></span>';
-                echo __('Mark All Read', 'asgaros-forum');
+                echo esc_html__('Mark All Read', 'asgaros-forum');
             echo '</a>';
         echo '</div>';
     }
@@ -240,7 +274,7 @@ class AsgarosForumUnread {
                     echo '<div class="topic-name">';
                         $first_unread_post = $this->asgarosforum->content->get_first_unread_post($topic->topic_id);
                         $link = $this->asgarosforum->rewrite->get_post_link($first_unread_post->id, $first_unread_post->parent_id);
-                        $human_time_diff = sprintf(__('%s ago', 'asgaros-forum'), human_time_diff(strtotime($first_unread_post->date), current_time('timestamp')));
+                        $human_time_diff = $this->asgarosforum->get_activity_timestamp($first_unread_post->date);
 
                         if ($this->asgarosforum->is_topic_sticky($topic->topic_id)) {
                             echo '<span class="topic-icon fas fa-thumbtack"></span>';
@@ -254,15 +288,15 @@ class AsgarosForumUnread {
                             echo '<span class="topic-icon fas fa-poll-h"></span>';
                         }
 
-                        echo '<a href="'.$link.'" title="'.$topic_title.'">'.$topic_title.'</a>';
+                        echo '<a href="'.esc_url($link).'" title="'.esc_attr($topic_title).'">'.esc_html($topic_title).'</a>';
 
                         echo '<small>';
-                        echo __('In', 'asgaros-forum').'&nbsp;';
-                        echo '<a href="'.$this->asgarosforum->rewrite->get_link('forum', $topic->forum_id).'">';
+                        echo esc_html__('In', 'asgaros-forum').'&nbsp;';
+                        echo '<a href="'.esc_url($this->asgarosforum->rewrite->get_link('forum', $topic->forum_id)).'">';
                         echo esc_html(stripslashes($topic->forum_name));
                         echo '</a>';
                         echo '&nbsp;&middot;&nbsp;';
-                        echo '<i class="unread-time">'.$human_time_diff.'</i>';
+                        echo '<i class="unread-time">'.esc_html($human_time_diff).'</i>';
                         echo '</small>';
                     echo '</div>';
                 echo '</div>';

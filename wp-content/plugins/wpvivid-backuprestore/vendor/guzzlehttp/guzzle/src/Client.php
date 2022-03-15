@@ -1,12 +1,12 @@
 <?php
-namespace GuzzleHttp;
+namespace WPvividGuzzleHttp;
 
-use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Promise;
-use GuzzleHttp\Psr7;
-use Psr\Http\Message\UriInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use WPvividGuzzleHttp\Cookie\CookieJar;
+use WPvividGuzzleHttp\Promise;
+use WPvividGuzzleHttp\Psr7;
+use WPvividPsr\Http\Message\UriInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
 
 /**
  * @method ResponseInterface get(string|UriInterface $uri, array $options = [])
@@ -320,7 +320,7 @@ class Client implements ClientInterface
         }
 
         if (isset($options['json'])) {
-            $options['body'] = \GuzzleHttp\json_encode($options['json']);
+            $options['body'] = \WPvividGuzzleHttp\json_encode($options['json']);
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);

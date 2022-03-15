@@ -40,7 +40,7 @@ class AsgarosForumMentioning {
         if (is_admin()) {
             return $settings;
         }
-        
+
         // Cancel if mentioning functionality is disabled.
         if (!$this->asgarosforum->options['enable_mentioning']) {
             return $settings;
@@ -115,7 +115,7 @@ class AsgarosForumMentioning {
         if ($this->asgarosforum->options['enable_mentioning']) {
             $user_data = get_userdata($user_id);
 
-            echo '<span class="mention-nice-name">@'.$user_data->user_nicename.'</span>';
+            echo '<span class="mention-nice-name">@'.esc_html($user_data->user_nicename).'</span>';
         }
     }
 

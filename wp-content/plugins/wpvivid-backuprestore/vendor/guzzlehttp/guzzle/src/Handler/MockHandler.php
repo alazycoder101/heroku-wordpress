@@ -1,13 +1,13 @@
 <?php
-namespace GuzzleHttp\Handler;
+namespace WPvividGuzzleHttp\Handler;
 
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise\RejectedPromise;
-use GuzzleHttp\TransferStats;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use WPvividGuzzleHttp\Exception\RequestException;
+use WPvividGuzzleHttp\HandlerStack;
+use WPvividGuzzleHttp\Promise\PromiseInterface;
+use WPvividGuzzleHttp\Promise\RejectedPromise;
+use WPvividGuzzleHttp\TransferStats;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
 
 /**
  * Handler that returns responses or throw exceptions from a queue.
@@ -91,8 +91,8 @@ class MockHandler implements \Countable
         }
 
         $response = $response instanceof \Exception
-            ? \GuzzleHttp\Promise\rejection_for($response)
-            : \GuzzleHttp\Promise\promise_for($response);
+            ? \WPvividGuzzleHttp\Promise\rejection_for($response)
+            : \WPvividGuzzleHttp\Promise\promise_for($response);
 
         return $response->then(
             function ($value) use ($request, $options) {
@@ -108,7 +108,7 @@ class MockHandler implements \Countable
                         fwrite($sink, $contents);
                     } elseif (is_string($sink)) {
                         file_put_contents($sink, $contents);
-                    } elseif ($sink instanceof \Psr\Http\Message\StreamInterface) {
+                    } elseif ($sink instanceof \WPvividPsr\Http\Message\StreamInterface) {
                         $sink->write($contents);
                     }
                 }
@@ -120,7 +120,7 @@ class MockHandler implements \Countable
                 if ($this->onRejected) {
                     call_user_func($this->onRejected, $reason);
                 }
-                return \GuzzleHttp\Promise\rejection_for($reason);
+                return \WPvividGuzzleHttp\Promise\rejection_for($reason);
             }
         );
     }
@@ -140,7 +140,7 @@ class MockHandler implements \Countable
                 $this->queue[] = $value;
             } else {
                 throw new \InvalidArgumentException('Expected a response or '
-                    . 'exception. Found ' . \GuzzleHttp\describe_type($value));
+                    . 'exception. Found ' . \WPvividGuzzleHttp\describe_type($value));
             }
         }
     }

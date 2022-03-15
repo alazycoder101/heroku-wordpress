@@ -315,6 +315,43 @@ class WPvivid_Uploads_Scanner
         return $files;
     }
 
+    public function array_to_file($exploded)
+    {
+        $file='';
+        foreach ($exploded as $key=>$value)
+        {
+            $file=$value;
+        }
+        return $file;
+    }
+
+    public function scan_image_from_nextend()
+    {
+        global $wpdb;
+        $query = "SELECT image FROM ".$wpdb->prefix."nextend2_image_storage";
+        $metas = $wpdb->get_col( $query );
+        $file_array=array();
+
+        $upload_dir = wp_upload_dir();
+        $upload_path = $upload_dir['basedir'];
+
+        foreach ($metas as $meta)
+        {
+            $exploded = explode( ',', $meta );
+            if ( is_array( $exploded ) )
+            {
+                $file_tmp = $this->array_to_file($exploded);
+                $file = str_replace('$upload$', $upload_path, $file_tmp);
+                if(file_exists($file))
+                {
+                    $file_array[] = str_replace('$upload$'.'/', '', $file_tmp);
+                }
+                continue;
+            }
+        }
+        return $file_array;
+    }
+
     /*
     public function get_images_from_acfwidgets( $widget)
     {
@@ -384,8 +421,7 @@ class WPvivid_Uploads_Scanner
 
         $post_status="post_status NOT IN ('inherit', 'trash', 'auto-draft')";
 
-        $query=$wpdb->prepare("SELECT COUNT(*) FROM $wpdb->posts WHERE $post_types AND %s",$post_status);
-
+        $query="SELECT COUNT(*) FROM $wpdb->posts WHERE $post_types AND $post_status";
         $result=$wpdb->get_results($query,ARRAY_N);
 
         if($result && sizeof($result)>0)
@@ -455,12 +491,20 @@ class WPvivid_Uploads_Scanner
         $html = get_post_field( 'post_content', $post );
 
         $html = mb_convert_encoding( $html, 'HTML-ENTITIES', 'UTF-8' );
+        ob_start();
         $html = do_shortcode( $html );
+        ob_clean();
+        ob_end_flush();
         $html = wp_filter_content_tags( $html );
 
         if ( !class_exists("DOMDocument") )
         {
             echo 'The DOM extension for PHP is not installed.';
+            return array();
+        }
+
+        if(empty($html))
+        {
             return array();
         }
 
@@ -761,6 +805,38 @@ class WPvivid_Uploads_Scanner
             }
         }
 
+        //
+        $meta_key="(meta_key = '_product_image_gallery')";
+        $query=$wpdb->prepare("SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id = %d AND $meta_key",$post);
+        $metas = $wpdb->get_col($query);
+        foreach ($metas as $meta)
+        {
+            if ( is_numeric( $meta ) )
+            {
+                if ( $meta > 0 )
+                    array_push( $postmeta_images_ids, $meta );
+                continue;
+            }
+            else if ( is_serialized( $meta ) )
+            {
+                $decoded = @unserialize( $meta );
+                if ( is_array( $decoded ) )
+                {
+                    $this->array_to_ids_or_urls( $decoded, $postmeta_images_ids, $postmeta_images_urls );
+                    continue;
+                }
+            }
+            else {
+                $exploded = explode( ',', $meta );
+                if ( is_array( $exploded ) )
+                {
+                    $this->array_to_ids_or_urls( $exploded, $postmeta_images_ids, $postmeta_images_urls );
+                    continue;
+                }
+            }
+        }
+        //
+
         $files=array();
 
         foreach ($postmeta_images_ids as $id)
@@ -803,6 +879,34 @@ class WPvivid_Uploads_Scanner
         return $files;
     }
 
+    public function get_media_from_post_custom_meta( $post )
+    {
+        $custom_fields=get_post_custom($post);
+        $files=array();
+
+
+        if($custom_fields!=false)
+        {
+            if(isset($custom_fields['essb_cached_image']))
+            {
+                if ( is_string( $custom_fields['essb_cached_image'] ) && ! empty( $custom_fields['essb_cached_image'] ) )
+                {
+                    $files[]=$this->get_src($custom_fields['essb_cached_image']);
+                }
+                else if(is_array( $custom_fields['essb_cached_image'] )&& ! empty( $custom_fields['essb_cached_image'] ))
+                {
+                    foreach ($custom_fields['essb_cached_image'] as $essb_cached_image)
+                    {
+                        $files[]=$this->get_src($essb_cached_image);
+                    }
+                }
+
+            }
+        }
+
+        return $files;
+    }
+
     public function get_element_image($element_data,&$attachment_added_ids)
     {
         $element_image=array();
@@ -818,6 +922,48 @@ class WPvivid_Uploads_Scanner
                     $attachment_added_ids[]=$settings['image']['id'];
                 }
 
+            }
+
+            if(isset($settings['logo_items']))
+            {
+                foreach ($settings['logo_items'] as $item)
+                {
+                    if(isset($item['logo_image']))
+                    {
+                        if(!in_array($item['logo_image']['id'],$attachment_added_ids))
+                        {
+                            $element_image[]=$item['logo_image']['id'];
+                            $attachment_added_ids[]=$item['logo_image']['id'];
+                        }
+                    }
+                }
+            }
+
+            if(isset($settings['gallery']))
+            {
+                foreach ($settings['gallery'] as $item)
+                {
+                    if(isset($item['id']))
+                    {
+                        if(!in_array($item['id'],$attachment_added_ids))
+                        {
+                            $element_image[]=$item['id'];
+                            $attachment_added_ids[]=$item['id'];
+                        }
+                    }
+                }
+            }
+
+            if(isset($settings['background_image']))
+            {
+                if(isset($settings['background_image']['id']))
+                {
+                    if(!in_array($settings['background_image']['id'],$attachment_added_ids))
+                    {
+                        $element_image[]=$settings['background_image']['id'];
+                        $attachment_added_ids[]=$settings['background_image']['id'];
+                    }
+                }
             }
         }
 
@@ -991,7 +1137,14 @@ class WPvivid_Uploads_Scanner
 
         $exclude_regex=apply_filters('wpvivid_uc_scan_exclude_files_regex',array());
 
-        $this->scan_list_uploaded_files($files, $root_path.DIRECTORY_SEPARATOR.$folder,$root_path,$regex,$exclude_regex);
+        if($folder === '.')
+        {
+            $this->scan_root_uploaded_files($files, $root_path.DIRECTORY_SEPARATOR.$folder,$root_path,$regex,$exclude_regex);
+        }
+        else
+        {
+            $this->scan_list_uploaded_files($files, $root_path.DIRECTORY_SEPARATOR.$folder,$root_path,$regex,$exclude_regex);
+        }
 
         return $files;
     }
@@ -1098,6 +1251,36 @@ class WPvivid_Uploads_Scanner
                 @closedir($handler);
         }
         return $folders;
+    }
+
+    function scan_root_uploaded_files( &$files,$path,$root,$regex=array(),$exclude_regex=array())
+    {
+        $count = 0;
+        if(is_dir($path))
+        {
+            $handler = opendir($path);
+            if($handler!==false)
+            {
+                while (($filename = readdir($handler)) !== false)
+                {
+                    if ($filename != "." && $filename != "..")
+                    {
+                        $count++;
+                        if ($this->regex_match($exclude_regex, $path . DIRECTORY_SEPARATOR . $filename, 0))
+                        {
+                            if($this->regex_match($regex, $filename, 1))
+                            {
+                                $result['files'][] = $filename;
+                                $files[] = str_replace($path . DIRECTORY_SEPARATOR,'',$path . DIRECTORY_SEPARATOR . $filename);
+                            }
+                        }
+                    }
+                }
+                if($handler)
+                    @closedir($handler);
+            }
+        }
+        return $files;
     }
 
     function scan_list_uploaded_files( &$files,$path,$root,$regex=array(),$exclude_regex=array())
@@ -1224,6 +1407,8 @@ class WPvivid_Uploads_Scanner
         $place_holders=array();
         foreach ( $uploads_files as $id=>$files )
         {
+            if(empty($files))
+                continue;
             foreach ($files as $path)
             {
                 array_push( $values, $path );
@@ -1269,7 +1454,7 @@ class WPvivid_Uploads_Scanner
         $file=str_replace('\\','/',$file);
 
         $table = $wpdb->prefix . "wpvivid_scan_result";
-        $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE path = '%s'", $file ) );
+        $row = $wpdb->get_row( "SELECT * FROM $table WHERE path = '$file'" );
         if (empty($row))
         {
             $quick_scan=get_option('wpvivid_uc_quick_scan',false);
@@ -1277,7 +1462,6 @@ class WPvivid_Uploads_Scanner
             if(!$quick_scan)
             {
                 $attachment_id=$this->find_media_id_from_file($file);
-
                 if($attachment_id)
                 {
                     if(isset($this->file_found_cache[$attachment_id]))
@@ -1297,7 +1481,6 @@ class WPvivid_Uploads_Scanner
                     if(!empty($files))
                     {
                         $files = implode("','",$files);
-
                         $sql= "SELECT * FROM $table WHERE path IN ('$files')";
                         $row = $wpdb->get_row($sql);
 
@@ -1370,7 +1553,7 @@ class WPvivid_Uploads_Scanner
 
         $table = $wpdb->prefix . "wpvivid_unused_uploads_files";
 
-        $sql=esc_sql("SELECT * FROM `$table` ".$where);
+        $sql="SELECT * FROM `$table` ".$where;
 
         return $wpdb->get_results($sql,ARRAY_A);
     }
@@ -1450,7 +1633,7 @@ class WPvivid_Uploads_Scanner
         $ids=implode(",",$selected_list);
 
         $table = $wpdb->prefix . "wpvivid_unused_uploads_files";
-        $sql=$wpdb->prepare("SELECT * FROM $table WHERE `id` IN (%s)",$ids);
+        $sql="SELECT * FROM $table WHERE `id` IN ($ids)";
         $result=$wpdb->get_results($sql,ARRAY_A);
         if($result)
         {
@@ -1515,7 +1698,7 @@ class WPvivid_Uploads_Scanner
         //LIMIT
 
         $table = $wpdb->prefix . "wpvivid_unused_uploads_files";
-        $sql=esc_sql("SELECT * FROM $table ".$where);
+        $sql="SELECT * FROM $table ".$where;
         $result=$wpdb->get_results($sql,ARRAY_A);
         if($result)
         {

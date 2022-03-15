@@ -321,7 +321,12 @@ class WPvivid_Backup_Task
     protected function parse_url_all($url)
     {
         $parse = parse_url($url);
-        $path=str_replace('/','_',$parse['path']);
+        //$path=str_replace('/','_',$parse['path']);
+        $path = '';
+        if(isset($parse['path'])) {
+            $parse['path'] = str_replace('/', '_', $parse['path']);
+            $path = $parse['path'];
+        }
         return $parse['host'].$path;
     }
 
@@ -1313,7 +1318,7 @@ class WPvivid_Backup_Task
         return $files;
     }
 
-    public function getFolder(&$files,$path,$exclude_regex=array(),$include_regex=array(),$exclude_file_size=array(),$include_dir = true)
+    public function getFolder(&$files,$path,$exclude_regex=array(),$include_regex=array(),$exclude_file_size=0,$include_dir = true)
     {
         $count = 0;
         if(is_dir($path))
@@ -1512,8 +1517,29 @@ class WPvivid_Backup_Item
         return $this->config['type'];
     }
 
+    public function get_backup_path($file_name)
+    {
+        $path = $this->get_local_path() . $file_name;
+
+        if (file_exists($path)) {
+            return $path;
+        }
+        else{
+            $local_setting = get_option('wpvivid_local_setting', array());
+            if(!empty($local_setting))
+            {
+                $path = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $local_setting['path'] . DIRECTORY_SEPARATOR . $file_name;
+            }
+            else {
+                $path = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'wpvividbackups' . DIRECTORY_SEPARATOR . $file_name;
+            }
+        }
+        return $path;
+    }
+
     public function get_files($has_dir=true)
     {
+        global $wpvivid_plugin;
         $files=array();
         if(isset($this->config['backup']['files']))
         {
@@ -1521,7 +1547,7 @@ class WPvivid_Backup_Item
             foreach ($this->config['backup']['files'] as $file)
             {
                 if($has_dir)
-                    $files[]=$this->get_local_path().$file['file_name'];
+                    $files[]=$this->get_backup_path($file['file_name']);//$this->get_local_path().$file['file_name'];
                 else
                     $files[]=$file['file_name'];
             }
@@ -1532,7 +1558,7 @@ class WPvivid_Backup_Item
                 foreach ($this->config['backup']['data']['meta']['files'] as $file)
                 {
                     if($has_dir)
-                        $files[]=$this->get_local_path().$file['file_name'];
+                        $files[]=$this->get_backup_path($file['file_name']);//$this->get_local_path().$file['file_name'];
                     else
                         $files[]=$file['file_name'];
                 }
@@ -1576,7 +1602,7 @@ class WPvivid_Backup_Item
             foreach ($tmp_data as $file)
             {
                 $need_download=false;
-                $path=$this->get_local_path().$file['file_name'];
+                $path=$this->get_backup_path($file['file_name']);//$this->get_local_path().$file['file_name'];
                 if(file_exists($path))
                 {
                     if(filesize($path) == $file['size'])
@@ -1658,7 +1684,7 @@ class WPvivid_Backup_Item
 
             foreach ($tmp_data as $file)
             {
-                $path=$this->get_local_path().$file['file_name'];
+                $path=$this->get_backup_path($file['file_name']);//$this->get_local_path().$file['file_name'];
                 if(file_exists($path))
                 {
                     $ret=$zip->get_json_data($path);
@@ -1696,7 +1722,7 @@ class WPvivid_Backup_Item
 
             foreach ($tmp_data as $file)
             {
-                $path=$this->get_local_path().$file['file_name'];
+                $path=$this->get_backup_path($file['file_name']);//$this->get_local_path().$file['file_name'];
                 if(file_exists($path))
                 {
                     $ret=$zip->get_json_data($path);
@@ -1941,7 +1967,7 @@ class WPvivid_Backup_Item
     {
         $zip=new WPvivid_ZipClass();
 
-        $path=$this->get_local_path().$file_name;
+        $path=$this->get_backup_path($file_name);//$this->get_local_path().$file_name;
 
         $files = array();
 
@@ -1961,7 +1987,7 @@ class WPvivid_Backup_Item
     {
         $zip=new WPvivid_ZipClass();
 
-        $path=$this->get_local_path().$file_name;
+        $path=$this->get_backup_path($file_name);//$this->get_local_path().$file_name;
 
         $ret=$zip->get_json_data($path);
         if($ret['result'] === WPVIVID_SUCCESS) {
@@ -2000,7 +2026,7 @@ class WPvivid_Backup_Item
     public function get_sql_file($file_name)
     {
         $zip=new WPvivid_ZipClass();
-        $path=$this->get_local_path().$file_name;
+        $path=$this->get_backup_path($file_name);//$this->get_local_path().$file_name;
         $files=$zip->list_file($path);
         return $files[0]['file_name'];
     }
@@ -2081,7 +2107,7 @@ class WPvivid_Backup_Item
         foreach ($files as $file)
         {
             $need_download=false;
-            $path=$this->get_local_path().$file['file_name'];
+            $path=$this->get_backup_path($file['file_name']);//$this->get_local_path().$file['file_name'];
             $download_url=content_url().DIRECTORY_SEPARATOR.$this->config['local']['path'].DIRECTORY_SEPARATOR.$file['file_name'];
             if(file_exists($path)) {
                 if(filesize($path) == $file['size']){
@@ -2239,6 +2265,14 @@ class WPvivid_Backup_Item
             if (file_exists($download_path))
             {
                 @unlink($download_path);
+            }
+            else{
+                $backup_dir=WPvivid_Setting::get_backupdir();
+                $download_path = WP_CONTENT_DIR .DIRECTORY_SEPARATOR . $backup_dir . DIRECTORY_SEPARATOR . $file;
+                if (file_exists($download_path))
+                {
+                    @unlink($download_path);
+                }
             }
         }
     }

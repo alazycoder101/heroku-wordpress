@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-namespace Google\Auth;
+namespace WPvividGoogle\Auth;
 
 use DomainException;
-use Google\Auth\Credentials\AppIdentityCredentials;
-use Google\Auth\Credentials\GCECredentials;
-use Google\Auth\Middleware\AuthTokenMiddleware;
-use Google\Auth\Subscriber\AuthTokenSubscriber;
-use Psr\Cache\CacheItemPoolInterface;
+use WPvividGoogle\Auth\Credentials\AppIdentityCredentials;
+use WPvividGoogle\Auth\Credentials\GCECredentials;
+use WPvividGoogle\Auth\Middleware\AuthTokenMiddleware;
+use WPvividGoogle\Auth\Subscriber\AuthTokenSubscriber;
+use WPvividPsr\Cache\CacheItemPoolInterface;
 
 /**
  * ApplicationDefaultCredentials obtains the default credentials for

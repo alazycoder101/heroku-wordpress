@@ -52,8 +52,18 @@ class autoptimizeImages
         // get service availability and add it to the options-array.
         $value['availabilities'] = autoptimizeOptionWrapper::get_option( 'autoptimize_service_availablity' );
 
-        if ( empty( $value['availabilities'] ) ) {
-            $value['availabilities'] = autoptimizeUtils::check_service_availability( true );
+        if ( empty( $value['availabilities'] ) || ! is_array( $value['availabilities'] ) ) {
+            $value['availabilities'] = null;
+
+            if ( true === autoptimizeImages::imgopt_active() ) {
+                $value['availabilities'] = autoptimizeUtils::check_service_availability( true );
+            }
+
+            if ( null === $value['availabilities'] ) {
+                // We can't seem to check service availability, use mock result with imgopt status UP.
+                $_mock_settings          = array( 'extra_imgopt' => array( 'status' => 'up', 'hosts' => array( '1' => 'https://sp-ao.shortpixel.ai/' ) ), 'critcss' => array( 'status' => 'up' ) );
+                $value['availabilities'] = $_mock_settings;
+            }
         }
 
         return $value;
@@ -114,7 +124,9 @@ class autoptimizeImages
             if ( $this->should_lazyload() ) {
                 add_filter(
                     'wp_lazy_loading_enabled',
-                    '__return_false'
+                    array( $this, 'should_disable_core_lazyload' ),
+                    10,
+                    3
                 );
                 add_filter(
                     'autoptimize_html_after_minify',
@@ -166,7 +178,9 @@ class autoptimizeImages
         if ( $this->should_lazyload() ) {
             add_filter(
                 'wp_lazy_loading_enabled',
-                '__return_false'
+                array( $this, 'should_disable_core_lazyload' ),
+                10,
+                3
             );
             add_action(
                 'wp_footer',
@@ -175,6 +189,18 @@ class autoptimizeImages
                 0
             );
         }
+    }
+
+    /**
+     * Disables core's native lazyload for images, not for iframes.
+     *
+     * @return bool
+     */
+    public function should_disable_core_lazyload( $flag = true, $tag = '', $context = '' ) {
+        if ( 'img' === $tag ) {
+            return false;
+        }
+        return $flag;
     }
 
     /**
@@ -211,7 +237,7 @@ class autoptimizeImages
         static $imgopt_host = null;
 
         if ( null === $imgopt_host ) {
-            $imgopt_host  = 'https://cdn.shortpixel.ai/';
+            $imgopt_host  = 'https://sp-ao.shortpixel.ai/';
             $avail_imgopt = $this->options['availabilities']['extra_imgopt'];
             if ( ! empty( $avail_imgopt ) && array_key_exists( 'hosts', $avail_imgopt ) && is_array( $avail_imgopt['hosts'] ) ) {
                 $imgopt_host = array_rand( array_flip( $avail_imgopt['hosts'] ) );
@@ -231,7 +257,7 @@ class autoptimizeImages
 
     public static function get_service_url_suffix()
     {
-        $suffix = '/af/GWRGFLW109483/' . AUTOPTIMIZE_SITE_DOMAIN;
+        $suffix = '/af/SPZURYE109483/' . AUTOPTIMIZE_SITE_DOMAIN;
 
         return $suffix;
     }
@@ -346,16 +372,15 @@ class autoptimizeImages
             $result = trim( $in );
 
             // Some silly plugins wrap background images in html-encoded quotes, so remove those from the img url.
-            if ( strpos( $result, '&quot;' ) !== false ) {
-                $result = str_replace( '&quot;', '', $result );
-            }
+            $result = $this->fix_silly_bgimg_quotes( $result );
 
             if ( autoptimizeUtils::is_protocol_relative( $result ) ) {
                 $result = $parsed_site_url['scheme'] . ':' . $result;
             } elseif ( 0 === strpos( $result, '/' ) ) {
                 // Root-relative...
                 $result = $parsed_site_url['scheme'] . '://' . $parsed_site_url['host'] . $result;
-            } elseif ( ! empty( $cdn_domain ) && strpos( $result, $cdn_domain ) !== 0 ) {
+            } elseif ( ! empty( $cdn_domain ) && false === strpos( $this->get_imgopt_host(), $cdn_domain ) && strpos( $result, $cdn_domain ) !== 0 ) {
+                // remove CDN except if it is the image optimization one.
                 $result = str_replace( $cdn_domain, $parsed_site_url['host'], $result );
             }
 
@@ -377,7 +402,7 @@ class autoptimizeImages
     {
         $in = $this->normalize_img_url( $in );
 
-        if ( $this->can_optimize_image( $in ) ) {
+        if ( $this->can_optimize_image( $in ) && false === strpos( $in, $this->get_imgopt_host() ) ) {
             return $this->build_imgopt_url( $in, '', '' );
         } else {
             return $in;
@@ -392,7 +417,13 @@ class autoptimizeImages
             $imgopt_host     = $this->get_imgopt_host();
             $quality         = $this->get_img_quality_string();
             $ret_val         = apply_filters( 'autoptimize_filter_imgopt_wait', 'ret_img' ); // values: ret_wait, ret_img, ret_json, ret_blank.
-            $imgopt_base_url = $imgopt_host . 'client/' . $quality . ',' . $ret_val;
+            if ( $this->should_ngimg() ) {
+                $sp_to_string = 'to_auto';
+            } else {
+                $sp_to_string = 'to_webp';
+            }
+            $sp_to_string    = apply_filters( 'autoptimize_filter_imgopt_format', $sp_to_string ); // values: empty (= jpeg), to_webp (smart; webp or fallback), to_avif (avif or fallback) or to_auto (smart avif, webp or fallback).
+            $imgopt_base_url = $imgopt_host . 'client/' . $sp_to_string . ',' . $quality . ',' . $ret_val;
             $imgopt_base_url = apply_filters( 'autoptimize_filter_imgopt_base_url', $imgopt_base_url );
         }
 
@@ -466,7 +497,13 @@ class autoptimizeImages
             return $filtered_url;
         }
 
-        $orig_url        = $this->normalize_img_url( $orig_url );
+        $normalized_url = $this->normalize_img_url( $orig_url );
+
+        // if the URL is ascii we check if we have a real URL with filter_var (which only works on ascii url's) and if not a real URL we return the original one.
+        if ( apply_filters( 'autoptimize_filter_imgopt_check_normalized_url', true ) && ! preg_match( '/[^\x20-\x7e]/', $normalized_url ) && false === filter_var( $normalized_url, FILTER_VALIDATE_URL ) ) {
+            return $orig_url;
+        }
+
         $imgopt_base_url = $this->get_imgopt_base_url();
         $imgopt_size     = '';
 
@@ -478,7 +515,7 @@ class autoptimizeImages
             $imgopt_size .= ',h_' . $height;
         }
 
-        $url = $imgopt_base_url . $imgopt_size . '/' . $orig_url;
+        $url = $imgopt_base_url . $imgopt_size . '/' . $normalized_url;
 
         return $url;
     }
@@ -539,6 +576,8 @@ class autoptimizeImages
         // extract img tags.
         if ( preg_match_all( '#<img[^>]*src[^>]*>#Usmi', $in, $matches ) ) {
             foreach ( $matches[0] as $tag ) {
+                $tag = apply_filters( 'autoptimize_filter_imgopt_tag_preopt' , $tag );
+
                 $orig_tag = $tag;
                 $imgopt_w = '';
                 $imgopt_h = '';
@@ -554,7 +593,7 @@ class autoptimizeImages
                             if ( isset( $indiv_srcset_parts[1] ) && rtrim( $indiv_srcset_parts[1], 'w' ) !== $indiv_srcset_parts[1] ) {
                                 $imgopt_w = rtrim( $indiv_srcset_parts[1], 'w' );
                             }
-                            if ( $this->can_optimize_image( $indiv_srcset_parts[0], $tag, $testing ) ) {
+                            if ( $this->can_optimize_image( $indiv_srcset_parts[0], $tag, $testing ) && false === apply_filters( 'autoptimize_filter_imgopt_do_spai', false ) ) {
                                 $imgopt_url = $this->build_imgopt_url( $indiv_srcset_parts[0], $imgopt_w, '' );
                                 $srcset     = str_replace( $indiv_srcset_parts[0], $imgopt_url, $srcset );
                             }
@@ -574,7 +613,7 @@ class autoptimizeImages
                     foreach ( $urls as $url ) {
                         $full_src_orig = $url[0];
                         $url           = $url[1];
-                        if ( $this->can_optimize_image( $url, $full_src_orig, $testing ) ) {
+                        if ( $this->can_optimize_image( $url, $tag, $testing ) && false === apply_filters( 'autoptimize_filter_imgopt_do_spai', false ) ) {
                             $imgopt_url      = $this->build_imgopt_url( $url, $imgopt_w, $imgopt_h );
                             $full_imgopt_src = str_replace( $url, $imgopt_url, $full_src_orig );
                             $tag             = str_replace( $full_src_orig, $full_imgopt_src, $tag );
@@ -596,7 +635,7 @@ class autoptimizeImages
                     $_url = $this->normalize_img_url( $_url );
 
                     $placeholder = '';
-                    if ( $this->can_optimize_image( $_url, $tag ) && apply_filters( 'autoptimize_filter_imgopt_lazyload_dolqip', true, $_url ) ) {
+                    if ( $this->can_optimize_image( $_url, $tag ) && apply_filters( 'autoptimize_filter_imgopt_lazyload_dolqip', true, $_url ) && false === apply_filters( 'autoptimize_filter_imgopt_do_spai', false ) ) {
                         $lqip_w = '';
                         $lqip_h = '';
                         if ( isset( $imgopt_w ) && ! empty( $imgopt_w ) ) {
@@ -610,6 +649,8 @@ class autoptimizeImages
                     // then call add_lazyload-function with lpiq placeholder if set.
                     $tag = $this->add_lazyload( $tag, $placeholder );
                 }
+
+                $tag = apply_filters( 'autoptimize_filter_imgopt_tag_postopt' , $tag );
 
                 // and add tag to array for later replacement.
                 if ( $tag !== $orig_tag ) {
@@ -664,7 +705,7 @@ class autoptimizeImages
         return $out;
     }
 
-    public function get_size_from_tag( $tag ) {
+    public static function get_size_from_tag( $tag ) {
         // reusable function to extract widht and height from an image tag
         // enforcing a filterable maximum width and height (default 4999X4999).
         $width  = '';
@@ -716,12 +757,18 @@ class autoptimizeImages
         } else {
             $lazyload_return = false;
         }
+
+        // If page/ post check post_meta to see if lazyload is off for page.
+        if ( false === autoptimizeConfig::get_post_meta_ao_settings( 'ao_post_lazyload' ) ) {
+              $lazyload_return = false;
+        }
+
         $lazyload_return = apply_filters( 'autoptimize_filter_imgopt_should_lazyload', $lazyload_return, $context );
 
         return $lazyload_return;
     }
 
-    public function check_nolazy() {
+    public static function check_nolazy() {
         if ( array_key_exists( 'ao_nolazy', $_GET ) && '1' === $_GET['ao_nolazy'] ) {
             return true;
         } else {
@@ -770,7 +817,13 @@ class autoptimizeImages
     public function add_lazyload( $tag, $placeholder = '' ) {
         // adds actual lazyload-attributes to an image node.
         $this->lazyload_counter++;
-        $_lazyload_from_nth = apply_filters( 'autoptimize_filter_imgopt_lazyload_from_nth', $this->options['autoptimize_imgopt_number_field_7'] );
+
+        $_lazyload_from_nth = '';
+        if ( array_key_exists( 'autoptimize_imgopt_number_field_7', $this->options ) ) {
+            $_lazyload_from_nth = $this->options['autoptimize_imgopt_number_field_7'];
+        }
+        $_lazyload_from_nth = apply_filters( 'autoptimize_filter_imgopt_lazyload_from_nth', $_lazyload_from_nth );
+
         if ( str_ireplace( $this->get_lazyload_exclusions(), '', $tag ) === $tag && $this->lazyload_counter >= $_lazyload_from_nth ) {
             $tag = $this->maybe_fix_missing_quotes( $tag );
 
@@ -816,7 +869,7 @@ class autoptimizeImages
     }
 
     public function add_lazyload_js_footer() {
-        if ( false === autoptimizeMain::should_buffer() ) {
+        if ( false === autoptimizeMain::should_buffer() || autoptimizeMain::is_amp_markup('') ) {
             return;
         }
 
@@ -842,24 +895,9 @@ class autoptimizeImages
         echo apply_filters( 'autoptimize_filter_imgopt_lazyload_cssoutput', '<noscript><style>.lazyload{display:none;}</style></noscript>' );
         echo apply_filters( 'autoptimize_filter_imgopt_lazyload_jsconfig', '<script' . $type_js . $noptimize_flag . '>window.lazySizesConfig=window.lazySizesConfig||{};window.lazySizesConfig.loadMode=1;</script>' );
         echo apply_filters( 'autoptimize_filter_imgopt_lazyload_js', '<script async' . $type_js . $noptimize_flag . ' src=\'' . $lazysizes_js . '\'></script>' );
-
-        // And add webp detection and loading JS.
-        if ( $this->should_ngimg() ) {
-            // Add AVIF code, can be disabled for now to only do webp.
-            if ( apply_filters( 'autoptimize_filter_imgopt_do_avif', true ) ) {
-                $_ngimg_detect = 'function c_img(a,b){src="avif"==b?"data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAABoAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACJtZGF0EgAKCBgADsgQEAwgMgwf8AAAWAAAAACvJ+o=":"data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==";var c=new Image;c.onload=function(){var d=0<c.width&&0<c.height;a(d,b)},c.onerror=function(){a(!1,b)},c.src=src}function s_img(a,b){w=window,"avif"==b?!1==a?c_img(s_img,"webp"):w.ngImg="avif":!1==a?w.ngImg=!1:w.ngImg="webp"}c_img(s_img,"avif");';
-                $_ngimg_load   = 'document.addEventListener("lazybeforeunveil",function({target:a}){window.ngImg&&["data-src","data-srcset"].forEach(function(b){attr=a.getAttribute(b),null!==attr&&-1==attr.indexOf("/client/to_")&&a.setAttribute(b,attr.replace(/\/client\//,"/client/to_"+window.ngImg+","))})});';
-            } else {
-                $_ngimg_detect = "function c_webp(A){var n=new Image;n.onload=function(){var e=0<n.width&&0<n.height;A(e)},n.onerror=function(){A(!1)},n.src='data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=='}function s_webp(e){window.supportsWebP=e}c_webp(s_webp);";
-                $_ngimg_load   = "document.addEventListener('lazybeforeunveil',function({target:b}){window.supportsWebP&&['data-src','data-srcset'].forEach(function(c){attr=b.getAttribute(c),null!==attr&&-1==attr.indexOf('/client/to_webp')&&b.setAttribute(c,attr.replace(/\/client\//,'/client/to_webp,'))})});";
-            }
-            // Keeping autoptimize_filter_imgopt_webp_js filter for now, but it is deprecated as not only for webp any more.
-            $_ngimg_output = apply_filters( 'autoptimize_filter_imgopt_webp_js', '<script' . $type_js . $noptimize_flag . '>' . $_ngimg_detect . $_ngimg_load . '</script>' );
-            echo apply_filters( 'autoptimize_filter_imgopt_ngimg_js', $_ngimg_output );
-        }
     }
 
-    public function get_cdn_url() {
+    public static function get_cdn_url() {
         // getting CDN url here to avoid having to make bigger changes to autoptimizeBase.
         static $cdn_url = null;
 
@@ -915,8 +953,8 @@ class autoptimizeImages
         static $ngimg_return = null;
 
         if ( is_null( $ngimg_return ) ) {
-            // webp only works if imgopt and lazyload are also active.
-            if ( ! empty( $this->options['autoptimize_imgopt_checkbox_field_4'] ) && ! empty( $this->options['autoptimize_imgopt_checkbox_field_3'] ) && $this->imgopt_active() ) {
+            // nextgen img only works if imgopt is active.
+            if ( ! empty( $this->options['autoptimize_imgopt_checkbox_field_4'] ) && $this->imgopt_active() ) {
                 $ngimg_return = true;
             } else {
                 $ngimg_return = false;
@@ -965,7 +1003,7 @@ class autoptimizeImages
     public function process_bgimage( $in ) {
         if ( strpos( $in, 'background-image:' ) !== false && apply_filters( 'autoptimize_filter_imgopt_lazyload_backgroundimages', true ) ) {
             $out = preg_replace_callback(
-                '/(<(?:article|aside|body|div|footer|header|p|section|table)[^>]*)\sstyle=(?:"|\')[^<>]*?background-image:\s?url\((?:"|\')?([^"\')]*)(?:"|\')?\)[^>]*/',
+                '/(<(?:article|aside|body|div|footer|header|p|section|span|table)[^>]*)\sstyle=(?:"|\')[^<>]*?background-image:\s?url\((?:"|\')?([^"\')]*)(?:"|\')?\)[^>]*/',
                 array( $this, 'lazyload_bgimg_callback' ),
                 $in
             );
@@ -979,15 +1017,24 @@ class autoptimizeImages
             // get placeholder & lazyload class strings.
             $placeholder    = apply_filters( 'autoptimize_filter_imgopt_lazyload_placeholder', $this->get_default_lazyload_placeholder( 500, 300 ) );
             $lazyload_class = apply_filters( 'autoptimize_filter_imgopt_lazyload_class', 'lazyload' );
+            // remove quotes from url() to be able to replace in next step.
+            $out = str_replace( array( "url('" . $matches[2] . "')", 'url("' . $matches[2] . '")' ), 'url(' . $matches[2] . ')', $matches[0] );
             // replace background-image URL with SVG placeholder.
-            $out = str_replace( $matches[2], $placeholder, $matches[0] );
+            $out = str_replace( 'url(' . $matches[2], 'url(' . $placeholder, $out );
+            // sanitize bgimg src for quote sillyness.
+            $bgimg_src = $this->fix_silly_bgimg_quotes( $matches[2] );
             // add data-bg attribute with real background-image URL for lazyload to pick up.
-            $out = str_replace( $matches[1], $matches[1] . ' data-bg="' . trim( str_replace( array( "\r\n", '&quot;' ), '', $matches[2] ) ) . '"', $out );
-            // add lazyload class to tag.
+            $out = str_replace( $matches[1], $matches[1] . ' data-bg="' . $bgimg_src . '"', $out );
+            // and finally add lazyload class to tag.
             $out = $this->inject_classes_in_tag( $out, "$lazyload_class " );
             return $out;
         }
         return $matches[0];
+    }
+    
+    public function fix_silly_bgimg_quotes( $tag_in ) {
+        // some themes/ pagebuilders wrap backgroundimages in HTML-encoded quotes (or linebreaks) which breaks imgopt/ lazyloading, this removes them.
+        return trim( str_replace( array( "\r\n", '&quot;', '&#034;', '&apos;', '&#039;' ), '', $tag_in ) );
     }
 
     public function maybe_fix_missing_quotes( $tag_in ) {
@@ -1033,7 +1080,7 @@ class autoptimizeImages
     {
         // Check querystring for "refreshCacheChecker" and call cachechecker if so.
         if ( array_key_exists( 'refreshImgProvStats', $_GET ) && 1 == $_GET['refreshImgProvStats'] ) {
-            $this->query_img_provider_stats();
+            $this->query_img_provider_stats( true );
         }
 
         $options       = $this->fetch_options();
@@ -1046,7 +1093,7 @@ class autoptimizeImages
     </style>
     <script>document.title = "Autoptimize: <?php _e( 'Images', 'autoptimize' ); ?> " + document.title;</script>
     <div class="wrap">
-    <h1><?php _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
+    <h1><?php apply_filters( 'autoptimize_filter_settings_is_pro', false ) ? _e( 'Autoptimize Pro Settings', 'autoptimize' ) : _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
         <?php echo autoptimizeConfig::ao_admin_tabs(); ?>
         <?php if ( 'down' === $options['availabilities']['extra_imgopt']['status'] ) { ?>
             <div class="notice-warning notice"><p>
@@ -1102,18 +1149,18 @@ class autoptimizeImages
                         echo apply_filters( 'autoptimize_filter_imgopt_settings_status', '<p><strong><span style="color:' . $_notice_color . ';">' . __( 'Shortpixel status: ', 'autoptimize' ) . '</span></strong>' . $_notice['notice'] . '</p>' );
                     } else {
                         // translators: link points to shortpixel.
-                        $upsell_msg_1 = '<p>' . sprintf( __( 'Get more Google love and improve your website\'s loading speed by having your publicly available images optimized on the fly (also in the "next-gen" WebP and AVIF image format) by %1$sShortPixel%2$s and then cached and served fast from Shortpixel\'s global CDN.', 'autoptimize' ), '<a href="https://shortpixel.com/aospai' . $sp_url_suffix . '" target="_blank">', '</a>' );
+                        $upsell_msg_1 = '<p>' . sprintf( __( 'Get more Google love by speeding up your website. Start serving on-the-fly optimized images (also in the "next-gen" <strong>WebP</strong> and <strong>AVIF</strong> image formats) by %1$sShortPixel%2$s. No additional image optimization plugins are needed: your images are optimized, cached and served from %3$sShortPixel\'s global CDN%2$s.', 'autoptimize' ), '<a href="https://shortpixel.com/aospai' . $sp_url_suffix . '" target="_blank">', '</a>', '<a href="https://help.shortpixel.com/article/62-where-does-the-cdn-has-pops" target="_blank">' );
                         if ( 'launch' === $options['availabilities']['extra_imgopt']['status'] ) {
                             $upsell_msg_2 = __( 'For a limited time only, this service is offered free for all Autoptimize users, <b>don\'t miss the chance to test it</b> and see how much it could improve your site\'s speed.', 'autoptimize' );
                         } else {
                             // translators: link points to shortpixel.
-                            $upsell_msg_2 = sprintf( __( '%1$sSign-up now%2$s to receive extra traffic or image optimization credits for free. You\'ll also receive +50&percnt; more CDN traffic or image optimization credits regardless for any future plan that you\'ll choose to purchase.', 'autoptimize' ), '<a href="https://shortpixel.com/aospai' . $sp_url_suffix . '" target="_blank">', '</a>' );
+                            $upsell_msg_2 = sprintf( __( '%1$sSign-up now%2$s to receive x2 more CDN traffic or image optimization credits for free! This offer also applies to any future plan that you\'ll choose to purchase.', 'autoptimize' ), '<a href="https://shortpixel.com/aospai' . $sp_url_suffix . '" target="_blank">', '</a>' );
                         }
                         echo apply_filters( 'autoptimize_imgopt_imgopt_settings_copy', $upsell_msg_1 . ' ' . $upsell_msg_2 . '</p>' );
                     }
                     // translators: link points to shortpixel FAQ.
-                    $faqcopy = sprintf( __( '<strong>Questions</strong>? Have a look at the %1$sShortPixel FAQ%2$s!', 'autoptimize' ), '<strong><a href="https://help.shortpixel.com/category/405-autoptimize" target="_blank">', '</strong></a>' );
-                    $faqcopy = $faqcopy . ' ' . __( 'Only works for sites/ images that are publicly available.', 'autoptimize' );
+                    $faqcopy = sprintf( __( '<strong>Questions</strong>? Have a look at the %1$sAutoptimize + ShortPixel FAQ%2$s!', 'autoptimize' ), '<strong><a href="https://help.shortpixel.com/category/405-autoptimize" target="_blank">', '</strong></a>' );
+                    $faqcopy = $faqcopy . ' ' . __( 'Only works for websites and images that are publicly available.', 'autoptimize' );
                     // translators: links points to shortpixel TOS & Privacy Policy.
                     $toscopy = sprintf( __( 'Usage of this feature is subject to Shortpixel\'s %1$sTerms of Use%2$s and %3$sPrivacy policy%4$s.', 'autoptimize' ), '<a href="https://shortpixel.com/tos' . $sp_url_suffix . '" target="_blank">', '</a>', '<a href="https://shortpixel.com/pp' . $sp_url_suffix . '" target="_blank">', '</a>' );
                     echo apply_filters( 'autoptimize_imgopt_imgopt_settings_tos', '<p>' . $faqcopy . ' ' . $toscopy . '</p>' );
@@ -1155,9 +1202,9 @@ class autoptimizeImages
                 </td>
             </tr>
             <tr id='autoptimize_imgopt_ngimg' <?php if ( ! array_key_exists( 'autoptimize_imgopt_checkbox_field_1', $options ) || ( isset( $options['autoptimize_imgopt_checkbox_field_1'] ) && '1' !== $options['autoptimize_imgopt_checkbox_field_1'] ) ) { echo 'class="hidden"'; } ?>>
-                <th scope="row"><?php _e( 'Load WebP or AVIF in supported browsers?', 'autoptimize' ); ?></th>
+                <th scope="row"><?php _e( 'Load AVIF in supported browsers?', 'autoptimize' ); ?></th>
                 <td>
-                    <label><input type='checkbox' id='autoptimize_imgopt_ngimg_checkbox' name='autoptimize_imgopt_settings[autoptimize_imgopt_checkbox_field_4]' <?php if ( ! empty( $options['autoptimize_imgopt_checkbox_field_4'] ) && '1' === $options['autoptimize_imgopt_checkbox_field_3'] ) { echo 'checked="checked"'; } ?> value='1'><?php _e( 'Automatically serve "next-gen" WebP or AVIF image formats to any browser that supports it (requires lazy load to be active).', 'autoptimize' ); ?></label>
+                    <label><input type='checkbox' id='autoptimize_imgopt_ngimg_checkbox' name='autoptimize_imgopt_settings[autoptimize_imgopt_checkbox_field_4]' <?php if ( ! empty( $options['autoptimize_imgopt_checkbox_field_4'] ) && '1' === $options['autoptimize_imgopt_checkbox_field_3'] ) { echo 'checked="checked"'; } ?> value='1'><?php _e( 'Automatically serve AVIF image format to any browser that supports it.', 'autoptimize' ); ?></label>
                 </td>
             </tr>
             <tr>
@@ -1175,7 +1222,7 @@ class autoptimizeImages
             <tr id='autoptimize_imgopt_lazyload_from_nth_image' <?php if ( ! array_key_exists( 'autoptimize_imgopt_checkbox_field_3', $options ) || ( isset( $options['autoptimize_imgopt_checkbox_field_3'] ) && '1' !== $options['autoptimize_imgopt_checkbox_field_3'] ) ) { echo 'class="autoptimize_lazyload_child hidden"'; } else { echo 'class="autoptimize_lazyload_child"'; } ?>>
                 <th scope="row"><?php _e( 'Lazy-load from nth image', 'autoptimize' ); ?></th>
                 <td>
-                    <label><input type='number' min='0' max='50' style='width:80%' id='autoptimize_imgopt_lazyload_from_nth_image_number' name='autoptimize_imgopt_settings[autoptimize_imgopt_number_field_7]' value='<?php if ( ! empty( $options['autoptimize_imgopt_number_field_7'] ) ) { echo esc_attr( $options['autoptimize_imgopt_number_field_7'] ); } else { echo '0'; } ?>'><br /><?php _e( 'Don\'t lazyload the first X images, \'0\' lazyloads all.', 'autoptimize' ); ?></label>
+                    <label><input type='number' min='0' max='50' style='width:80%' id='autoptimize_imgopt_lazyload_from_nth_image_number' name='autoptimize_imgopt_settings[autoptimize_imgopt_number_field_7]' value='<?php if ( ! empty( $options['autoptimize_imgopt_number_field_7'] ) ) { echo esc_attr( $options['autoptimize_imgopt_number_field_7'] ); } else { echo '1'; } ?>'><br /><?php _e( 'Don\'t lazyload the first X images, \'1\' lazyloads all.', 'autoptimize' ); ?></label>
                 </td>
             </tr>
         </table>
@@ -1194,18 +1241,11 @@ class autoptimizeImages
                     jQuery("#autoptimize_imgopt_optimization_exclusions").hide("slow");
                 }
             });
-            jQuery("#autoptimize_imgopt_ngimg_checkbox").change(function() {
-                if (this.checked) {
-                    jQuery("#autoptimize_imgopt_lazyload_checkbox")[0].checked = true;
-                    jQuery(".autoptimize_lazyload_child").show("slow");
-                }
-            });
             jQuery("#autoptimize_imgopt_lazyload_checkbox").change(function() {
                 if (this.checked) {
                     jQuery(".autoptimize_lazyload_child").show("slow");
                 } else {
                     jQuery(".autoptimize_lazyload_child").hide("slow");
-                    jQuery("#autoptimize_imgopt_ngimg_checkbox")[0].checked = false;
                 }
             });
         });
@@ -1221,7 +1261,7 @@ class autoptimizeImages
             $_imgopt_notice  = '';
             $_stat           = autoptimizeOptionWrapper::get_option( 'autoptimize_imgopt_provider_stat', '' );
             $_site_host      = AUTOPTIMIZE_SITE_DOMAIN;
-            $_imgopt_upsell  = 'https://shortpixel.com/aospai/af/GWRGFLW109483/' . $_site_host;
+            $_imgopt_upsell  = 'https://shortpixel.com/aospai/af/SPZURYE109483/' . $_site_host;
             $_imgopt_assoc   = 'https://shortpixel.helpscoutdocs.com/article/94-how-to-associate-a-domain-to-my-account';
             $_imgopt_unreach = 'https://shortpixel.helpscoutdocs.com/article/148-why-are-my-images-redirected-from-cdn-shortpixel-ai';
 
@@ -1233,12 +1273,12 @@ class autoptimizeImages
                     // translators: "add more credits" will appear in a "a href".
                     $_imgopt_notice = sprintf( __( 'Your ShortPixel image optimization and CDN quota was used, %1$sadd more credits%2$s to keep fast serving optimized images on your site', 'autoptimize' ), '<a href="' . $_imgopt_upsell . '" target="_blank">', '</a>' );
                     // translators: "associate your domain" will appear in a "a href".
-                    $_imgopt_notice = $_imgopt_notice . ' ' . sprintf( __( 'If you have enough credits/ CDN quota remaining, then you may need to %1$sassociate your domain%2$s to your Shortpixel account.', 'autoptimize' ), '<a rel="noopener noreferrer" href="' . $_imgopt_assoc . '" target="_blank">', '</a>' );
+                    $_imgopt_notice = $_imgopt_notice . ' ' . sprintf( __( 'If you have enough CDN quota remaining, then you may need to %1$sassociate your domain%2$s to your Shortpixel account.', 'autoptimize' ), '<a rel="noopener noreferrer" href="' . $_imgopt_assoc . '" target="_blank">', '</a>' );
                 } elseif ( -3 == $_stat['Status'] ) {
                     // translators: "check the documentation here" will appear in a "a href".
                     $_imgopt_notice = sprintf( __( 'It seems ShortPixel image optimization is not able to fetch images from your site, %1$scheck the documentation here%2$s for more information', 'autoptimize' ), '<a href="' . $_imgopt_unreach . '" target="_blank">', '</a>' );
                 } else {
-                    $_imgopt_upsell = 'https://shortpixel.com/g/af/GWRGFLW109483';
+                    $_imgopt_upsell = 'https://shortpixel.com/g/af/SPZURYE109483';
                     // translators: "log in to check your account" will appear in a "a href".
                     $_imgopt_notice = sprintf( __( 'Your ShortPixel image optimization and CDN quota are in good shape, %1$slog in to check your account%2$s.', 'autoptimize' ), '<a href="' . $_imgopt_upsell . '" target="_blank">', '</a>' );
                 }
@@ -1256,7 +1296,7 @@ class autoptimizeImages
                     }
                     $_imgopt_notice .= ' (' . $_imgopt_stats_last_run . ', ';
                     // translators: "here to refresh" links to the Autoptimize Extra page and forces a refresh of the img opt stats.
-                    $_imgopt_notice .= sprintf( __( 'click %1$shere to refresh%2$s', 'autoptimize' ), '<a href="' . $_imgopt_stats_refresh_url . '">', '</a>).' );
+                    $_imgopt_notice .= sprintf( __( 'you can click %1$shere to refresh your quota status%2$s', 'autoptimize' ), '<a href="' . $_imgopt_stats_refresh_url . '">', '</a>).' );
                 }
 
                 // and make the full notice filterable.
@@ -1280,15 +1320,19 @@ class autoptimizeImages
     /**
      * Get img provider stats (used to display notice).
      */
-    public function query_img_provider_stats() {
+    public function query_img_provider_stats( $_refresh = false ) {
         if ( ! empty( $this->options['autoptimize_imgopt_checkbox_field_1'] ) ) {
             $url      = '';
-            $endpoint = $this->get_imgopt_host() . 'read-domain/';
+            $stat_dom = 'https://no-cdn.shortpixel.ai/';
+            $endpoint = $stat_dom . 'read-domain/';
             $domain   = AUTOPTIMIZE_SITE_DOMAIN;
 
             // make sure parse_url result makes sense, keeping $url empty if not.
             if ( $domain && ! empty( $domain ) ) {
                 $url = $endpoint . $domain;
+                if ( true === $_refresh ) {
+                    $url = $url . '/refresh';
+                }
             }
 
             $url = apply_filters(
@@ -1327,7 +1371,11 @@ class autoptimizeImages
         static $launch_status = null;
 
         if ( null === $launch_status ) {
-            $avail_imgopt  = $this->options['availabilities']['extra_imgopt'];
+            $avail_imgopt = '';
+            if ( is_array( $this->options ) && array_key_exists( 'availabilities', $this->options ) && is_array( $this->options['availabilities'] ) && array_key_exists( 'extra_imgopt', $this->options['availabilities'] ) ) {
+                $avail_imgopt = $this->options['availabilities']['extra_imgopt'];
+            }
+
             $magic_number  = intval( substr( md5( parse_url( AUTOPTIMIZE_WP_SITE_URL, PHP_URL_HOST ) ), 0, 3 ), 16 );
             $has_launched  = autoptimizeOptionWrapper::get_option( 'autoptimize_imgopt_launched', '' );
             $launch_status = false;

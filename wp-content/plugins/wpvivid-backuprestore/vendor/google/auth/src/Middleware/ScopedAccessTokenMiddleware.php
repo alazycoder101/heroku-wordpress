@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-namespace Google\Auth\Middleware;
+namespace WPvividGoogle\Auth\Middleware;
 
-use Google\Auth\CacheTrait;
-use Psr\Cache\CacheItemPoolInterface;
-use Psr\Http\Message\RequestInterface;
+use WPvividGoogle\Auth\CacheTrait;
+use WPvividPsr\Cache\CacheItemPoolInterface;
+use WPvividPsr\Http\Message\RequestInterface;
 
 /**
  * ScopedAccessTokenMiddleware is a Guzzle Middleware that adds an Authorization

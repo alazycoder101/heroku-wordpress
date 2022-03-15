@@ -1,11 +1,11 @@
 <?php
-namespace GuzzleHttp;
+namespace WPvividGuzzleHttp;
 
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Exception\GuzzleException;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
+use WPvividGuzzleHttp\Promise\PromiseInterface;
+use WPvividGuzzleHttp\Exception\GuzzleException;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
+use WPvividPsr\Http\Message\UriInterface;
 
 /**
  * Client interface for sending HTTP requests.

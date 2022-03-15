@@ -1,8 +1,8 @@
 <?php
-namespace GuzzleHttp\Cookie;
+namespace WPvividGuzzleHttp\Cookie;
 
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use WPvividPsr\Http\Message\RequestInterface;
+use WPvividPsr\Http\Message\ResponseInterface;
 
 /**
  * Cookie jar that stores cookies as an array

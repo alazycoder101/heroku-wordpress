@@ -11,7 +11,7 @@
 
 namespace Symfony\Component\EventDispatcher\Debug;
 
-use Psr\Log\LoggerInterface;
+use WPvividPsr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

@@ -1,5 +1,8 @@
 <?php
-
+if (!defined('WPVIVID_PLUGIN_DIR'))
+{
+    die;
+}
 class WPvivid_Tab_Page_Container
 {
     public $tabs;
