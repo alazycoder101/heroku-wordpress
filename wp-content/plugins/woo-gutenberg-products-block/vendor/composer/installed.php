@@ -6,28 +6,28 @@
     'aliases' => 
     array (
     ),
-    'reference' => 'e78f5855b8ec80e32b265081f2286250074298dc',
+    'reference' => 'b6b8a005cd5b0892fada670ed4bc4596132ad79e',
     'name' => 'woocommerce/woocommerce-blocks',
   ),
   'versions' => 
   array (
     'automattic/jetpack-autoloader' => 
     array (
-      'pretty_version' => '2.10.1',
-      'version' => '2.10.1.0',
+      'pretty_version' => 'v2.10.7',
+      'version' => '2.10.7.0',
       'aliases' => 
       array (
       ),
-      'reference' => '20393c4677765c3e737dcb5aee7a3f7b90dce4b3',
+      'reference' => 'e3dfa1a2679e4b8e380bc37b722081875c84a381',
     ),
     'composer/installers' => 
     array (
-      'pretty_version' => 'v1.10.0',
-      'version' => '1.10.0.0',
+      'pretty_version' => 'v1.12.0',
+      'version' => '1.12.0.0',
       'aliases' => 
       array (
       ),
-      'reference' => '1a0357fccad9d1cc1ea0c9a05b8847fbccccb78d',
+      'reference' => 'd20a64ed3c94748397ff5973488761b22f6d3f19',
     ),
     'roundcube/plugin-installer' => 
     array (
@@ -50,7 +50,7 @@
       'aliases' => 
       array (
       ),
-      'reference' => 'e78f5855b8ec80e32b265081f2286250074298dc',
+      'reference' => 'b6b8a005cd5b0892fada670ed4bc4596132ad79e',
     ),
   ),
 );
