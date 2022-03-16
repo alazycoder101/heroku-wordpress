@@ -1756,6 +1756,8 @@ function is_blog_installed() {
 	}
 	$wpdb->suppress_errors( $suppress );
 
+    error_log("======================================");
+    error_log($installed);
 	$installed = ! empty( $installed );
 	wp_cache_set( 'is_blog_installed', $installed );
 
