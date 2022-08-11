@@ -67,7 +67,7 @@ class Indexable_Home_Page_Builder {
 		Url_Helper $url_helper,
 		Indexable_Builder_Versions $versions,
 		Post_Helper $post_helper,
-		wpdb $wpdb
+		$wpdb
 	) {
 		$this->options     = $options;
 		$this->url_helper  = $url_helper;

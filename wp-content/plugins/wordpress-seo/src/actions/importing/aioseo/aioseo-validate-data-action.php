@@ -57,7 +57,7 @@ class Aioseo_Validate_Data_Action extends Abstract_Aioseo_Importing_Action {
 	 * @param Aioseo_Posts_Importing_Action                      $post_importing_action             The Post importing action.
 	 */
 	public function __construct(
-		wpdb $wpdb,
+		$wpdb,
 		Options_Helper $options,
 		Aioseo_Custom_Archive_Settings_Importing_Action $custom_archive_action,
 		Aioseo_Default_Archive_Settings_Importing_Action $default_archive_action,

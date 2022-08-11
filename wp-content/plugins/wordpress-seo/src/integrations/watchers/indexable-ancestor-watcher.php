@@ -75,7 +75,7 @@ class Indexable_Ancestor_Watcher implements Integration_Interface {
 		Indexable_Repository $indexable_repository,
 		Indexable_Hierarchy_Builder $indexable_hierarchy_builder,
 		Indexable_Hierarchy_Repository $indexable_hierarchy_repository,
-		wpdb $wpdb,
+		$wpdb,
 		Permalink_Helper $permalink_helper,
 		Post_Type_Helper $post_type_helper
 	) {

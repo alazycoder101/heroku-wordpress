@@ -65,7 +65,7 @@ class Indexable_Term_Indexation_Action extends Abstract_Indexing_Action {
 	public function __construct(
 		Taxonomy_Helper $taxonomy,
 		Indexable_Repository $repository,
-		wpdb $wpdb,
+		$wpdb,
 		Indexable_Builder_Versions $builder_versions
 	) {
 		$this->taxonomy   = $taxonomy;

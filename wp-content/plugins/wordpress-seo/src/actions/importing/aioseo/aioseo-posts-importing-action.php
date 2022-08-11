@@ -178,7 +178,7 @@ class Aioseo_Posts_Importing_Action extends Abstract_Aioseo_Importing_Action {
 	 */
 	public function __construct(
 		Indexable_Repository $indexable_repository,
-		wpdb $wpdb,
+		$wpdb,
 		Import_Cursor_Helper $import_cursor,
 		Indexable_Helper $indexable_helper,
 		Indexable_To_Postmeta_Helper $indexable_to_postmeta,

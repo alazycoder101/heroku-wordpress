@@ -31,7 +31,7 @@ class Aioseo_Helper {
 	 * @param Wpdb_Helper $wpdb_helper The wpdb helper.
 	 */
 	public function __construct(
-		wpdb $wpdb,
+		$wpdb,
 		Wpdb_Helper $wpdb_helper
 	) {
 		$this->wpdb        = $wpdb;

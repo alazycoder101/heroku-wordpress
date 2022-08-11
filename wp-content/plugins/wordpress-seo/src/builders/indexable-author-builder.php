@@ -57,7 +57,7 @@ class Indexable_Author_Builder {
 		Author_Archive_Helper $author_archive,
 		Indexable_Builder_Versions $versions,
 		Post_Helper $post_helper,
-		wpdb $wpdb
+		$wpdb
 	) {
 		$this->author_archive = $author_archive;
 		$this->version        = $versions->get_latest_version_for_type( 'user' );

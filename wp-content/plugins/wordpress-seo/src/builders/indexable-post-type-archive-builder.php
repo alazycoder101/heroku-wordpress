@@ -55,7 +55,7 @@ class Indexable_Post_Type_Archive_Builder {
 		Options_Helper $options,
 		Indexable_Builder_Versions $versions,
 		Post_Helper $post_helper,
-		wpdb $wpdb
+		$wpdb
 	) {
 		$this->options     = $options;
 		$this->version     = $versions->get_latest_version_for_type( 'post-type-archive' );

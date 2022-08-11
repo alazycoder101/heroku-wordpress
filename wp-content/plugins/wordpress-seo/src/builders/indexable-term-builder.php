@@ -59,7 +59,7 @@ class Indexable_Term_Builder {
 		Taxonomy_Helper $taxonomy_helper,
 		Indexable_Builder_Versions $versions,
 		Post_Helper $post_helper,
-		wpdb $wpdb
+		$wpdb
 	) {
 		$this->taxonomy_helper = $taxonomy_helper;
 		$this->version         = $versions->get_latest_version_for_type( 'term' );

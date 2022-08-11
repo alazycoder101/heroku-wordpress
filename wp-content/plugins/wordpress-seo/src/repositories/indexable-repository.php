@@ -82,7 +82,7 @@ class Indexable_Repository {
 		Current_Page_Helper $current_page,
 		Logger $logger,
 		Indexable_Hierarchy_Repository $hierarchy_repository,
-		wpdb $wpdb,
+		$wpdb,
 		Indexable_Version_Manager $version_manager
 	) {
 		$this->builder              = $builder;

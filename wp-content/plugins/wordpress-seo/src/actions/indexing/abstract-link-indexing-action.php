@@ -43,7 +43,7 @@ abstract class Abstract_Link_Indexing_Action extends Abstract_Indexing_Action {
 	public function __construct(
 		Indexable_Link_Builder $link_builder,
 		Indexable_Repository $repository,
-		wpdb $wpdb
+		$wpdb
 	) {
 		$this->link_builder = $link_builder;
 		$this->repository   = $repository;

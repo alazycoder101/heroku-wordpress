@@ -76,7 +76,7 @@ class Indexable_Post_Indexation_Action extends Abstract_Indexing_Action {
 	public function __construct(
 		Post_Type_Helper $post_type_helper,
 		Indexable_Repository $repository,
-		wpdb $wpdb,
+		$wpdb,
 		Indexable_Builder_Versions $builder_versions,
 		Post_Helper $post_helper
 	) {

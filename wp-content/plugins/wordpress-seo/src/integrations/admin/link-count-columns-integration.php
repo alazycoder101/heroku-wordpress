@@ -80,7 +80,7 @@ class Link_Count_Columns_Integration implements Integration_Interface {
 	 */
 	public function __construct(
 		Post_Type_Helper $post_type_helper,
-		wpdb $wpdb,
+		$wpdb,
 		Post_Link_Indexing_Action $post_link_indexing_action,
 		Admin_Columns_Cache_Integration $admin_columns_cache
 	) {
