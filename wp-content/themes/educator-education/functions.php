@@ -363,6 +363,7 @@ function educator_education_scripts() {
 	wp_enqueue_style( 'educator-education-block-style', get_theme_file_uri('/css/blocks.css') );
 	wp_enqueue_style('bootstrap-style', esc_url(get_template_directory_uri()).'/css/bootstrap.css');
 	wp_enqueue_style('educator-education-basic-style', get_stylesheet_uri());
+	wp_enqueue_style('educator-education-block-pattern-frontend', esc_url(get_template_directory_uri()).'/theme-block-pattern/css/block-pattern-frontend.css');
 	wp_style_add_data('educator-education-basic-style', 'rtl', 'replace');
 	
 	wp_enqueue_style('educator-education-customcss', esc_url(get_template_directory_uri()).'/css/custom.css');
@@ -383,6 +384,15 @@ function educator_education_scripts() {
 	}
 }
 add_action('wp_enqueue_scripts', 'educator_education_scripts');
+/*** Enqueue block editor style */
+function educator_education_block_editor_styles() {
+	wp_enqueue_style( 'educator-education-font', educator_education_font_url(), array() );
+    wp_enqueue_style( 'block-pattern-patterns-style-editor', get_theme_file_uri( '/theme-block-pattern/css/block-pattern-editor.css' ), false, '1.0', 'all' );
+	wp_enqueue_style( 'font-awesome-css', esc_url(get_template_directory_uri()).'/css/fontawesome-all.css' );
+    wp_enqueue_style( 'bootstrap-style', esc_url(get_template_directory_uri()).'/css/bootstrap.css' );
+}
+add_action( 'enqueue_block_editor_assets', 'educator_education_block_editor_styles' );
+
 
 /* Custom header additions. */
 require get_template_directory().'/inc/custom-header.php';
@@ -398,3 +408,6 @@ require get_template_directory() .'/inc/tgm.php';
 
 /* Get Started. */
 require get_template_directory().'/inc/admin/admin.php';
+
+/* Implement the block pattern */
+require get_template_directory().'/theme-block-pattern/theme-block-pattern.php';

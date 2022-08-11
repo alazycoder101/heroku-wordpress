@@ -156,13 +156,15 @@ function kumle_scripts() {
 
 	wp_enqueue_style( 'kumle-fonts', kumle_fonts_url(), array(), null );
 
-	wp_enqueue_style( 'jquery-meanmenu', get_template_directory_uri() . '/assets/third-party/meanmenu/meanmenu.css' );
+	wp_enqueue_style( 'jquery-meanmenu', get_template_directory_uri() . '/assets/third-party/meanmenu/meanmenu.css','','2.0.8' );
 
 	wp_enqueue_style( 'jquery-slick', get_template_directory_uri() . '/assets/third-party/slick/slick.css', '', '1.6.0' );
 
-	wp_enqueue_style( 'font-awesome', get_template_directory_uri() . '/assets/third-party/font-awesome/css/font-awesome.min.css', '', '4.7.0' );
+	wp_enqueue_style( 'font-awesome-css', get_template_directory_uri() . '/assets/third-party/font-awesome/css/all.css', '', '5.15.4' );
 
-	wp_enqueue_style( 'kumle-style', get_stylesheet_uri() );
+	wp_enqueue_style( 'font-awesome-shim-v4', get_template_directory_uri() . '/assets/third-party/font-awesome/css/v4-shims.css', '', '5.15.4' );
+
+	wp_enqueue_style( 'kumle-style', get_stylesheet_uri(),'','2.1.0' );
 
 	wp_enqueue_script( 'kumle-navigation', get_template_directory_uri() . '/assets/js/navigation.js', array(), '20151215', true );
 

@@ -134,12 +134,12 @@
 		$educator_education_custom_css .='}';
 	}
 
-	$educator_education_top_bottom_wooproducts_padding = get_theme_mod('educator_education_top_bottom_wooproducts_padding',0);
+	$educator_education_top_bottom_wooproducts_padding = get_theme_mod('educator_education_top_bottom_wooproducts_padding');
 	$educator_education_custom_css .='.woocommerce ul.products li.product, .woocommerce-page ul.products li.product{';
 		$educator_education_custom_css .='padding-top: '.esc_attr($educator_education_top_bottom_wooproducts_padding).'px !important; padding-bottom: '.esc_attr($educator_education_top_bottom_wooproducts_padding).'px !important;';
 	$educator_education_custom_css .='}';
 
-	$educator_education_left_right_wooproducts_padding = get_theme_mod('educator_education_left_right_wooproducts_padding',0);
+	$educator_education_left_right_wooproducts_padding = get_theme_mod('educator_education_left_right_wooproducts_padding');
 	$educator_education_custom_css .='.woocommerce ul.products li.product, .woocommerce-page ul.products li.product{';
 		$educator_education_custom_css .='padding-left: '.esc_attr($educator_education_left_right_wooproducts_padding).'px !important; padding-right: '.esc_attr($educator_education_left_right_wooproducts_padding).'px !important;';
 	$educator_education_custom_css .='}';
@@ -277,3 +277,48 @@
 	$educator_education_custom_css .='.our-services img, .page-box-single img{';
 		$educator_education_custom_css .='box-shadow: '.esc_attr($educator_education_featured_img_box_shadow).'px '.esc_attr($educator_education_featured_img_box_shadow).'px '.esc_attr($educator_education_featured_img_box_shadow).'px #ccc;';
 	$educator_education_custom_css .='}';
+
+	// slider top and bottom padding
+	$educator_education_top_bottom_slider_content_space = get_theme_mod('educator_education_top_bottom_slider_content_space');
+	$educator_education_left_right_slider_content_space = get_theme_mod('educator_education_left_right_slider_content_space');
+	$educator_education_custom_css .='#slider .carousel-caption, #slider .inner_carousel, #slider .inner_carousel h1, #slider .inner_carousel p, #slider .read-btn{';
+		$educator_education_custom_css .='top: '.esc_attr($educator_education_top_bottom_slider_content_space).'%; bottom: '.esc_attr($educator_education_top_bottom_slider_content_space).'%;left: '.esc_attr($educator_education_left_right_slider_content_space).'%;right: '.esc_attr($educator_education_left_right_slider_content_space).'%;';
+	$educator_education_custom_css .='}';
+
+	// responsive settings
+
+	$educator_education_slider = get_theme_mod( 'educator_education_responsive_slider',false);
+	if($educator_education_slider == true && get_theme_mod( 'educator_education_slider_hide', false) == false){
+    	$educator_education_custom_css .='#slider{';
+			$educator_education_custom_css .='display:none;';
+		$educator_education_custom_css .='} ';
+	}
+    if($educator_education_slider == true){
+    	$educator_education_custom_css .='@media screen and (max-width:575px) {';
+		$educator_education_custom_css .='#slider{';
+			$educator_education_custom_css .='display:block;';
+		$educator_education_custom_css .='} }';
+	}else if($educator_education_slider == false){
+		$educator_education_custom_css .='@media screen and (max-width:575px) {';
+		$educator_education_custom_css .='#slider{';
+			$educator_education_custom_css .='display:none;';
+		$educator_education_custom_css .='} }';
+	}
+
+	$educator_education_scroll = get_theme_mod( 'educator_education_responsive_scroll',true);
+	if($educator_education_scroll == true && get_theme_mod( 'educator_education_enable_disable_scroll', true) == false){
+    	$educator_education_custom_css .='#scroll-top{';
+			$educator_education_custom_css .='visibility: hidden !important;';
+		$educator_education_custom_css .='} ';
+	}
+    if($educator_education_scroll == true){
+    	$educator_education_custom_css .='@media screen and (max-width:575px) {';
+		$educator_education_custom_css .='#scroll-top{';
+			$educator_education_custom_css .='visibility: visible !important;';
+		$educator_education_custom_css .='} }';
+	}else if($educator_education_scroll == false){
+		$educator_education_custom_css .='@media screen and (max-width:575px) {';
+		$educator_education_custom_css .='#scroll-top{';
+			$educator_education_custom_css .='visibility: hidden !important;';
+		$educator_education_custom_css .='} }';
+	}

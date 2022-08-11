@@ -30,6 +30,9 @@
       <?php if( get_theme_mod( 'educator_education_comment_hide',true) != '') { ?>
         <span class="entry-comments me-2"><i class="fas fa-comments me-2"></i><?php comments_number( __('0 Comments','educator-education'), __('0 Comments','educator-education'), __('% Comments','educator-education') ); ?></span>
       <?php } ?>
+      <?php if( get_theme_mod( 'educator_education_time_hide',false) != '') { ?>
+        <span class="entry-time me-2"><i class="fas fa-clock me-1"></i> <?php echo esc_html( get_the_time() ); ?></span>
+      <?php }?>
     </div>
     <div class="entry-content">
       <div class="entry-content"><?php the_content();?></div>

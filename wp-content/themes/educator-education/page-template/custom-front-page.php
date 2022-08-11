@@ -8,7 +8,7 @@ get_header(); ?>
 <main role="main" id="maincontent">
   <?php do_action( 'educator_education_above_slider' ); ?>
 
-  <?php if( get_theme_mod( 'educator_education_slider_hide', false) != '') { ?>
+  <?php if( get_theme_mod( 'educator_education_slider_hide', false) != '' || get_theme_mod( 'educator_education_responsive_slider', false) != '') { ?>
     <section id="slider" class="mw-100 m-auto p-0">
       <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel" data-interval="<?php echo esc_attr(get_theme_mod('educator_education_slider_speed_option', 3000)); ?>"> 
         <?php $educator_education_slider_pages = array();
@@ -31,7 +31,11 @@ get_header(); ?>
         <div class="carousel-inner" role="listbox">
           <?php  while ( $query->have_posts() ) : $query->the_post(); ?>
             <div <?php if($i == 1){echo 'class="carousel-item active"';} else{ echo 'class="carousel-item"';}?>>
-              <?php the_post_thumbnail(); ?>
+              <?php if(has_post_thumbnail()){
+                  the_post_thumbnail();
+              } else{?>
+                <img src="<?php echo esc_url(get_template_directory_uri()); ?>/theme-block-pattern/images/banner.png" alt="" />
+              <?php } ?>
               <div class="carousel-caption">
                 <?php if( get_theme_mod('educator_education_slider_title_Show_hide',true) != ''){ ?>
                   <h1 class="m-0"><?php the_title(); ?></h1>
