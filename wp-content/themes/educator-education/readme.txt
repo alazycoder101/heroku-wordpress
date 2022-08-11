@@ -1,10 +1,10 @@
 === Educator Education WordPress Theme ===
 Contributors: Themeshopy
-Tags: wide-blocks, flexible-header, block-styles, left-sidebar, right-sidebar, one-column, two-columns, grid-layout, custom-colors, custom-background, custom-logo, custom-menu, custom-header, editor-style, featured-images, footer-widgets, full-width-template, theme-options, threaded-comments, translation-ready, rtl-language-support, e-commerce, education, portfolio
+Tags: wide-blocks, flexible-header, block-styles, block-patterns, left-sidebar, right-sidebar, one-column, two-columns, grid-layout, custom-colors, custom-background, custom-logo, custom-menu, custom-header, editor-style, featured-images, footer-widgets, full-width-template, theme-options, threaded-comments, translation-ready, rtl-language-support, e-commerce, education, portfolio
 Requires at least: 5.0
-Tested up to: 5.9
+Tested up to: 6.0
 Requires PHP: 7.2
-Stable tag: 0.3
+Stable tag: 0.3.7
 License: GPLv3.0 or later
 License URI: http://www.gnu.org/licenses/gps-3.0.html
 
@@ -30,6 +30,33 @@ Educator Education is a clean, simple, and professionally developed WordPress th
 * Added about theme option in dashboard.
 * Added footer link option.
 * Added POT file.
+
+= 0.3.1 =
+* Added top bottom slider content spacing settings.
+* Updated POT file.
+
+= 0.3.2 =
+* Added left right slider content spacing settings.
+* Updated POT file.
+
+= 0.3.3 =
+* Added post time settings.
+* Updated POT file.
+
+= 0.3.4 =
+* Added slider responsive setting for mobile.
+* Updated POT file.
+
+= 0.3.5 =
+* Added condition for slider image in custom-front-page.php file.
+* Added scroll to top responsive setting for mobile.
+* Updated POT file.
+
+= 0.3.6 =
+* Changed sidebar and blog post layout.
+
+= 0.3.7 =
+* Added block pattern in the theme.
 
 == Resources ==
 

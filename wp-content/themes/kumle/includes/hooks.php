@@ -258,7 +258,7 @@ function construction_kit_credit_info(){ ?>
 
 <div class="site-info">
 	<?php $author_uri = wp_get_theme()->get( 'AuthorURI' ); ?>
-	<?php printf( esc_html__( '%1$s by %2$s', 'kumle' ), 'Kumle', '<a href="' . $author_uri . '" target="_blank">WP Charms</a>' ); ?>
+	<?php printf( esc_html__( '%1$s by %2$s', 'kumle' ), '<a href="https://wpcharms.com/item/kumle/" target="_blank">Kumle</a>', '<a href="' . $author_uri . '" target="_blank">WP Charms</a>' ); ?>
 </div><!-- .site-info -->
 
 <?php

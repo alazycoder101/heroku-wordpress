@@ -40,6 +40,7 @@ abstract class Item {
 	);
 
 	private static $checked_table_exists = array();
+	private static $enable_cache = true;
 
 	private $id;
 	private $provider;
@@ -177,6 +178,20 @@ abstract class Item {
 	 */
 	public static function primary_object_key() {
 		return '__as3cf_primary';
+	}
+
+	/**
+	 * Enable the built-in Item cache.
+	 */
+	public static function enable_cache() {
+		self::$enable_cache = true;
+	}
+
+	/**
+	 * Disable the built-in Item cache.
+	 */
+	public static function disable_cache() {
+		self::$enable_cache = false;
 	}
 
 	/**
@@ -389,6 +404,10 @@ abstract class Item {
 	 * @return bool|Item
 	 */
 	private static function get_from_items_cache_by_id( $id ) {
+		if ( false === self::$enable_cache ) {
+			return false;
+		}
+
 		$blog_id = get_current_blog_id();
 
 		if ( ! empty( static::$items_cache_by_id[ $blog_id ][ $id ] ) ) {
@@ -414,6 +433,10 @@ abstract class Item {
 	 * @return bool|Item
 	 */
 	private static function get_from_items_cache_by_source_id( $source_id ) {
+		if ( false === self::$enable_cache ) {
+			return false;
+		}
+
 		$blog_id = get_current_blog_id();
 
 		if ( ! empty( static::$items_cache_by_source_id[ $blog_id ][ static::$source_type ][ $source_id ] ) ) {
@@ -440,6 +463,10 @@ abstract class Item {
 	 * @return bool|Item
 	 */
 	private static function get_from_items_cache_by_bucket_and_path( $bucket, $path ) {
+		if ( false === self::$enable_cache ) {
+			return false;
+		}
+
 		$blog_id = get_current_blog_id();
 
 		if ( ! empty( static::$items_cache_by_path[ $blog_id ][ static::$source_type ][ $path ] ) ) {
@@ -800,7 +827,7 @@ abstract class Item {
 
 		$source_id = (int) $source_id;
 
-		if ( empty( $source_id ) ) {
+		if ( $source_id < 0 ) {
 			return false;
 		}
 
@@ -1410,7 +1437,7 @@ abstract class Item {
 	 *
 	 * While source id isn't strictly unique, it is by source type, which is always used in queries based on called class.
 	 *
-	 * @param int  $upper_bound Returned source_ids should be lower than this, use null/0 for no upper bound.
+	 * @param int  $upper_bound Returned source_ids should be lower than this, use null for no upper bound.
 	 * @param int  $limit       Maximum number of source_ids to return. Required if not counting.
 	 * @param bool $count       Just return a count of matching source_ids? Negates $limit, default false.
 	 * @param int  $originator  Optionally restrict to only records with given originator type from ORIGINATORS const.
@@ -1421,17 +1448,16 @@ abstract class Item {
 	public static function get_source_ids( $upper_bound, $limit, $count = false, $originator = null, $is_verified = null ) {
 		global $wpdb;
 
-		$args = array( static::$source_type );
-
 		if ( $count ) {
 			$sql = 'SELECT COUNT(DISTINCT source_id)';
 		} else {
 			$sql = 'SELECT DISTINCT source_id';
 		}
 
-		$sql .= ' FROM ' . static::items_table() . ' WHERE source_type = %s';
+		$sql  .= ' FROM ' . static::items_table() . ' WHERE source_type = %s';
+		$args = array( static::$source_type );
 
-		if ( ! empty( $upper_bound ) ) {
+		if ( is_numeric( $upper_bound ) ) {
 			$sql    .= ' AND source_id < %d';
 			$args[] = $upper_bound;
 		}
@@ -1897,13 +1923,23 @@ abstract class Item {
 	 */
 	protected static function maybe_update_extra_info( &$extra_info, $source_id, $is_private ) {
 		if ( ! is_array( $extra_info ) ) {
-			return;
+			$extra_info = array();
 		}
 
 		// Compatibility fallback for if just an array of private sizes is supplied.
 		$private_sizes = array();
 		if ( ! isset( $extra_info['private_sizes'] ) && ! isset( $extra_info['private_prefix'] ) && ! isset( $extra_info['objects'] ) ) {
 			$private_sizes = $extra_info;
+		}
+
+		// Compatibility fallback for old broken format.
+		if ( isset( $extra_info['private_sizes'] ) && isset( $extra_info['private_sizes']['private_sizes'] ) ) {
+			$extra_info['private_sizes'] = $extra_info['private_sizes']['private_sizes'];
+		}
+
+		// Extra info must have at least one element, if not it's broken.
+		if ( isset( $extra_info['objects'] ) && 0 === count( $extra_info['objects'] ) ) {
+			unset( $extra_info['objects'] );
 		}
 
 		if ( ! isset( $extra_info['objects'] ) ) {
@@ -1966,5 +2002,25 @@ abstract class Item {
 		}
 
 		return $offloaded_files;
+	}
+
+	/**
+	 * Is the supplied item_source considered to be empty?
+	 *
+	 * @param array $item_source
+	 *
+	 * @return bool
+	 */
+	public static function is_empty_item_source( $item_source ) {
+		if (
+			empty( $item_source['source_type'] ) ||
+			! isset( $item_source['id'] ) ||
+			! is_numeric( $item_source['id'] ) ||
+			$item_source['id'] < 0
+		) {
+			return true;
+		}
+
+		return false;
 	}
 }

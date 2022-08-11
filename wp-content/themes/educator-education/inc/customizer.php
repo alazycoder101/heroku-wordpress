@@ -494,7 +494,7 @@ function educator_education_customize_register($wp_customize) {
 	));
 
 	$wp_customize->add_setting( 'educator_education_top_bottom_wooproducts_padding',array(
-		'default' => 0,
+		'default' => '',
 		'sanitize_callback'	=> 'educator_education_sanitize_float',
 	));
 	$wp_customize->add_control( 'educator_education_top_bottom_wooproducts_padding',	array(
@@ -509,7 +509,7 @@ function educator_education_customize_register($wp_customize) {
 	));
 
 	$wp_customize->add_setting( 'educator_education_left_right_wooproducts_padding',array(
-		'default' => 0,
+		'default' => '',
 		'sanitize_callback'	=> 'educator_education_sanitize_float',
 	));
 	$wp_customize->add_control( 'educator_education_left_right_wooproducts_padding',	array(
@@ -1105,6 +1105,36 @@ function educator_education_customize_register($wp_customize) {
 		'type'=> 'text'
 	));
 
+	$wp_customize->add_setting('educator_education_top_bottom_slider_content_space',array(
+		'default'=> '',
+		'sanitize_callback'	=> 'educator_education_sanitize_float',
+	));
+	$wp_customize->add_control('educator_education_top_bottom_slider_content_space',array(
+		'label'	=> __('Top Bottom Slider Content Space','educator-education'),
+		'section'=> 'educator_education_slider',
+		'input_attrs' => array(
+            'step'             => 1,
+			'min'              => 0,
+			'max'              => 50,
+        ),
+		'type'=> 'number'
+	));
+
+	$wp_customize->add_setting('educator_education_left_right_slider_content_space',array(
+		'default'=> '',
+		'sanitize_callback'	=> 'educator_education_sanitize_float',
+	));
+	$wp_customize->add_control('educator_education_left_right_slider_content_space',array(
+		'label'	=> __('Left Right Slider Content Space','educator-education'),
+		'section'=> 'educator_education_slider',
+		'input_attrs' => array(
+            'step'             => 1,
+			'min'              => 0,
+			'max'              => 50,
+        ),
+		'type'=> 'number'
+	));
+
 	// Our Courses Settings
 	$wp_customize->add_section('educator_education_services',array(
 		'title' => __("Our Courses",'educator-education'),
@@ -1185,6 +1215,32 @@ function educator_education_customize_register($wp_customize) {
 		'type'=> 'text'
 	));
 
+	//Responsive Media Settings
+	$wp_customize->add_section('educator_education_responsive_setting',array(
+		'title'	=> __('Responsive Setting','educator-education'),
+		'panel' => 'educator_education_panel_id',
+	));
+
+	$wp_customize->add_setting('educator_education_responsive_slider',array(
+       'default' => false,
+       'sanitize_callback'	=> 'educator_education_sanitize_checkbox'
+    ));
+    $wp_customize->add_control('educator_education_responsive_slider',array(
+       'type' => 'checkbox',
+       'label' => __('Slider','educator-education'),
+       'section' => 'educator_education_responsive_setting'
+    ));
+
+    $wp_customize->add_setting('educator_education_responsive_scroll',array(
+       'default' => true,
+       'sanitize_callback'	=> 'educator_education_sanitize_checkbox'
+    ));
+    $wp_customize->add_control('educator_education_responsive_scroll',array(
+       'type' => 'checkbox',
+       'label' => __('Scroll To Top','educator-education'),
+       'section' => 'educator_education_responsive_setting'
+    ));
+
 	//Blog Post
 	$wp_customize->add_section('educator_education_blog_post',array(
 		'title'	=> __('Blog Page Settings','educator-education'),
@@ -1218,6 +1274,16 @@ function educator_education_customize_register($wp_customize) {
     $wp_customize->add_control('educator_education_author_hide',array(
        'type' => 'checkbox',
        'label' => __('Author','educator-education'),
+       'section' => 'educator_education_blog_post'
+    ));
+
+    $wp_customize->add_setting('educator_education_time_hide',array(
+       'default' => false,
+       'sanitize_callback'	=> 'educator_education_sanitize_checkbox'
+    ));
+    $wp_customize->add_control('educator_education_time_hide',array(
+       'type' => 'checkbox',
+       'label' => __('Time','educator-education'),
        'section' => 'educator_education_blog_post'
     ));
 

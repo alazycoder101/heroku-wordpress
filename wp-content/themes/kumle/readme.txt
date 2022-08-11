@@ -3,8 +3,8 @@
 Contributors: wpcharms
 Requires at least: 5.4.2
 Requires PHP: 7.4
-Tested up to: 5.7
-Stable tag: 2.0.9
+Tested up to: 5.9
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,6 +24,14 @@ Kumle WordPress Theme, Copyright (C) 2019, WP Charms
 Kumle is distributed under the terms of the GNU GPL
 
 == Changelog ==
+
+= 2.1.0 - April 17 2022  = 
+* Extended compatibility to Wordpress 5.9.3
+* Updated fontawesome libraries to 5.1.5
+* Extended compatibility to Elementor 3.6.5
+* Mobile menu icon fix
+* Upgraded meanmenu to v2.0.8
+
 
 = 2.0.9 - March 27 2021  =
 * Tested on Wordpress 5.7

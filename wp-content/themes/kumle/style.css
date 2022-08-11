@@ -4,9 +4,9 @@ Theme URI: https://wpcharms.com/item/kumle/
 Author: WP Charms
 Author URI: https://wpcharms.com/
 Description: Kumle is a simple, clean and lightweight multi-purpose theme compatible with elementor page builder. It is speed optimized theme with 95% GTMetrix PageSpeed Score.
-Version: 2.0.9
+Version: 2.1.0
 Requires at least: 5.4.2
-Tested up to: 5.7
+Tested up to: 5.9
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -763,7 +763,7 @@ a:active {
 
 .main-navigation ul li.menu-item-has-children > a::after, .main-navigation ul li.page_item_has_children > a::after {
     content: "\f107";
-    font-family: FontAwesome;
+    font-family: "Font Awesome 5 Free","Font Awesome 5 Brands";
     margin-left: 10px;
     margin-right: 0;
     position: absolute;
@@ -774,6 +774,7 @@ a:active {
     -ms-transform: translate(0%, -50%);
     -o-transform: translate(0%, -50%);
     top: 50%;
+    font-weight:600;
 }
 
 .main-navigation ul li li.menu-item-has-children > a::after,
@@ -861,9 +862,10 @@ a:active {
 .post-navigation .nav-previous a::before {
     content: "\f100";
     display: inline-block;
-    font-family: FontAwesome;
+    font-family: "Font Awesome 5 Free","Font Awesome 5 Brands";
     margin-right: 10px;
     color: #707070;
+    font-weight: 600;
 }
 
 .comment-navigation .nav-next a::after,
@@ -871,9 +873,10 @@ a:active {
 .post-navigation .nav-next a::after {
     content: "\f101";
     display: inline-block;
-    font-family: FontAwesome;
+    font-family: "Font Awesome 5 Free","Font Awesome 5 Brands";
     margin-left: 10px;
     color: #707070;
+    font-weight: 600;
 }
 
 .page-links {
@@ -1102,11 +1105,12 @@ a:active {
 .entry-footer > span::before,
 .single-post-meta > span::before {
     display: inline-block;
-    font-family: FontAwesome;
+    font-family: "Font Awesome 5 Free","Font Awesome 5 Brands";
     height: 15px;
     margin-right: 6px;
     content: "";
     color: #fa6161;
+    font-weight: 600;
 }
 
 .entry-meta .byline .author.vcard {
@@ -1122,7 +1126,7 @@ a:active {
 }
 
 span.comments-link::before {
-    content: "\f0e6";
+    content: "\f086";
 }
 
 .entry-meta .posted-on::before,
@@ -1132,12 +1136,12 @@ span.comments-link::before {
 
 .entry-footer > .cat-links::before,
 .entry-meta .cat-links::before {
-    content: "\f115";
+    content: "\f07c";
 }
 
 .entry-meta .byline::before,
 .single-post-meta .byline::before {
-    content: "\f2c0";
+    content: "\f007";
 }
 
 .entry-footer .edit-link::before {
@@ -1710,7 +1714,7 @@ li {
     color: #fff;
     content: "\f0c1";
     display: block;
-    font-family: FontAwesome;
+    font-family: "Font Awesome 5 Free","Font Awesome 5 Brands";
     font-weight: normal;
     line-height: 45px;
 }
@@ -1735,7 +1739,7 @@ li {
 }
 
 .kumle-social-icons ul li a[href*="facebook.com"]::before {
-    content: "\f09a";
+    content: "\f39e";
 }
 
 .kumle-social-icons ul li a[href*="twitter.com"]::before {
@@ -2422,11 +2426,12 @@ li {
 }
 
 .scrollup:before {
-    content: "\f176";
-    font-family: "FontAwesome";
+    content: "\f30c";
+    font-family: "Font Awesome 5 Free","Font Awesome 5 Brands";
     font-size: 17px;
     color: #adadad;
     line-height: 35px;
+    font-weight: 800;
 }
 
 .scrollup:hover:before {
@@ -2841,7 +2846,7 @@ div.wpcf7 {
 }
 
 #primary .entry-footer .byline::before {
-    content: "\f2c0";
+    content: "\f007";
     margin-right: 5px;
 }
 
@@ -2938,10 +2943,11 @@ blockquote p {
     color: #999;
     content: "\f08d";
     font-size: 20px;
-    font-family: "FontAwesome";
+    font-family: "Font Awesome 5 Free","Font Awesome 5 Brands";
     margin-right: 10px;
     transform: rotate(-25deg);
     display: inline-block;
+    font-weight: 800;
 }
 
 
@@ -3124,7 +3130,7 @@ blockquote p {
     font-size: 17px;
     color: #dddfde;
     margin-right: 15px;
-    font-family: "FontAwesome";
+    font-family: "Font Awesome 5 Free","Font Awesome 5 Brands";
     position: absolute;
     left: 0;
     top: 8px;
@@ -3161,7 +3167,13 @@ blockquote p {
 }
 
 .mean-container a.meanmenu-reveal span {
-    background: #fff;
+	background: #fff;
+	margin-top: 8px;
+	position: absolute;
+	width: 29px;
+	transition: all 0.2s;
+	height: 1px;
+	left: 0px;
 }
 
 .mean-container a.meanmenu-reveal:focus span {
@@ -3174,7 +3186,7 @@ blockquote p {
 
 .mean-container a.meanmenu-reveal {
     color: #fff;
-    top: -1px;
+    top: 3px;
 }
 
 .mean-container .mean-nav {
@@ -3282,7 +3294,16 @@ blockquote p {
         opacity: 1;
         border-top: 0px;
     }
+    
+    .header-layout-two .mean-container .mean-bar {
+        float: left;
+        position: absolute;
+        width: 100%;
+        z-index: 999999;
+        left: 0;
+    }
 
+    
     .mean-container .mean-nav ul li a.mean-expand {
         z-index: 99999999;
         height: 57px;

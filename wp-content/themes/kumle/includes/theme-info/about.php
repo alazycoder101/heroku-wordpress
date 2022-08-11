@@ -119,6 +119,20 @@ $config = array(
 				'plugin_slug' => 'one-click-demo-import',
 				'id'          => 'one-click-demo-import',
 			),
+			'elementor' => array(
+				'title'       => esc_html__( 'Elementor', 'kumle' ),
+				'description' => esc_html__( 'Please install the Elementor plugin for compatability with demo content.', 'kumle' ),
+				'check'       => class_exists( 'OCDI_Plugin' ),
+				'plugin_slug' => 'elementor',
+				'id'          => 'elementor',
+			),
+			'rankchecker-io-integration' => array(
+				'title'       => esc_html__( 'Rankchecker.io Integration', 'kumle' ),
+				'description' => esc_html__( 'Please install the Rankchecker.io Integration for Google website rank checking services.', 'kumle' ),
+				'check'       => class_exists( 'OCDI_Plugin' ),
+				'plugin_slug' => 'rankchecker-io-integration',
+				'id'          => 'rankchecker-io-integration',
+			),
 		),
 	),
 

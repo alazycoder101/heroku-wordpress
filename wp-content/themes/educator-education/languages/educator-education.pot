@@ -530,11 +530,11 @@ msgstr ""
 msgid "Product Sale Button Alignment"
 msgstr ""
 
-#: customizer.php:636 customizer.php:1521 customizer.php:1576
+#: customizer.php:636 customizer.php:1587 customizer.php:1642
 msgid "Right"
 msgstr ""
 
-#: customizer.php:637 customizer.php:1520 customizer.php:1575
+#: customizer.php:637 customizer.php:1586 customizer.php:1641
 msgid "Left"
 msgstr ""
 
@@ -760,7 +760,7 @@ msgstr ""
 msgid "Slider Image Height"
 msgstr ""
 
-#: customizer.php:1099 customizer.php:1327
+#: customizer.php:1099 customizer.php:1393
 msgid "READ MORE"
 msgstr ""
 
@@ -768,266 +768,290 @@ msgstr ""
 msgid "Slider Button"
 msgstr ""
 
-#: customizer.php:1110
+#: customizer.php:1113
+msgid "Top Bottom Slider Content Space"
+msgstr ""
+
+#: customizer.php:1128
+msgid "Left Right Slider Content Space"
+msgstr ""
+
+#: customizer.php:1140
 msgid "Our Courses"
 msgstr ""
 
-#: customizer.php:1119
+#: customizer.php:1149
 msgid "Section Title"
 msgstr ""
 
-#: customizer.php:1148
+#: customizer.php:1178
 msgid "Select Course category"
 msgstr ""
 
-#: customizer.php:1154
+#: customizer.php:1184
 msgid "404 Page"
 msgstr ""
 
-#: customizer.php:1159
+#: customizer.php:1189
 msgid "404"
 msgstr ""
 
-#: customizer.php:1163
+#: customizer.php:1193
 msgid "404 Page Title"
 msgstr ""
 
-#: customizer.php:1169
+#: customizer.php:1199
 msgid "We could not find the page you were looking for."
 msgstr ""
 
-#: customizer.php:1173
+#: customizer.php:1203
 msgid "404 Page Content"
 msgstr ""
 
-#: customizer.php:1179
+#: customizer.php:1209
 msgid "Go Back"
 msgstr ""
 
-#: customizer.php:1183
+#: customizer.php:1213
 msgid "404 Page Button"
 msgstr ""
 
-#: customizer.php:1190
-msgid "Blog Page Settings"
-msgstr ""
-
-#: customizer.php:1200
-msgid "Post Date"
-msgstr ""
-
-#: customizer.php:1210
-msgid "Comments"
-msgstr ""
-
 #: customizer.php:1220
-msgid "Author"
+msgid "Responsive Setting"
 msgstr ""
 
 #: customizer.php:1230
-msgid "Blog Post Image"
+msgid "Slider"
 msgstr ""
 
 #: customizer.php:1240
+msgid "Scroll To Top"
+msgstr ""
+
+#: customizer.php:1246
+msgid "Blog Page Settings"
+msgstr ""
+
+#: customizer.php:1256
+msgid "Post Date"
+msgstr ""
+
+#: customizer.php:1266
+msgid "Comments"
+msgstr ""
+
+#: customizer.php:1276
+msgid "Author"
+msgstr ""
+
+#: customizer.php:1286
+msgid "Time"
+msgstr ""
+
+#: customizer.php:1296
+msgid "Blog Post Image"
+msgstr ""
+
+#: customizer.php:1306
 msgid "Single Post Tags"
 msgstr ""
 
-#: customizer.php:1250
+#: customizer.php:1316
 msgid "Single Post Image"
 msgstr ""
 
-#: customizer.php:1259
+#: customizer.php:1325
 msgid "Blog Post Image Border Radius"
 msgstr ""
 
-#: customizer.php:1274
+#: customizer.php:1340
 msgid "Blog Post Image Shadow"
 msgstr ""
 
-#: customizer.php:1290
+#: customizer.php:1356
 msgid "Post Description Length"
 msgstr ""
 
-#: customizer.php:1293
+#: customizer.php:1359
 msgid "No Content"
 msgstr ""
 
-#: customizer.php:1294
+#: customizer.php:1360
 msgid "Excerpt Content"
 msgstr ""
 
-#: customizer.php:1295
+#: customizer.php:1361
 msgid "Full Content"
 msgstr ""
 
-#: customizer.php:1304
+#: customizer.php:1370
 msgid "Excerpt length"
 msgstr ""
 
-#: customizer.php:1316
+#: customizer.php:1382
 msgid "..."
 msgstr ""
 
-#: customizer.php:1320
+#: customizer.php:1386
 msgid "Post Excerpt Indicator Option"
 msgstr ""
 
-#: customizer.php:1331
+#: customizer.php:1397
 msgid "Add Button Text"
 msgstr ""
 
-#: customizer.php:1341
+#: customizer.php:1407
 msgid "Meta Box Separator"
 msgstr ""
 
-#: customizer.php:1343
+#: customizer.php:1409
 msgid "Add Meta Separator. e.g.: \"|\", \"/\", etc."
 msgstr ""
 
-#: customizer.php:1356
+#: customizer.php:1422
 msgid "Display Blog Page Post :"
 msgstr ""
 
-#: customizer.php:1359
+#: customizer.php:1425
 msgid "In Box"
 msgstr ""
 
-#: customizer.php:1360
+#: customizer.php:1426
 msgid "Without Box"
 msgstr ""
 
-#: customizer.php:1370
+#: customizer.php:1436
 msgid "Pagination in Blog Page"
 msgstr ""
 
-#: customizer.php:1380
+#: customizer.php:1446
 msgid "Related Post"
 msgstr ""
 
-#: customizer.php:1390
+#: customizer.php:1456
 msgid "Related Post Taxonomies"
 msgstr ""
 
-#: customizer.php:1393
+#: customizer.php:1459
 msgid "Categories"
 msgstr ""
 
-#: customizer.php:1394
+#: customizer.php:1460
 msgid "Tags"
 msgstr ""
 
-#: customizer.php:1399
+#: customizer.php:1465
 msgid "Related Posts"
 msgstr ""
 
-#: customizer.php:1403
+#: customizer.php:1469
 msgid "Related Post Title"
 msgstr ""
 
-#: customizer.php:1413
+#: customizer.php:1479
 msgid "Related Post Number"
 msgstr ""
 
-#: customizer.php:1425
+#: customizer.php:1491
 msgid "No Result Found"
 msgstr ""
 
-#: customizer.php:1430
+#: customizer.php:1496
 msgid "Nothing Found"
 msgstr ""
 
-#: customizer.php:1434
+#: customizer.php:1500
 msgid "No Result Found Title"
 msgstr ""
 
-#: customizer.php:1440
+#: customizer.php:1506
 msgid ""
 "Sorry, but nothing matched your search terms. Please try again with some "
 "different keywords."
 msgstr ""
 
-#: customizer.php:1444
+#: customizer.php:1510
 msgid "No Result Found Content"
 msgstr ""
 
-#: customizer.php:1455
+#: customizer.php:1521
 msgid "No Result search"
 msgstr ""
 
-#: customizer.php:1461
+#: customizer.php:1527
 msgid "Footer Text"
 msgstr ""
 
-#: customizer.php:1472
+#: customizer.php:1538
 msgid "Footer widget area"
 msgstr ""
 
-#: customizer.php:1474
+#: customizer.php:1540
 msgid ""
 "Select the number of widget areas you want in the footer. After that, go to "
 "Appearance > Widgets and add your widgets."
 msgstr ""
 
-#: customizer.php:1476
+#: customizer.php:1542
 msgid "One"
 msgstr ""
 
-#: customizer.php:1477
+#: customizer.php:1543
 msgid "Two"
 msgstr ""
 
-#: customizer.php:1478
+#: customizer.php:1544
 msgid "Three"
 msgstr ""
 
-#: customizer.php:1479
+#: customizer.php:1545
 msgid "Four"
 msgstr ""
 
-#: customizer.php:1488
+#: customizer.php:1554
 msgid "Footer Widget Background Color"
 msgstr ""
 
-#: customizer.php:1497
+#: customizer.php:1563
 msgid "Footer Widget Background Image"
 msgstr ""
 
-#: customizer.php:1506
+#: customizer.php:1572
 msgid "Copyright Text"
 msgstr ""
 
-#: customizer.php:1517
+#: customizer.php:1583
 msgid "Copyright Text Alignment "
 msgstr ""
 
-#: customizer.php:1522 customizer.php:1577
+#: customizer.php:1588 customizer.php:1643
 msgid "Center"
 msgstr ""
 
-#: customizer.php:1531
+#: customizer.php:1597
 msgid "Copyright Font Size"
 msgstr ""
 
-#: customizer.php:1546
+#: customizer.php:1612
 msgid "Copyright Padding"
 msgstr ""
 
-#: customizer.php:1562
+#: customizer.php:1628
 msgid "Show / Hide Scroll Top Button"
 msgstr ""
 
-#: customizer.php:1572
+#: customizer.php:1638
 msgid "Scroll Back to Top Position"
 msgstr ""
 
-#: customizer.php:1586
+#: customizer.php:1652
 msgid "Scroll Icon Font Size"
 msgstr ""
 
-#: customizer.php:1677
+#: customizer.php:1743
 msgid "Educator Education"
 msgstr ""
 
-#: customizer.php:1678
+#: customizer.php:1744
 msgid "GO PRO"
 msgstr ""

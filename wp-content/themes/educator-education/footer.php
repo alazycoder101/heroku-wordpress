@@ -51,7 +51,7 @@
     <p class="mb-0"><?php educator_education_credit();?> <?php echo esc_html(get_theme_mod('educator_education_footer_copy', __('By Themeshopy', 'educator-education')));?></p>
   </div>
 </footer>
-<?php if( get_theme_mod( 'educator_education_enable_disable_scroll',true) != '') { ?>
+<?php if( get_theme_mod( 'educator_education_enable_disable_scroll',true) != '' || get_theme_mod( 'educator_education_responsive_scroll',true) != '') { ?>
   <?php $educator_education_theme_lay = get_theme_mod( 'educator_education_scroll_setting','Right');
     if($educator_education_theme_lay == 'Left'){ ?>
       <button id="scroll-top" class="left-align" title="<?php esc_attr_e('Scroll to Top','educator-education'); ?>"><span class="fas fa-chevron-up" aria-hidden="true"></span><span class="screen-reader-text"><?php esc_html_e('Scroll to Top', 'educator-education'); ?></span></button>
