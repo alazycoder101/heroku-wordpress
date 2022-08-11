@@ -11,6 +11,7 @@
 
 namespace SkyVerge\WooCommerce\Facebook\Handlers;
 
+use SkyVerge\WooCommerce\Facebook\Utilities\Heartbeat;
 use SkyVerge\WooCommerce\PluginFramework\v5_10_0\SV_WC_API_Exception;
 use SkyVerge\WooCommerce\PluginFramework\v5_10_0\SV_WC_Helper;
 use SkyVerge\WooCommerce\Facebook\API\Exceptions\Connect_WC_API_Exception;
@@ -109,9 +110,9 @@ class Connection {
 
 		$this->plugin = $plugin;
 
-		add_action( 'init', array( $this, 'refresh_business_configuration' ) );
+		add_action( Heartbeat::HOURLY, array( $this, 'refresh_business_configuration' ) );
 
-		add_action( 'admin_init', array( $this, 'refresh_installation_data' ) );
+		add_action( Heartbeat::DAILY, array( $this, 'refresh_installation_data' ) );
 
 		add_action( 'woocommerce_api_' . self::ACTION_CONNECT, array( $this, 'handle_connect' ) );
 
@@ -133,11 +134,6 @@ class Connection {
 	 * @since 2.0.0
 	 */
 	public function refresh_business_configuration() {
-
-		// only refresh once an hour
-		if ( get_transient( 'wc_facebook_business_configuration_refresh' ) ) {
-			return;
-		}
 
 		// bail if not connected
 		if ( ! $this->is_connected() ) {
@@ -175,7 +171,6 @@ class Connection {
 			$this->get_plugin()->log( 'Could not refresh business configuration. ' . $exception->getMessage() );
 		}
 
-		set_transient( 'wc_facebook_business_configuration_refresh', time(), HOUR_IN_SECONDS );
 	}
 
 
@@ -191,11 +186,6 @@ class Connection {
 			return;
 		}
 
-		// only refresh once a day
-		if ( get_transient( 'wc_facebook_connection_refresh' ) ) {
-			return;
-		}
-
 		try {
 
 			$this->update_installation_data();
@@ -205,7 +195,6 @@ class Connection {
 			$this->get_plugin()->log( 'Could not refresh installation data. ' . $exception->getMessage() );
 		}
 
-		set_transient( 'wc_facebook_connection_refresh', time(), DAY_IN_SECONDS );
 	}
 
 
@@ -417,12 +406,13 @@ class Connection {
 		$this->update_ad_account_id( '' );
 		$this->update_instagram_business_id( '' );
 		$this->update_commerce_merchant_settings_id( '' );
+		$this->update_external_business_id('');
 
 		update_option( \WC_Facebookcommerce_Integration::SETTING_FACEBOOK_PAGE_ID, '' );
 		update_option( \WC_Facebookcommerce_Integration::SETTING_FACEBOOK_PIXEL_ID, '' );
+
 		facebook_for_woocommerce()->get_integration()->update_product_catalog_id( '' );
 
-		delete_transient( 'wc_facebook_business_configuration_refresh' );
 	}
 
 
@@ -688,7 +678,7 @@ class Connection {
 
 			$external_id = get_option( self::OPTION_EXTERNAL_BUSINESS_ID );
 
-			if ( ! is_string( $external_id ) ) {
+			if ( ! is_string( $external_id ) || empty( $external_id ) ) {
 
 				/**
 				 * Filters the shop's business external ID.
@@ -708,7 +698,8 @@ class Connection {
 
 				$external_id = uniqid( sprintf( '%s-', $external_id ), false );
 
-				update_option( self::OPTION_EXTERNAL_BUSINESS_ID, $external_id );
+				$this->update_external_business_id( $external_id );
+
 			}
 
 			$this->external_business_id = $external_id;
@@ -1146,6 +1137,18 @@ class Connection {
 		update_option( self::OPTION_PAGE_ACCESS_TOKEN, is_string( $value ) ? $value : '' );
 	}
 
+	/**
+	 * Stores the given external business id.
+	 *
+	 * @since 2.6.13
+	 *
+	 * @param string $value external business id
+	 */
+	public function update_external_business_id( $value ) {
+
+		update_option( self::OPTION_EXTERNAL_BUSINESS_ID, is_string( $value ) ? $value : '' );
+	}
+
 
 	/**
 	 * Determines whether the site is connected.
@@ -1304,7 +1307,7 @@ class Connection {
 		}
 
 		if ( ! empty( $values->business_id ) ) {
-			update_option( self::OPTION_EXTERNAL_BUSINESS_ID, sanitize_text_field( $values->business_id ) );
+			$this->update_external_business_id( sanitize_text_field( $values->business_id ) );
 			$log_data[ self::OPTION_EXTERNAL_BUSINESS_ID ] = sanitize_text_field( $values->business_id );
 		}
 
