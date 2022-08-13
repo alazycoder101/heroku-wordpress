@@ -384,7 +384,6 @@
 			$sql = preg_replace('/id bigint\(\d+\)/i', 'id serial', $sql);
 			$sql = preg_replace_callback('/([^ (]+)(\(\d+\))/i',
 				function($matches) {
-					print_r($matches);
 					if (strtoupper($maches[1]) == "VARCHAR") {
 						return $matches[0];
 					} else {
@@ -555,8 +554,14 @@
 		// Fix tables listing
 		elseif( 0 === strpos($sql, 'SHOW TABLES'))
 		{
-			$logto = 'SHOWTABLES';
-			$sql = 'SELECT tablename FROM pg_tables WHERE schemaname = \'public\';';
+			// "SHOW TABLES LIKE '$table_name'"
+			if ($sql == 'SHOW TABLES')
+			{
+				$logto = 'SHOWTABLES';
+				$sql = 'SELECT tablename FROM pg_tables WHERE schemaname = \'public\';';
+			} else {
+				$sql = str_replace('SHOW TABLES LIKE', 'SELECT tablename FROM pg_tables WHERE schemaname = \'public\' AND tablename like ', $sql);
+			}
 		}
 		elseif( 0 === strpos( $sql, 'SHOW') || 0 === strpos( $sql, 'show'))
 		{
