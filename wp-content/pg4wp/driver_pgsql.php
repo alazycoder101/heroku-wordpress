@@ -376,6 +376,29 @@
 			$pattern = '/\) AS \'([^\']+)\'/';
 			$sql = preg_replace( $pattern, ') AS "$1"', $sql);
 		} // SELECT
+		elseif( 0 === strpos($sql, 'CREATE'))
+		{
+			//id bigint(20) unsigned auto_increment primary key
+			//id BIGINT(20) NOT NULL AUTO_INCREMENT
+			$sql = preg_replace('/(auto_increment|unsigned|default character set utf8)/i', '', $sql);
+			$sql = preg_replace('/id bigint\(\d+\)/i', 'id serial', $sql);
+			$sql = preg_replace_callback('/([^ (]+)(\(\d+\))/i',
+				function($matches) {
+					print_r($matches);
+					if (strtoupper($maches[1]) == "VARCHAR") {
+						return $matches[0];
+					} else {
+						return $matches[1];
+					}
+				},
+				$sql);
+			$sql = preg_replace('/unique key [^(]+/i', 'unique', $sql);
+			$sql = preg_replace('/longtext/i', 'text', $sql);
+			$sql = preg_replace('/tinyint/i', 'smallint', $sql);
+			# is_verified BOOLEAN NOT NULL DEFAULT 1
+			$sql = preg_replace('/boolean not null default 1/i', 'boolean not null default true', $sql);
+			$sql = preg_replace('/boolean not null default 0/i', 'boolean not null default false', $sql);
+		} // CREATE
 		elseif( 0 === strpos($sql, 'UPDATE'))
 		{
 			$logto = 'UPDATE';
